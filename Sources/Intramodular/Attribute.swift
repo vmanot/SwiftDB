@@ -2,34 +2,36 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
-import Swift
-
-public enum AttributeProperty {
-    case transient
-    case optional
-}
-
-@_functionBuilder
-public class AttributePropertiesBuilder {
-    @inlinable
-    public static func buildBlock(_ element: AttributeProperty) -> [AttributeProperty] {
-        return [element]
-    }
-    
-    @inlinable
-    public static func buildBlock(_ elements: AttributeProperty...) -> [AttributeProperty] {
-        return elements
-    }
-}
+import Data
+import Swallow
 
 @propertyWrapper
-struct Attribute<Value> {
-    var wrappedValue: Value {
+public struct Attribute<Value: Codable> {
+    @usableFromInline
+    var parent: NSManagedObject?
+    
+    @usableFromInline
+    var key: AnyStringKey {
         fatalError()
     }
     
-    init(@AttributePropertiesBuilder _ action: () -> [AttributeProperty]) {
+    public var wrappedValue: Value {
+        get {
+            guard let parent = parent else {
+                fatalError()
+            }
+            
+            return try! _CodableToNSAttributeCoder<Value>.decode(from: parent, forKey: key).value
+        } set {
+            guard let parent = parent else {
+                fatalError()
+            }
+            
+            try! _CodableToNSAttributeCoder(newValue).encode(to: parent, forKey: key)
+        }
+    }
+    
+    public init() {
         
     }
 }
