@@ -6,6 +6,7 @@ import Data
 import Runtime
 import Swallow
 
+/// A shadow protocol for `Attribute`.
 public protocol opaque_Attribute {
     var name: String? { get set }
     var type: EntityAttributeTypeDescription { get }
@@ -15,6 +16,7 @@ public protocol opaque_Attribute {
     var preservesValueInHistoryOnDeletion: Bool { get }
 }
 
+/// A property wrapper type that can read and write an attribute managed by CoreData.
 @propertyWrapper
 public struct Attribute<Value: Codable>: opaque_Attribute {
     @usableFromInline
