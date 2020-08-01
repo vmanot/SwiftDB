@@ -38,5 +38,6 @@ extension NSEntityDescription {
         name = description.name
         managedObjectClassName = description.managedObjectClassName
         properties = description.properties.map({ $0.toNSPropertyDescription() })
+        subentities = description.subentities.map({ .init($0) })
     }
 }

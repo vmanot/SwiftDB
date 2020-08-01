@@ -12,3 +12,4 @@ public protocol Schema {
     @ArrayBuilder<opaque_Entity.Type>
     var entities: Entities { get }
 }
+

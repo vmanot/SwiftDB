@@ -34,3 +34,13 @@ public struct SchemaDescription {
         self.entities = .init(nameToEntityMap.values)
     }
 }
+
+// MARK: - Auxiliary Implementation -
+
+extension NSManagedObjectModel {
+    public convenience init(_ schema: SchemaDescription) {
+        self.init()
+        
+        entities = schema.entities.map(({ .init($0) }))
+    }
+}
