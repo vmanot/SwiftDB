@@ -27,3 +27,4 @@ final class SwiftDBTests: XCTestCase {
         }
     }
 }
+

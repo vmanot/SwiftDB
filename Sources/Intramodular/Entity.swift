@@ -43,7 +43,7 @@ extension opaque_Entity where Self: Entity {
     }
     
     public static var managedObjectClass: ObjCClass {
-        ObjCClass.init(
+        ObjCClass(
             name: managedObjectClassName,
             superclass: opaque_ParentType?.managedObjectClass ?? ObjCClass(NSXManagedObject.self)
         )
