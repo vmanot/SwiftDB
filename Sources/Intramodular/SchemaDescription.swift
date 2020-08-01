@@ -1,37 +1,36 @@
 //
-//  File.swift
-//  
-//
-//  Created by Vatsal Manot on 8/1/20.
+// Copyright (c) Vatsal Manot
 //
 
-import Foundation
+import Data
+import Runtime
+import Swallow
 
-struct Foo: Entity {
-    @Attribute var x: Int = 0
-    @Attribute var y: Int = 0
-}
-
-struct Bar: Entity {
-    struct V0: Entity {
-        @Attribute var foo: URL? = nil
-    }
+public struct SchemaDescription {
+    public let entities: [EntityDescription]
     
-    struct V1: Entity {
-        typealias PreviousVersion = V0
+    public init(
+        @ArrayBuilder<opaque_Entity.Type> entities: () -> [opaque_Entity.Type]
+    ) {
+        var parentNameToChildrenMap: [String: [EntityDescription]] = [:]
+        var nameToEntityMap: [String: EntityDescription] = [:]
         
-        @Attribute var bar: URL? = nil
-    }
-
-    typealias PreviousVersion = V1
-    typealias Parent = Foo
-
-    @Attribute var x: URL? = nil
-}
-
-struct MySchema: Schema {
-    var entities: Entities {
-        Foo.self
-        Bar.self
+        for entity in entities() {
+            let description = entity.toEntityDescription()
+            
+            nameToEntityMap[entity.name] = description
+            
+            if let parent = entity.opaque_ParentType {
+                parentNameToChildrenMap[parent.name, default: []].insert(description)
+            }
+        }
+        
+        for name in nameToEntityMap.keys {
+            if let children = parentNameToChildrenMap[name] {
+                nameToEntityMap[name]?.insertSubentities(children)
+            }
+        }
+        
+        self.entities = .init(nameToEntityMap.values)
     }
 }
