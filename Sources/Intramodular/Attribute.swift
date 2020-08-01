@@ -6,16 +6,6 @@ import Data
 import Runtime
 import Swallow
 
-/// A shadow protocol for `Attribute`.
-public protocol opaque_Attribute {
-    var name: String? { get set }
-    var type: EntityAttributeTypeDescription { get }
-    var isOptional: Bool { get }
-    var isTransient: Bool { get }
-    var allowsExternalBinaryDataStorage: Bool { get }
-    var preservesValueInHistoryOnDeletion: Bool { get }
-}
-
 /// A property wrapper type that can read and write an attribute managed by CoreData.
 @propertyWrapper
 public struct Attribute<Value: Codable>: opaque_Attribute {
@@ -23,12 +13,13 @@ public struct Attribute<Value: Codable>: opaque_Attribute {
     var parent: NSManagedObject?
     
     @usableFromInline
+    let initialValue: Value?
+    @usableFromInline
     let decodeImpl: (NSManagedObject, AnyStringKey) throws -> Value
     @usableFromInline
     let encodeImpl: (NSManagedObject, AnyStringKey, Value) throws -> Void
     
     public var name: String?
-    public let type: EntityAttributeTypeDescription = .transformable(class: NSDictionary.self)
     public let isOptional: Bool
     public var isTransient: Bool = false
     public var allowsExternalBinaryDataStorage: Bool = false
@@ -41,6 +32,150 @@ public struct Attribute<Value: Codable>: opaque_Attribute {
             try! encodeImpl(parent.unwrap(), .init(stringValue: name.unwrap()), newValue)
         }
     }
+    
+    public var type: EntityAttributeTypeDescription {
+        if let type = Value.self as? NSPrimitiveAttributeCoder.Type {
+            if let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
+                return result
+            }
+        } else if let wrappedValue = wrappedValue as? NSAttributeCoder {
+            if let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
+                return result
+            }
+        } else {
+            return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
+        }
+        
+        return .undefined
+    }
+}
+
+// MARK: - Initialization -
+
+extension Attribute {
+    init(
+        initialValue: Value?,
+        decodeImpl: @escaping (NSManagedObject, AnyStringKey) throws -> Value,
+        encodeImpl: @escaping (NSManagedObject, AnyStringKey, Value) throws -> Void,
+        isOptional: Bool,
+        isTransient: Bool,
+        allowsExternalBinaryDataStorage: Bool,
+        preservesValueInHistoryOnDeletion: Bool
+    ) {
+        self.initialValue = initialValue
+        self.decodeImpl = decodeImpl
+        self.encodeImpl = encodeImpl
+        self.isOptional = isOptional
+        self.isTransient = isTransient
+        self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
+        self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
+    }
+}
+
+extension Attribute {
+    public init(
+        wrappedValue: Value,
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) where Value: NSAttributeCoder {
+        self.init(
+            initialValue: wrappedValue,
+            decodeImpl: { object, key in
+                try Value.decode(from: object, forKey: key)
+            },
+            encodeImpl: { object, key, newValue in
+                try newValue.encode(to: object, forKey: key)
+            },
+            isOptional: false,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
+    
+    public init(
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) where Value: Initiable & NSPrimitiveAttributeCoder {
+        self.init(
+            initialValue: .init(),
+            decodeImpl: { object, key in
+                try Value.decode(from: object, forKey: key)
+            },
+            encodeImpl: { object, key, newValue in
+                try newValue.encode(to: object, forKey: key)
+            },
+            isOptional: false,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
+    
+    public init<T>(
+        wrappedValue: T,
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) where T: NSAttributeCoder, Value == Optional<T> {
+        self.init(
+            initialValue: wrappedValue,
+            decodeImpl: { object, key in
+                try Value.decode(from: object, forKey: key)
+            },
+            encodeImpl: { object, key, newValue in
+                try newValue.encode(to: object, forKey: key)
+            },
+            isOptional: false,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
+    
+    public init<T>(
+        initialValue: Value = nil,
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) where T: NSAttributeCoder, Value == Optional<T> {
+        self.init(
+            initialValue: initialValue,
+            decodeImpl: { object, key in
+                try Value.decode(from: object, forKey: key)
+            },
+            encodeImpl: { object, key, newValue in
+                try newValue.encode(to: object, forKey: key)
+            },
+            isOptional: false,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
+    
+    public init<T>(
+        initialValue: Value = nil,
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) where T: NSPrimitiveAttributeCoder, Value == Optional<T> {
+        self.init(
+            initialValue: initialValue,
+            decodeImpl: { object, key in
+                try Value.decode(from: object, forKey: key)
+            },
+            encodeImpl: { object, key, newValue in
+                try newValue.encode(to: object, forKey: key)
+            },
+            isOptional: false,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
 }
 
 extension Attribute {
@@ -50,26 +185,27 @@ extension Attribute {
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
     ) {
-        self.decodeImpl = { parent, name in
-            try! _CodableToNSAttributeCoder<Value>.decode(
-                from: parent,
-                forKey: name,
-                defaultValue: wrappedValue
-            )
-            .value
-        }
-        
-        self.encodeImpl = { parent, name, newValue in
-            try! _CodableToNSAttributeCoder(newValue).encode(
-                to: parent,
-                forKey: name
-            )
-        }
-        
-        self.isOptional = false
-        self.isTransient = isTransient
-        self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
-        self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
+        self.init(
+            initialValue: nil,
+            decodeImpl: { object, key in
+                try! _CodableToNSAttributeCoder<Value>.decode(
+                    from: object,
+                    forKey: key,
+                    defaultValue: wrappedValue
+                )
+                .value
+            },
+            encodeImpl: { object, key, newValue in
+                try! _CodableToNSAttributeCoder(newValue).encode(
+                    to: object,
+                    forKey: key
+                )
+            },
+            isOptional: false,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
     }
     
     public init<T>(
@@ -78,29 +214,36 @@ extension Attribute {
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
     ) where Value == Optional<T> {
-        self.decodeImpl = { parent, name in
-            try! _OptionalCodableToNSAttributeCoder<T>.decode(
-                from: parent,
-                forKey: name
-            )
-            .value ?? initialValue
-        }
-        
-        self.encodeImpl = { parent, name, newValue in
-            try! _OptionalCodableToNSAttributeCoder(newValue).encode(
-                to: parent,
-                forKey: name
-            )
-        }
-        
-        self.isOptional = true
-        self.isTransient = isTransient
-        self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
-        self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
+        self.init(
+            initialValue: nil,
+            decodeImpl: { object, key in
+                try! _OptionalCodableToNSAttributeCoder<T>.decode(
+                    from: object,
+                    forKey: key
+                )
+                .value ?? initialValue
+            },
+            encodeImpl: { object, key, newValue in
+                try! _OptionalCodableToNSAttributeCoder(newValue).encode(
+                    to: object,
+                    forKey: key
+                )
+            },
+            isOptional: true,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
     }
 }
 
 // MARK: - Auxiliary Implementation -
+
+extension Attribute {
+    public func toEntityPropertyDescription() -> EntityPropertyDescription {
+        EntityAttributeDescription(self)
+    }
+}
 
 extension EntityAttributeDescription {
     public init(_ attribute: opaque_Attribute) {

@@ -28,6 +28,11 @@ let package = Package(
             ],
             path: "Sources"
         ),
+        .testTarget(
+            name: "SwiftDBTests",
+            dependencies: ["SwiftDB"],
+            path: "Tests"
+        )
     ],
     swiftLanguageVersions: [
         .version("5.1")

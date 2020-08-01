@@ -8,7 +8,7 @@ import XCTest
 
 public func allTests() -> [XCTestCaseEntry] {
     return [
-        testCase(ExampleTests.allTests),
+        testCase(SwiftDBTests.allTests),
     ]
 }
 
