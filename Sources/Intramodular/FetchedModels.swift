@@ -2,7 +2,8 @@
 // Copyright (c) Vatsal Manot
 //
 
-import SwiftUI
+import CoreData
+import SwiftUIX
 
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
