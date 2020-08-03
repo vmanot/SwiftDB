@@ -2,36 +2,15 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Data
+import CoreData
 import Runtime
 import Swallow
 
 public struct SchemaDescription {
     public let entities: [EntityDescription]
     
-    public init(
-        @ArrayBuilder<opaque_Entity.Type> entities: () -> [opaque_Entity.Type]
-    ) {
-        var parentNameToChildrenMap: [String: [EntityDescription]] = [:]
-        var nameToEntityMap: [String: EntityDescription] = [:]
-        
-        for entity in entities() {
-            let description = entity.toEntityDescription()
-            
-            nameToEntityMap[entity.name] = description
-            
-            if let parent = entity.opaque_ParentType {
-                parentNameToChildrenMap[parent.name, default: []].insert(description)
-            }
-        }
-        
-        for name in nameToEntityMap.keys {
-            if let children = parentNameToChildrenMap[name] {
-                nameToEntityMap[name]?.insertSubentities(children)
-            }
-        }
-        
-        self.entities = .init(nameToEntityMap.values)
+    public init<S: Schema>(_ schema: S) {
+        self.entities = schema.entities.map({ $0.toEntityDescription() })
     }
 }
 
@@ -40,6 +19,27 @@ public struct SchemaDescription {
 extension NSManagedObjectModel {
     public convenience init(_ schema: SchemaDescription) {
         self.init()
+        
+        var parentNameToChildrenMap: [String: [NSEntityDescription]] = [:]
+        var nameToEntityMap: [String: NSEntityDescription] = [:]
+        
+        for entity in schema.entities {
+            let description = NSEntityDescription(entity)
+            
+            nameToEntityMap[entity.name] = description
+            
+            if let parent = entity.parent {
+                parentNameToChildrenMap[parent.name, default: []].insert(description)
+            }
+        }
+        
+        for name in nameToEntityMap.keys {
+            if let children = parentNameToChildrenMap[name] {
+                nameToEntityMap[name]?.subentities = children
+            }
+        }
+        
+        self.entities = .init(nameToEntityMap.values)
         
         entities = schema.entities.map(({ .init($0) }))
     }

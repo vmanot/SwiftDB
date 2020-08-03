@@ -10,7 +10,7 @@ import Swallow
 @propertyWrapper
 public struct Attribute<Value: Codable>: opaque_Attribute {
     @usableFromInline
-    var parent: NSManagedObject?
+    var base: NSManagedObject?
     
     @usableFromInline
     let initialValue: Value?
@@ -27,9 +27,9 @@ public struct Attribute<Value: Codable>: opaque_Attribute {
     
     public var wrappedValue: Value {
         get {
-            try! decodeImpl(parent.unwrap(), .init(stringValue: name.unwrap()))
+            try! decodeImpl(base.unwrap(), .init(stringValue: name.unwrap()))
         } nonmutating set {
-            try! encodeImpl(parent.unwrap(), .init(stringValue: name.unwrap()), newValue)
+            try! encodeImpl(base.unwrap(), .init(stringValue: name.unwrap()), newValue)
         }
     }
     
@@ -246,7 +246,7 @@ extension Attribute {
 }
 
 extension EntityAttributeDescription {
-    public init(_ attribute: opaque_Attribute) {
+    init(_ attribute: opaque_Attribute) {
         self = EntityAttributeDescription(name: attribute.name!.stringValue)
             .type(attribute.type)
             .optional(attribute.isOptional)
@@ -257,7 +257,7 @@ extension EntityAttributeDescription {
 }
 
 extension NSAttributeDescription {
-    public convenience init(_ attribute: opaque_Attribute) {
+    convenience init(_ attribute: opaque_Attribute) {
         self.init(EntityAttributeDescription(attribute))
     }
 }

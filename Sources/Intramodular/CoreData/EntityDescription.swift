@@ -7,25 +7,25 @@ import Foundation
 import Swallow
 
 public struct EntityDescription: AnyProtocol {
-    public private(set) var name: String
-    public private(set) var managedObjectClassName: String
-    public private(set) var subentities: [EntityDescription]
-    public private(set) var properties: [EntityPropertyDescription]
+    @Indirect
+    public var parent: EntityDescription?
+    public let name: String
+    public let managedObjectClassName: String
+    public let subentities: MaybeKnown<[EntityDescription]>
+    public let properties: [EntityPropertyDescription]
     
     public init(
+        parent: EntityDescription?,
         name: String,
         managedObjectClassName: String,
-        subentities: [EntityDescription],
+        subentities: MaybeKnown<[EntityDescription]>,
         properties: [EntityPropertyDescription]
     ) {
+        self.parent = parent
         self.name = name
         self.managedObjectClassName = managedObjectClassName
         self.subentities = subentities
         self.properties = properties
-    }
-    
-    public mutating func insertSubentities(_ entities: [EntityDescription]) {
-        subentities.insert(contentsOf: entities)
     }
 }
 
@@ -38,6 +38,6 @@ extension NSEntityDescription {
         name = description.name
         managedObjectClassName = description.managedObjectClassName
         properties = description.properties.map({ $0.toNSPropertyDescription() })
-        subentities = description.subentities.map({ .init($0) })
+        subentities = description.subentities.knownValue?.map({ .init($0) }) ?? []
     }
 }

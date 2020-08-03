@@ -2,8 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Data
-import Swift
+import Swallow
 
 /// A shadow protocol for `Model`.
 public protocol opaque_Model {

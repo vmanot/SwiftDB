@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Data
 import Runtime
 import Swallow
 
@@ -12,10 +11,6 @@ public protocol opaque_Entity: Initiable {
     static var name: String { get }
     static var managedObjectClassName: String { get }
     static var managedObjectClass: ObjCClass { get }
-    
-    var _runtime_propertyAccessors: [opaque_PropertyAccessor] { get }
-    
-    mutating func _runtime_configurePropertyAccessors()
     
     static func toEntityDescription() -> EntityDescription
 }
@@ -49,17 +44,24 @@ extension opaque_Entity where Self: Entity {
         )
     }
     
-    public var _runtime_propertyAccessors: [opaque_PropertyAccessor] {
+    public static func toEntityDescription() -> EntityDescription {
+        .init(self)
+    }
+}
+
+extension opaque_Entity {
+    var _runtime_propertyAccessors: [opaque_PropertyAccessor] {
         AnyNominalOrTupleValue(self)!.compactMap { key, value in
             (value as? opaque_PropertyAccessor)
         }
     }
     
-    public mutating func _runtime_configurePropertyAccessors() {
+    mutating func _runtime_configurePropertyAccessors(base: NSManagedObject? = nil) {
         var emptyInstance = AnyNominalOrTupleValue(self)!
         
         for (key, value) in emptyInstance {
-            if var attribute = value as? opaque_Attribute {
+            if var attribute = value as? opaque_PropertyAccessor {
+                attribute.base = base
                 attribute.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 
                 emptyInstance[key] = attribute
@@ -69,8 +71,14 @@ extension opaque_Entity where Self: Entity {
         self = emptyInstance.value as! Self
     }
     
-    public static func toEntityDescription() -> EntityDescription {
-        .init(self)
+    public init?(base: NSManagedObject) {
+        guard NSStringFromClass(type(of: base)) == Self.managedObjectClassName else {
+            return nil
+        }
+        
+        self.init()
+        
+        _runtime_configurePropertyAccessors(base: base)
     }
 }
 
@@ -89,9 +97,10 @@ extension EntityDescription {
         instance._runtime_configurePropertyAccessors()
         
         self.init(
+            parent: type.opaque_ParentType?.toEntityDescription(),
             name: type.name,
             managedObjectClassName: type.managedObjectClassName,
-            subentities: [],
+            subentities: .unknown,
             properties: instance._runtime_propertyAccessors.map({ $0.toEntityPropertyDescription() })
         )
     }
