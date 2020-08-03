@@ -7,7 +7,7 @@ import SwiftUIX
 
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
-public struct FetchedModels<Result: Entity>: DynamicProperty {
+public struct FetchModels<Result: Entity>: DynamicProperty {
     @FetchRequest var base: FetchedResults<NSManagedObject>
     
     public var wrappedValue: AnyRandomAccessCollection<Result> {
@@ -15,7 +15,7 @@ public struct FetchedModels<Result: Entity>: DynamicProperty {
     }
 }
 
-extension FetchedModels {
+extension FetchModels {
     public init(
         fetchRequest: ModelFetchRequest<Result>,
         animation: Animation? = nil
