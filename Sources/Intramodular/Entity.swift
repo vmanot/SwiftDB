@@ -50,6 +50,18 @@ extension opaque_Entity where Self: Entity {
 }
 
 extension opaque_Entity {
+    var base: NSManagedObject? {
+        let instance = AnyNominalOrTupleValue(self)!
+        
+        for (_, value) in instance {
+            if let value = value as? _opaque_PropertyAccessor {
+                return value.base
+            }
+        }
+        
+        return nil
+    }
+    
     var _runtime_propertyAccessors: [_opaque_PropertyAccessor] {
         AnyNominalOrTupleValue(self)!.compactMap { key, value in
             (value as? _opaque_PropertyAccessor)

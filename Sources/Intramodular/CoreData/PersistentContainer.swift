@@ -27,11 +27,17 @@ public final class PersistentContainer: Identifiable, ObservableObject {
 }
 
 extension PersistentContainer {
-    public func createObject<E: Entity>(_ type: E.Type) -> NSManagedObject {
+    @discardableResult
+    public func create<Instance: Entity>(_ type: Instance.Type) -> Instance {
         let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
-        let classType = type.managedObjectClass.value as! NSManagedObject.Type
+        let managedObjectType = type.managedObjectClass.value as! NSManagedObject.Type
+        let managedObject = managedObjectType.init(entity: entityDescription, insertInto: viewContext)
         
-        return classType.init(entity: entityDescription, insertInto: viewContext)
+        return Instance(base: managedObject)!
+    }
+    
+    public func delete<Instance: Entity>(_ instance: Instance) {
+        viewContext!.delete(instance.base!)
     }
 }
 
