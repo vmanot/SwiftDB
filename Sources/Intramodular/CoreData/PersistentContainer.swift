@@ -6,6 +6,7 @@ import CoreData
 import Foundation
 import Merge
 import Swallow
+import SwiftUIX
 
 public final class PersistentContainer: Identifiable, ObservableObject {
     private let cancellables = Cancellables()
@@ -23,6 +24,8 @@ public final class PersistentContainer: Identifiable, ObservableObject {
     
     public init<S: Schema>(_ schema: S) {
         self.base = NSPersistentContainer(name: schema.name, managedObjectModel: .init(schema))
+        
+        loadPersistentStores()
     }
 }
 
@@ -91,7 +94,7 @@ extension PersistentContainer {
         loadPersistentStores()
     }
     
-    public func saveViewContext() {
+    public func save() {
         if base.viewContext.hasChanges {
             try! base.viewContext.save()
         }
@@ -118,5 +121,14 @@ extension PersistentContainer {
     
     public func cloudKitContainerIdentifier(_ id: String) -> PersistentContainer {
         then({ $0.cloudKitContainerIdentifier = id })
+    }
+}
+
+// MARK: - API -
+
+extension View {
+    public func persistentContainer(_ container: PersistentContainer) -> some View {
+        self.environment(\.managedObjectContext, container.base.viewContext)
+            .environmentObject(container)
     }
 }
