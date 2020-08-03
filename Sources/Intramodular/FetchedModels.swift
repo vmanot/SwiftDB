@@ -5,6 +5,7 @@
 import SwiftUI
 
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
+@propertyWrapper
 public struct FetchedModels<Result: Entity>: DynamicProperty {
     @FetchRequest var base: FetchedResults<NSManagedObject>
     
@@ -42,5 +43,8 @@ extension FetchedModels {
             animation: animation
         )
     }
+    
+    public init() {
+        self.init(sortDescriptors: [])
+    }
 }
-

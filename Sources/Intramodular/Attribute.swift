@@ -5,10 +5,11 @@
 import Data
 import Runtime
 import Swallow
+import SwiftUI
 
 /// A property wrapper type that can read and write an attribute managed by CoreData.
 @propertyWrapper
-public struct Attribute<Value: Codable>: opaque_Attribute {
+public struct Attribute<Value: Codable>: _opaque_Attribute {
     @usableFromInline
     var base: NSManagedObject?
     
@@ -31,6 +32,10 @@ public struct Attribute<Value: Codable>: opaque_Attribute {
         } nonmutating set {
             try! encodeImpl(base.unwrap(), .init(stringValue: name.unwrap()), newValue)
         }
+    }
+    
+    public var projectedValue: Binding<Value> {
+        .init(get: { wrappedValue }, set: { wrappedValue = $0 })
     }
     
     public var type: EntityAttributeTypeDescription {
@@ -82,7 +87,7 @@ extension Attribute {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { object, key in
-                try Value.decode(from: object, forKey: key)
+                try Value.decode(from: object, forKey: key, initialValue: wrappedValue)
             },
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
@@ -123,7 +128,7 @@ extension Attribute {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { object, key in
-                try Value.decode(from: object, forKey: key)
+                try Value.decode(from: object, forKey: key, initialValue: wrappedValue)
             },
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
@@ -144,7 +149,7 @@ extension Attribute {
         self.init(
             initialValue: initialValue,
             decodeImpl: { object, key in
-                try Value.decode(from: object, forKey: key)
+                try Value.decode(from: object, forKey: key, initialValue: initialValue)
             },
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
@@ -165,7 +170,7 @@ extension Attribute {
         self.init(
             initialValue: initialValue,
             decodeImpl: { object, key in
-                try Value.decode(from: object, forKey: key)
+                try Value.decode(from: object, forKey: key, initialValue: initialValue)
             },
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
@@ -246,7 +251,7 @@ extension Attribute {
 }
 
 extension EntityAttributeDescription {
-    init(_ attribute: opaque_Attribute) {
+    init(_ attribute: _opaque_Attribute) {
         self = EntityAttributeDescription(name: attribute.name!.stringValue)
             .type(attribute.type)
             .optional(attribute.isOptional)
@@ -257,7 +262,7 @@ extension EntityAttributeDescription {
 }
 
 extension NSAttributeDescription {
-    convenience init(_ attribute: opaque_Attribute) {
+    convenience init(_ attribute: _opaque_Attribute) {
         self.init(EntityAttributeDescription(attribute))
     }
 }

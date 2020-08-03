@@ -14,13 +14,24 @@ public final class PersistentContainer: Identifiable, ObservableObject {
     @Published public private(set) var base: NSPersistentContainer
     @Published public private(set) var viewContext: NSManagedObjectContext?
     
-    @Published private var name: String
     @Published private var applicationGroupID: String?
     @Published private var cloudKitContainerIdentifier: String?
     
     public init(name: String) {
-        self.name = name
         self.base = NSPersistentContainer(name: name)
+    }
+    
+    public init<S: Schema>(_ schema: S) {
+        self.base = NSPersistentContainer(name: schema.name, managedObjectModel: .init(schema))
+    }
+}
+
+extension PersistentContainer {
+    public func createObject<E: Entity>(_ type: E.Type) -> NSManagedObject {
+        let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
+        let classType = type.managedObjectClass.value as! NSManagedObject.Type
+        
+        return classType.init(entity: entityDescription, insertInto: viewContext)
     }
 }
 
@@ -35,6 +46,10 @@ extension PersistentContainer {
 }
 
 extension PersistentContainer {
+    public var arePersistentStoresLoaded: Bool {
+        !base.persistentStoreCoordinator.persistentStores.isEmpty
+    }
+    
     func setupPersistentStoreDescription() {
         if let sqliteStoreURL = sqliteStoreURL {
             base.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
@@ -84,7 +99,7 @@ extension PersistentContainer {
         
         try base.persistentStoreCoordinator.destroyAll()
         
-        base = NSPersistentContainer(name: name)
+        base = NSPersistentContainer(name: base.name)
         
         loadViewContext()
     }

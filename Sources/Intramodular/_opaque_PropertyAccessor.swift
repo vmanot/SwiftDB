@@ -7,7 +7,7 @@ import Runtime
 import Swallow
 
 /// A prototype for `NSPropertyDescription`.
-protocol opaque_PropertyAccessor {
+protocol _opaque_PropertyAccessor {
     var base: NSManagedObject? { get set }
     
     var name: String? { get set }
@@ -18,7 +18,7 @@ protocol opaque_PropertyAccessor {
 }
 
 /// A shadow protocol for `Attribute`.
-protocol opaque_Attribute: opaque_PropertyAccessor {
+protocol _opaque_Attribute: _opaque_PropertyAccessor {
     var type: EntityAttributeTypeDescription { get }
     var allowsExternalBinaryDataStorage: Bool { get }
     var preservesValueInHistoryOnDeletion: Bool { get }

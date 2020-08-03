@@ -50,9 +50,9 @@ extension opaque_Entity where Self: Entity {
 }
 
 extension opaque_Entity {
-    var _runtime_propertyAccessors: [opaque_PropertyAccessor] {
+    var _runtime_propertyAccessors: [_opaque_PropertyAccessor] {
         AnyNominalOrTupleValue(self)!.compactMap { key, value in
-            (value as? opaque_PropertyAccessor)
+            (value as? _opaque_PropertyAccessor)
         }
     }
     
@@ -60,7 +60,7 @@ extension opaque_Entity {
         var emptyInstance = AnyNominalOrTupleValue(self)!
         
         for (key, value) in emptyInstance {
-            if var attribute = value as? opaque_PropertyAccessor {
+            if var attribute = value as? _opaque_PropertyAccessor {
                 attribute.base = base
                 attribute.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 
@@ -72,7 +72,7 @@ extension opaque_Entity {
     }
     
     public init?(base: NSManagedObject) {
-        guard NSStringFromClass(type(of: base)) == Self.managedObjectClassName else {
+        guard base.entity.name == Self.name else {
             return nil
         }
         
