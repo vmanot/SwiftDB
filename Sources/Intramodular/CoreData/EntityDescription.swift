@@ -6,7 +6,7 @@ import CoreData
 import Foundation
 import Swallow
 
-public struct EntityDescription: AnyProtocol {
+public struct EntityDescription {
     @Indirect
     public var parent: EntityDescription?
     public let name: String
