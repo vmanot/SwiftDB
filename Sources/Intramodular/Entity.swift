@@ -6,8 +6,9 @@ import Runtime
 import Swallow
 
 /// A shadow protocol for `Entity`.
-public protocol opaque_Entity: _opaque_EntityRelatable, Initiable {
-    static var opaque_ParentType: opaque_Entity.Type? { get }
+public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
+    static var _opaque_ParentType: _opaque_Entity.Type? { get }
+    
     static var name: String { get }
     static var managedObjectClassName: String { get }
     static var managedObjectClass: ObjCClass { get }
@@ -16,16 +17,19 @@ public protocol opaque_Entity: _opaque_EntityRelatable, Initiable {
 }
 
 /// An entity in a data schema.
-public protocol Entity: opaque_Entity, EntityRelatable, Model {
+public protocol Entity: _opaque_Entity, EntityRelatable, Model {
+    associatedtype RelatableEntityType = Self
     associatedtype Parent: Entity = _DefaultParentEntity
+    
+    typealias Relationship<Value: EntityRelatable, ValueEntity: Entity, InverseValue: EntityRelatable, InverseValueEntity: Entity> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity>
     
     static var name: String { get }
 }
 
 // MARK: - Implementation -
 
-extension opaque_Entity where Self: Entity {
-    public static var opaque_ParentType: opaque_Entity.Type? {
+extension _opaque_Entity where Self: Entity {
+    public static var _opaque_ParentType: _opaque_Entity.Type? {
         guard Parent.self != _DefaultParentEntity.self else {
             return nil
         }
@@ -40,7 +44,7 @@ extension opaque_Entity where Self: Entity {
     public static var managedObjectClass: ObjCClass {
         ObjCClass(
             name: managedObjectClassName,
-            superclass: opaque_ParentType?.managedObjectClass ?? ObjCClass(NSXManagedObject.self)
+            superclass: _opaque_ParentType?.managedObjectClass ?? ObjCClass(NSXManagedObject.self)
         )
     }
     
@@ -49,7 +53,7 @@ extension opaque_Entity where Self: Entity {
     }
 }
 
-extension opaque_Entity {
+extension _opaque_Entity {
     var base: NSManagedObject? {
         let instance = AnyNominalOrTupleValue(self)!
         
@@ -103,13 +107,13 @@ extension Entity {
 // MARK: - Auxiliary Implementation -
 
 extension EntityDescription {
-    public init(_ type: opaque_Entity.Type) {
+    public init(_ type: _opaque_Entity.Type) {
         var instance = type.init()
         
         instance._runtime_configurePropertyAccessors()
         
         self.init(
-            parent: type.opaque_ParentType?.toEntityDescription(),
+            parent: type._opaque_ParentType?.toEntityDescription(),
             name: type.name,
             managedObjectClassName: type.managedObjectClass.name,
             subentities: .unknown,
@@ -123,7 +127,7 @@ class _EntityToNSManagedObjectAdaptor<T: Entity>: NSXManagedObject {
     
 }
 
-public struct _DefaultParentEntity: Entity {
+public struct _DefaultParentEntity: Entity {    
     public static var name: String {
         TODO.unimplemented
     }

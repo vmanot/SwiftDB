@@ -10,11 +10,11 @@ import Swallow
 ///
 /// This can loosely by considered the equivalent of an `NSManagedObjectModel`.
 public protocol Schema {
-    typealias Entities = [opaque_Entity.Type]
+    typealias Entities = [_opaque_Entity.Type]
     
     var name: String { get }
     
-    @ArrayBuilder<opaque_Entity.Type>
+    @ArrayBuilder<_opaque_Entity.Type>
     var entities: Entities { get }
 }
 

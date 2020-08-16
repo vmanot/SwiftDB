@@ -19,6 +19,7 @@ extension NSManagedObjectModel {
     public convenience init(_ schema: ManagedObjectModel) {
         self.init()
         
+        var relationshipNameToRelationship: [String: NSRelationshipDescription] = [:]
         var parentNameToChildrenMap: [String: [NSEntityDescription]] = [:]
         var nameToEntityMap: [String: NSEntityDescription] = [:]
         
@@ -30,11 +31,23 @@ extension NSManagedObjectModel {
             if let parent = entity.parent {
                 parentNameToChildrenMap[parent.name, default: []].insert(description)
             }
+            
+            for property in description.properties {
+                if let property = property as? NSRelationshipDescription {
+                    relationshipNameToRelationship[property.name] = property
+                }
+            }
         }
         
-        for name in nameToEntityMap.keys {
+        for (name, entity) in nameToEntityMap {
+            for property in entity.properties {
+                if let property = property as? NSRelationshipDescription {
+                    property.inverseRelationship = property.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
+                }
+            }
+            
             if let children = parentNameToChildrenMap[name] {
-                nameToEntityMap[name]?.subentities = children
+                entity.subentities = children
             }
         }
         

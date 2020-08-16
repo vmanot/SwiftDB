@@ -5,15 +5,15 @@
 import Swallow
 
 /// A shadow protocol for `Model`.
-public protocol opaque_Model {
-    static var opaque_PreviousVersion: opaque_Model.Type { get }
-    static var opaque_NextVersion: opaque_Model.Type { get }
+public protocol _opaque_Model {
+    static var _opaque_PreviousVersion: _opaque_Model.Type { get }
+    static var _opaque_NextVersion: _opaque_Model.Type { get }
     
     static var version: Version? { get }
 }
 
 /// A type that represents a data model.
-public protocol Model: opaque_Model {
+public protocol Model: _opaque_Model {
     associatedtype PreviousVersion: Model = Never
     associatedtype NextVersion: Model = Never
     
@@ -24,12 +24,12 @@ public protocol Model: opaque_Model {
 
 // MARK: - Implementation -
 
-extension opaque_Model where Self: Model {
-    public static var opaque_PreviousVersion: opaque_Model.Type {
+extension _opaque_Model where Self: Model {
+    public static var _opaque_PreviousVersion: _opaque_Model.Type {
         PreviousVersion.self
     }
     
-    public static var opaque_NextVersion: opaque_Model.Type {
+    public static var _opaque_NextVersion: _opaque_Model.Type {
         NextVersion.self
     }
 }

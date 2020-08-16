@@ -8,6 +8,8 @@ import Swallow
 
 /// A prototype for `NSPropertyDescription`.
 protocol _opaque_PropertyAccessor {
+    var _opaque_modelEnvironment: _opaque_ModelEnvironment { get }
+    
     var base: NSManagedObject? { get set }
     
     var name: String? { get set }
