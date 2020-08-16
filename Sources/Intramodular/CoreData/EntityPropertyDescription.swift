@@ -26,10 +26,6 @@ public class EntityPropertyDescription: Codable {
         self.isTransient = isTransient
     }
     
-    public func toNSPropertyDescription() -> NSPropertyDescription {
-        Never.materialize(reason: .abstract)
-    }
-    
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
@@ -44,5 +40,9 @@ public class EntityPropertyDescription: Codable {
         try container.encode(name, forKey: .name)
         try container.encode(isOptional, forKey: .isOptional)
         try container.encode(isTransient, forKey: .isTransient)
+    }
+    
+    public func toNSPropertyDescription() -> NSPropertyDescription {
+        Never.materialize(reason: .abstract)
     }
 }

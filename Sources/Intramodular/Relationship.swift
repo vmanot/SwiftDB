@@ -9,12 +9,6 @@ public protocol EntityRelationship {
     
 }
 
-extension EntityRelatable {
-    public static func from(base: NSManagedObject, key: AnyStringKey) throws -> Self {
-        fatalError()
-    }
-}
-
 public struct RelatedEntities<E: Entity>: EntityRelatable, Sequence {
     let base: Set<NSManagedObject>
     

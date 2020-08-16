@@ -64,43 +64,10 @@ extension NSAttributeDescription {
         name = description.name
         isOptional = description.isOptional
         isTransient = description.isTransient
-        
-        switch description.type {
-            case .undefined:
-                attributeType = .undefinedAttributeType
-            case .integer16:
-                attributeType = .integer16AttributeType
-            case .integer32:
-                attributeType = .integer32AttributeType
-            case .integer64:
-                attributeType = .integer64AttributeType
-            case .decimal:
-                attributeType = .decimalAttributeType
-            case .double:
-                attributeType = .doubleAttributeType
-            case .float:
-                attributeType = .floatAttributeType
-            case .string:
-                attributeType = .stringAttributeType
-            case .boolean:
-                attributeType = .booleanAttributeType
-            case .date:
-                attributeType = .dateAttributeType
-            case .binaryData:
-                attributeType = .binaryDataAttributeType
-            case .UUID:
-                attributeType = .UUIDAttributeType
-            case .URI:
-                attributeType = .URIAttributeType
-            case let .transformable(className, transformerName):
-                attributeType = .transformableAttributeType
-                attributeValueClassName = className
-                valueTransformerName = transformerName
-            case .objectID:
-                attributeType = .objectIDAttributeType
-        }
-        
-        allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
-        preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
+        attributeType = .init(description.type)
+        attributeValueClassName = description.type.className
+        valueTransformerName = description.type.transformerName
+        allowsExternalBinaryDataStorage = description.allowsExternalBinaryDataStorage
+        preservesValueInHistoryOnDeletion = description.preservesValueInHistoryOnDeletion
     }
 }

@@ -23,6 +23,22 @@ public enum EntityAttributeTypeDescription: Codable {
     case transformable(className: String, transformerName: String? = nil)
     case objectID
     
+    public var className: String? {
+        if case let .transformable(className, _) = self {
+            return className
+        } else {
+            return nil
+        }
+    }
+    
+    public var transformerName: String? {
+        if case let .transformable(_, transformerName) = self {
+            return transformerName
+        } else {
+            return nil
+        }
+    }
+
     public static func transformable(class: AnyClass, transformerName: String? = nil) -> Self {
         .transformable(className: NSStringFromClass(`class`), transformerName: transformerName)
     }
