@@ -14,6 +14,7 @@ public final class EntityAttributeDescription: EntityPropertyDescription {
     }
     
     public let type: EntityAttributeTypeDescription
+    public let defaultValue: Any?
     public let allowsExternalBinaryDataStorage: Bool
     public let preservesValueInHistoryOnDeletion: Bool
     
@@ -22,10 +23,12 @@ public final class EntityAttributeDescription: EntityPropertyDescription {
         isOptional: Bool,
         isTransient: Bool,
         type: EntityAttributeTypeDescription,
+        defaultValue: Any?,
         allowsExternalBinaryDataStorage: Bool,
         preservesValueInHistoryOnDeletion: Bool
     ) {
         self.type = type
+        self.defaultValue = defaultValue
         self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
         self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
         
@@ -36,6 +39,7 @@ public final class EntityAttributeDescription: EntityPropertyDescription {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         self.type = try container.decode(EntityAttributeTypeDescription.self, forKey: .type)
+        self.defaultValue = nil
         self.allowsExternalBinaryDataStorage = try container.decode(Bool.self, forKey: .allowsExternalBinaryDataStorage)
         self.preservesValueInHistoryOnDeletion = try container.decode(Bool.self, forKey: .preservesValueInHistoryOnDeletion)
         
@@ -65,8 +69,15 @@ extension NSAttributeDescription {
         isOptional = description.isOptional
         isTransient = description.isTransient
         attributeType = .init(description.type)
-        attributeValueClassName = description.type.className
-        valueTransformerName = description.type.transformerName
+        
+        if let attributeValueClassName = description.type.className {
+            self.attributeValueClassName = attributeValueClassName
+        }
+        
+        if let valueTransformerName = description.type.transformerName {
+            self.valueTransformerName = valueTransformerName
+        }
+        
         allowsExternalBinaryDataStorage = description.allowsExternalBinaryDataStorage
         preservesValueInHistoryOnDeletion = description.preservesValueInHistoryOnDeletion
     }

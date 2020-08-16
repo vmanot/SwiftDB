@@ -22,6 +22,7 @@ protocol _opaque_PropertyAccessor {
 /// A shadow protocol for `Attribute`.
 protocol _opaque_Attribute: _opaque_PropertyAccessor {
     var type: EntityAttributeTypeDescription { get }
+    var _opaque_initialValue: Any? { get }
     var allowsExternalBinaryDataStorage: Bool { get }
     var preservesValueInHistoryOnDeletion: Bool { get }
 }

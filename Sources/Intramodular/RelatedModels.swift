@@ -14,6 +14,14 @@ public struct RelatedModels<E: Entity>: EntityRelatable, Sequence {
     
     var base: Set<NSManagedObject>
     
+    public init(base: Set<NSManagedObject>) {
+        self.base = base
+    }
+    
+    public init() {
+        self.base = .init()
+    }
+    
     public func makeIterator() -> AnyIterator<E> {
         .init(base.lazy.map({ E.init(base: $0)! }).makeIterator())
     }

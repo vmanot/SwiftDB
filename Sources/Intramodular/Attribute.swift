@@ -17,6 +17,11 @@ public struct Attribute<Value: Codable>: _opaque_Attribute {
     
     @usableFromInline
     let initialValue: Value?
+    
+    public var _opaque_initialValue: Any? {
+        initialValue.map({ $0 as Any })
+    }
+    
     @usableFromInline
     let decodeImpl: (NSManagedObject, AnyStringKey) throws -> Value
     @usableFromInline
@@ -259,6 +264,7 @@ extension EntityAttributeDescription {
             isOptional: attribute.isOptional,
             isTransient: attribute.isTransient,
             type: attribute.type,
+            defaultValue: attribute._opaque_initialValue as? NSPrimitiveAttributeCoder,
             allowsExternalBinaryDataStorage: attribute.allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: attribute.preservesValueInHistoryOnDeletion
         )

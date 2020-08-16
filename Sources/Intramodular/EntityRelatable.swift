@@ -7,6 +7,8 @@ import Swallow
 
 public protocol _opaque_EntityRelatable {
     static var entityCardinality: EntityCardinality { get }
+    
+    init()
 }
 
 public protocol EntityRelatable: _opaque_EntityRelatable {
@@ -47,6 +49,10 @@ extension RelatedModels {
 extension Optional: _opaque_EntityRelatable where Wrapped: _opaque_EntityRelatable {
     public static var entityCardinality: EntityCardinality {
         Wrapped.entityCardinality
+    }
+    
+    public init() {
+        self = .some(.init())
     }
 }
 

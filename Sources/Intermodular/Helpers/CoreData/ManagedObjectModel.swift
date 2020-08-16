@@ -42,6 +42,7 @@ extension NSManagedObjectModel {
         for (name, entity) in nameToEntityMap {
             for property in entity.properties {
                 if let property = property as? NSRelationshipDescription {
+                    property.destinationEntity = nameToEntityMap[property.destinationEntityName!]!
                     property.inverseRelationship = property.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
                 }
             }

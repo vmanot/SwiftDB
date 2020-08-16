@@ -47,7 +47,11 @@ public struct EntityRelationship<
     
     public var base: NSManagedObject?
     public var name: String?
-    public let isOptional: Bool = false
+    
+    public var isOptional: Bool {
+        Value.self is _opaque_Optional.Type
+    }
+    
     public let isTransient: Bool = false
     
     let inverse: WritableKeyPath<InverseValueEntity, InverseValue>
@@ -57,7 +61,11 @@ public struct EntityRelationship<
     
     public var wrappedValue: Value {
         get {
-            try! Value.decode(from: base.unwrap(), forKey: .init(stringValue: name.unwrap()))
+            do {
+                return try Value.decode(from: base.unwrap(), forKey: .init(stringValue: name.unwrap()))
+            } catch {
+                return .init()
+            }
         } set {
             defer {
                 wrappedValue_didSet_hash = UUID()

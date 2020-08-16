@@ -16,6 +16,10 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
     static func toEntityDescription() -> EntityDescription
 }
 
+extension _opaque_Entity where Self: Entity {
+    public typealias RelatableEntityType = Self
+}
+
 /// An entity in a data schema.
 public protocol Entity: _opaque_Entity, EntityRelatable, Model {
     associatedtype RelatableEntityType = Self
