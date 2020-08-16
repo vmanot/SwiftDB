@@ -251,13 +251,15 @@ extension Attribute {
 }
 
 extension EntityAttributeDescription {
-    init(_ attribute: _opaque_Attribute) {
-        self = EntityAttributeDescription(name: attribute.name!.stringValue)
-            .type(attribute.type)
-            .optional(attribute.isOptional)
-            .transient(attribute.isTransient)
-            .allowsExternalBinaryDataStorage(attribute.allowsExternalBinaryDataStorage)
-            .preservesValueInHistoryOnDeletion(attribute.preservesValueInHistoryOnDeletion)
+    convenience init(_ attribute: _opaque_Attribute) {
+        self.init(
+            name: attribute.name!.stringValue,
+            isOptional: attribute.isOptional,
+            isTransient: attribute.isTransient,
+            type: attribute.type,
+            allowsExternalBinaryDataStorage: attribute.allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: attribute.preservesValueInHistoryOnDeletion
+        )
     }
 }
 

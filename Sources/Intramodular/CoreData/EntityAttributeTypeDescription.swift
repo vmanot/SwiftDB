@@ -6,7 +6,7 @@ import CoreData
 import Foundation
 import Swift
 
-public enum EntityAttributeTypeDescription {
+public enum EntityAttributeTypeDescription: Codable {
     case undefined
     case integer16
     case integer32
@@ -25,6 +25,43 @@ public enum EntityAttributeTypeDescription {
     
     public static func transformable(class: AnyClass, transformerName: String? = nil) -> Self {
         .transformable(className: NSStringFromClass(`class`), transformerName: transformerName)
+    }
+}
+
+extension EntityAttributeTypeDescription {
+    public enum CodingKeys: String, CodingKey {
+        case rawValue
+        case className
+        case transformerName
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        let rawValue = try container.decode(NSAttributeType.RawValue.self, forKey: .rawValue)
+        
+        if rawValue == NSAttributeType.transformableAttributeType.rawValue {
+            let className = try container.decode(Optional<String>.self, forKey: .className).unwrap()
+            let transformerName = try container.decode(Optional<String>.self, forKey: .transformerName).unwrap()
+            
+            self = .transformable(className: className, transformerName: transformerName)
+        } else {
+            self = try Self(try NSAttributeType(rawValue: rawValue).unwrap()).unwrap()
+        }
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(NSAttributeType(self).rawValue, forKey: .rawValue)
+        
+        if case let .transformable(className, transformerName) = self {
+            try container.encode(Optional(className), forKey: .className)
+            try container.encode(Optional(transformerName), forKey: .transformerName)
+        } else {
+            try container.encode(Optional<String>.none, forKey: .className)
+            try container.encode(Optional<String>.none, forKey: .transformerName)
+        }
     }
 }
 

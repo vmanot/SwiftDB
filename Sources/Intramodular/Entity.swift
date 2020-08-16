@@ -6,7 +6,7 @@ import Runtime
 import Swallow
 
 /// A shadow protocol for `Entity`.
-public protocol opaque_Entity: Initiable {
+public protocol opaque_Entity: _opaque_EntityRelatable, Initiable {
     static var opaque_ParentType: opaque_Entity.Type? { get }
     static var name: String { get }
     static var managedObjectClassName: String { get }
@@ -16,7 +16,7 @@ public protocol opaque_Entity: Initiable {
 }
 
 /// An entity in a data schema.
-public protocol Entity: opaque_Entity, Model {
+public protocol Entity: opaque_Entity, EntityRelatable, Model {
     associatedtype Parent: Entity = _DefaultParentEntity
     
     static var name: String { get }

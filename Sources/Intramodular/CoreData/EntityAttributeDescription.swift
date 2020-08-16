@@ -6,62 +6,52 @@ import CoreData
 import Foundation
 import Swift
 
-public struct EntityAttributeDescription: EntityPropertyDescription {
-    public private(set) var name: String
-    public private(set) var isOptional: Bool = false
-    public private(set) var isTransient: Bool = false
-    public private(set) var type: EntityAttributeTypeDescription = .undefined
-    public private(set) var allowsExternalBinaryDataStorage: Bool = false
-    public private(set) var preservesValueInHistoryOnDeletion: Bool = false
-    
-    public init(name: String) {
-        self.name = name
+public final class EntityAttributeDescription: EntityPropertyDescription {
+    public enum CodingKeys: String, CodingKey {
+        case type
+        case allowsExternalBinaryDataStorage
+        case preservesValueInHistoryOnDeletion
     }
     
-    public func toNSPropertyDescription() -> NSPropertyDescription {
+    public let type: EntityAttributeTypeDescription
+    public let allowsExternalBinaryDataStorage: Bool
+    public let preservesValueInHistoryOnDeletion: Bool
+    
+    public init(
+        name: String,
+        isOptional: Bool,
+        isTransient: Bool,
+        type: EntityAttributeTypeDescription,
+        allowsExternalBinaryDataStorage: Bool,
+        preservesValueInHistoryOnDeletion: Bool
+    ) {
+        self.type = type
+        self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
+        self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
+        
+        super.init(name: name, isOptional: isOptional, isTransient: isTransient)
+    }
+    
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.type = try container.decode(EntityAttributeTypeDescription.self, forKey: .type)
+        self.allowsExternalBinaryDataStorage = try container.decode(Bool.self, forKey: .allowsExternalBinaryDataStorage)
+        self.preservesValueInHistoryOnDeletion = try container.decode(Bool.self, forKey: .preservesValueInHistoryOnDeletion)
+        
+        try super.init(from: decoder)
+    }
+    
+    public override func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(type, forKey: .type)
+        try container.encode(allowsExternalBinaryDataStorage, forKey: .allowsExternalBinaryDataStorage)
+        try container.encode(preservesValueInHistoryOnDeletion, forKey: .preservesValueInHistoryOnDeletion)
+    }
+    
+    public override func toNSPropertyDescription() -> NSPropertyDescription {
         NSAttributeDescription(self)
-    }
-}
-
-extension EntityAttributeDescription {
-    public func `type`(_ value: EntityAttributeTypeDescription)-> Self {
-        var result = self
-        
-        result.type = value
-        
-        return result
-    }
-    
-    public func optional(_ value: Bool)-> Self {
-        var result = self
-        
-        result.isOptional = value
-        
-        return result
-    }
-    
-    public func transient(_ value: Bool)-> Self {
-        var result = self
-        
-        result.isTransient = value
-        
-        return result
-    }
-    
-    public func allowsExternalBinaryDataStorage(_ value: Bool)-> Self {
-        var result = self
-        
-        result.allowsExternalBinaryDataStorage = value
-        
-        return result
-    }
-    
-    public func preservesValueInHistoryOnDeletion(_ value: Bool)-> Self {
-        var result = self
-        
-        result.preservesValueInHistoryOnDeletion = value
-        
-        return result
     }
 }
 

@@ -5,10 +5,44 @@
 import CoreData
 import Swift
 
-public protocol EntityPropertyDescription {
-    var name: String { get }
-    var isOptional: Bool { get }
-    var isTransient: Bool { get }
+public class EntityPropertyDescription: Codable {
+    public enum CodingKeys: String, CodingKey {
+        case name
+        case isOptional
+        case isTransient
+    }
     
-    func toNSPropertyDescription() -> NSPropertyDescription
+    public private(set) var name: String
+    public private(set) var isOptional: Bool = false
+    public private(set) var isTransient: Bool = false
+    
+    public init(
+        name: String,
+        isOptional: Bool,
+        isTransient: Bool
+    ) {
+        self.name = name
+        self.isOptional = isOptional
+        self.isTransient = isTransient
+    }
+    
+    public func toNSPropertyDescription() -> NSPropertyDescription {
+        Never.materialize(reason: .abstract)
+    }
+    
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.name = try container.decode(String.self, forKey: .name)
+        self.isOptional = try container.decode(Bool.self, forKey: .isOptional)
+        self.isTransient = try container.decode(Bool.self, forKey: .isTransient)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(name, forKey: .name)
+        try container.encode(isOptional, forKey: .isOptional)
+        try container.encode(isTransient, forKey: .isTransient)
+    }
 }
