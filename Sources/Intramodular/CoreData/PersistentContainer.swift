@@ -98,6 +98,8 @@ extension PersistentContainer {
         if base.viewContext.hasChanges {
             try! base.viewContext.save()
         }
+        
+        objectWillChange.send()
     }
     
     public func destroyAndRebuild() throws {

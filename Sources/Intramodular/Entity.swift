@@ -111,7 +111,7 @@ extension EntityDescription {
         self.init(
             parent: type.opaque_ParentType?.toEntityDescription(),
             name: type.name,
-            managedObjectClassName: type.managedObjectClassName,
+            managedObjectClassName: type.managedObjectClass.name,
             subentities: .unknown,
             properties: instance._runtime_propertyAccessors.map({ $0.toEntityPropertyDescription() })
         )
