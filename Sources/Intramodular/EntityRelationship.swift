@@ -52,50 +52,53 @@ public final class EntityRelationship<
         }
     }
     
-    public init(inverse: WritableKeyPath<InverseValueEntity, InverseValue>, deleteRule: NSDeleteRule? = nil) {
-        self.inverse = inverse
-        self.deleteRule = deleteRule
-    }
-    
-    public init(inverse: WritableKeyPath<Parent, InverseValue>, deleteRule: NSDeleteRule? = nil) where InverseValueEntity == Parent {
-        self.inverse = inverse
-        self.deleteRule = deleteRule
-    }
-    
-    public init(inverse: WritableKeyPath<InverseValueEntity, InverseValue>, deleteRule: NSDeleteRule? = nil) where Value == InverseValueEntity, ValueEntity == InverseValueEntity {
-        self.inverse = inverse
-        self.deleteRule = deleteRule
-    }
-    
-    public init(inverse: WritableKeyPath<InverseValueEntity, InverseValue>, deleteRule: NSDeleteRule? = nil) where Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
-        self.inverse = inverse
-        self.deleteRule = deleteRule
-    }
-    
-    public init(inverse: WritableKeyPath<Parent, RelatedModels<Parent>>, deleteRule: NSDeleteRule? = nil) where ValueEntity == Value.RelatableEntityType, InverseValue == RelatedModels<Parent>, InverseValueEntity == Parent {
-        self.inverse = inverse
-        self.deleteRule = deleteRule
-    }
-    
-    public init(inverse: WritableKeyPath<Parent, RelatedModels<Parent>?>, deleteRule: NSDeleteRule? = nil) where ValueEntity == Value.RelatableEntityType, InverseValue == Optional<RelatedModels<Parent>>, InverseValueEntity == Parent {
+    private init(
+        _inverse inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
+        _deleteRule deleteRule: NSDeleteRule? = nil
+    ) {
         self.inverse = inverse
         self.deleteRule = deleteRule
     }
 }
 
 extension EntityRelationship {
-    public func toEntityPropertyDescription() -> EntityPropertyDescription {
-        return EntityRelationshipDescription(
-            name: name!,
-            isOptional: isOptional,
-            isTransient: isTransient,
-            destinationEntityName: Value.RelatableEntityType.name,
-            inverseRelationshipName: try! _runtime_findInverse()?.name,
-            cardinality: .init(source: InverseValue.entityCardinality, destination: Value.entityCardinality),
-            deleteRule: deleteRule
-        )
+    public convenience init(
+        inverse: WritableKeyPath<Parent, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where InverseValueEntity == Parent {
+        self.init(_inverse: inverse, _deleteRule: deleteRule)
     }
     
+    public convenience init(
+        inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Value == InverseValueEntity, ValueEntity == InverseValueEntity {
+        self.init(_inverse: inverse, _deleteRule: deleteRule)
+    }
+    
+    public convenience init(
+        inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
+        self.init(_inverse: inverse, _deleteRule: deleteRule)
+    }
+    
+    public convenience init(
+        inverse: WritableKeyPath<Parent, RelatedModels<Parent>>,
+        deleteRule: NSDeleteRule? = nil
+    ) where ValueEntity == Value.RelatableEntityType, InverseValue == RelatedModels<Parent>, InverseValueEntity == Parent {
+        self.init(_inverse: inverse, _deleteRule: deleteRule)
+    }
+    
+    public convenience init(
+        inverse: WritableKeyPath<Parent, RelatedModels<Parent>?>,
+        deleteRule: NSDeleteRule? = nil
+    ) where ValueEntity == Value.RelatableEntityType, InverseValue == Optional<RelatedModels<Parent>>, InverseValueEntity == Parent {
+        self.init(_inverse: inverse, _deleteRule: deleteRule)
+    }
+}
+
+extension EntityRelationship {
     /// This is a hack to get a `String` representation of the `inverse` key path.
     func _runtime_findInverse() throws -> EntityRelationship<Parent, InverseValue, InverseValueEntity, Value, ValueEntity>? {
         // Create an empty instance of the inverse entity.
@@ -121,5 +124,17 @@ extension EntityRelationship {
         }
         
         return nil
+    }
+    
+    public func toEntityPropertyDescription() -> EntityPropertyDescription {
+        return EntityRelationshipDescription(
+            name: name!,
+            isOptional: isOptional,
+            isTransient: isTransient,
+            destinationEntityName: Value.RelatableEntityType.name,
+            inverseRelationshipName: try! _runtime_findInverse()?.name,
+            cardinality: .init(source: InverseValue.entityCardinality, destination: Value.entityCardinality),
+            deleteRule: deleteRule
+        )
     }
 }

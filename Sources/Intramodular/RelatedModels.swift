@@ -6,9 +6,7 @@ import CoreData
 import Swallow
 import SwiftUIX
 
-public struct RelatedModels<E: Entity>: EntityRelatable, Sequence {
-    public typealias RelatableEntityType = E
-    
+public struct RelatedModels<Model: Entity>: Sequence {
     public static var entityCardinality: EntityCardinality {
         .many
     }
@@ -23,12 +21,14 @@ public struct RelatedModels<E: Entity>: EntityRelatable, Sequence {
         self.base = .init()
     }
     
-    public func makeIterator() -> AnyIterator<E> {
-        .init(base.lazy.map({ E.init(base: $0)! }).makeIterator())
+    public func makeIterator() -> AnyIterator<Model> {
+        .init(base.lazy.map({ Model(base: $0)! }).makeIterator())
     }
 }
 
-extension RelatedModels {
+extension RelatedModels: EntityRelatable {
+    public typealias RelatableEntityType = Model
+    
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
         guard let value = base.value(forKey: key.stringValue) else {
             return .init()
@@ -43,15 +43,15 @@ extension RelatedModels {
 }
 
 extension RelatedModels {
-    public mutating func insert(_ model: E) {
+    public mutating func insert(_ model: Model) {
         base.insert(model.base!)
     }
     
-    public mutating func remove(_ model: E) {
+    public mutating func remove(_ model: Model) {
         base.remove(model.base!)
     }
     
-    public mutating func set<S: Sequence>(_ models: S) where S.Element == E {
+    public mutating func set<S: Sequence>(_ models: S) where S.Element == Model {
         base = Set(models.lazy.map({ $0.base! }))
     }
 }
