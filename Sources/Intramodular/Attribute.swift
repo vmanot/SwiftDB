@@ -253,26 +253,20 @@ extension Attribute {
 
 extension Attribute {
     public func toEntityPropertyDescription() -> EntityPropertyDescription {
-        EntityAttributeDescription(self)
-    }
-}
-
-extension EntityAttributeDescription {
-    convenience init(_ attribute: _opaque_Attribute) {
-        self.init(
-            name: attribute.name!.stringValue,
-            isOptional: attribute.isOptional,
-            isTransient: attribute.isTransient,
-            type: attribute.type,
-            defaultValue: attribute._opaque_initialValue as? NSPrimitiveAttributeCoder,
-            allowsExternalBinaryDataStorage: attribute.allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: attribute.preservesValueInHistoryOnDeletion
+        EntityAttributeDescription(
+            name: name!.stringValue,
+            isOptional: isOptional,
+            isTransient: isTransient,
+            type: type,
+            defaultValue: initialValue as? NSPrimitiveAttributeCoder,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
     }
 }
 
 extension NSAttributeDescription {
     convenience init(_ attribute: _opaque_Attribute) {
-        self.init(EntityAttributeDescription(attribute))
+        self.init(attribute.toEntityPropertyDescription() as! EntityAttributeDescription)
     }
 }

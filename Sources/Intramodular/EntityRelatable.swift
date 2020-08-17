@@ -34,18 +34,6 @@ extension Entity {
     }
 }
 
-extension RelatedModels {
-    public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        let value = try base.value(forKey: key.stringValue).unwrap()
-        
-        return .init(base: try cast(try cast(value, to: NSSet.self), to: Set<NSManagedObject>.self))
-    }
-    
-    public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
-        base.setValue(self.base as NSSet, forKey: key.stringValue)
-    }
-}
-
 extension Optional: _opaque_EntityRelatable where Wrapped: _opaque_EntityRelatable {
     public static var entityCardinality: EntityCardinality {
         Wrapped.entityCardinality

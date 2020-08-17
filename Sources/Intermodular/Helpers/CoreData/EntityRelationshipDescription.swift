@@ -19,6 +19,7 @@ public final class EntityRelationshipDescription: EntityPropertyDescription {
     let inverseRelationshipName: String?
     let cardinality: EntityRelationshipCardinality
     let deleteRule: NSDeleteRule?
+    let isOrdered: Bool = true
     
     public init(
         name: String,
@@ -86,18 +87,17 @@ extension NSRelationshipDescription {
         
         switch description.cardinality {
             case .oneToOne:
-                minCount = 1
+                minCount = description.isOptional ? 0 : 1
                 maxCount = 1
             case .oneToMany:
                 minCount = 0
                 maxCount = 0
             case .manyToOne:
-                minCount = 1
+                minCount = description.isOptional ? 0 : 1
                 maxCount = 1
             case .manyToMany:
                 minCount = 0
                 maxCount = 0
-                
         }
         
         if let deleteRule = description.deleteRule {

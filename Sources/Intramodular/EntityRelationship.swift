@@ -36,7 +36,7 @@ protocol _opaque_EntityRelationshipAccessor: _opaque_PropertyAccessor {
 }
 
 @propertyWrapper
-public struct EntityRelationship<
+public final class EntityRelationship<
     Parent: Entity,
     Value: EntityRelatable,
     ValueEntity: Entity,
@@ -116,7 +116,7 @@ extension EntityRelationship {
             isTransient: isTransient,
             destinationEntityName: Value.RelatableEntityType.name,
             inverseRelationshipName: try! _runtime_findInverse()?.name,
-            cardinality: .init(source: Parent.entityCardinality, destination: Value.entityCardinality),
+            cardinality: .init(source: InverseValue.entityCardinality, destination: Value.entityCardinality),
             deleteRule: deleteRule
         )
     }
