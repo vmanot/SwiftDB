@@ -6,31 +6,6 @@ import CoreData
 import Runtime
 import Swallow
 
-public enum EntityCardinality {
-    case one
-    case many
-}
-
-public enum EntityRelationshipCardinality {
-    case oneToOne
-    case oneToMany
-    case manyToOne
-    case manyToMany
-    
-    public init(source: EntityCardinality, destination: EntityCardinality) {
-        switch (source, destination) {
-            case (.one, .one):
-                self = .oneToOne
-            case (.one, .many):
-                self = .oneToMany
-            case (.many, .one):
-                self = .oneToMany
-            case (.many, .many):
-                self = .manyToMany
-        }
-    }
-}
-
 protocol _opaque_EntityRelationshipAccessor: _opaque_PropertyAccessor {
     var wrappedValue_didSet_hash: AnyHashable? { get set }
 }
@@ -121,18 +96,25 @@ extension EntityRelationship {
         )
     }
     
+    /// This is a hack to get a `String` representation of the `inverse` key path.
     func _runtime_findInverse() throws -> EntityRelationship<Parent, InverseValue, InverseValueEntity, Value, ValueEntity>? {
+        // Create an empty instance of the inverse entity.
         var subject = InverseValue.RelatableEntityType.init() as! InverseValueEntity
         
+        // "Touch" the inverse key path (by reassigning its value to itself).
+        // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
         subject[keyPath: inverse] = subject[keyPath: inverse]
         
         let emptyInverseEntity = NominalMirror(reflecting: subject)
         
+        // Walk through all properties of the empty inverse instance.
         for (key, value) in emptyInverseEntity.children {
             if var value = value as? _opaque_EntityRelationshipAccessor {
-                value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
-                
+                // Find the inverse relationship accessor that was "touched".
                 if value.wrappedValue_didSet_hash != nil {
+                    value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                    
+                    // Profit.
                     return try cast(value, to: <<infer>>)
                 }
             }
