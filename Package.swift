@@ -31,10 +31,7 @@ let package = Package(
                 "Swallow",
                 "SwiftUIX"
             ],
-            path: "Sources",
-            swiftSettings: [
-                .unsafeFlags(["-Onone"])
-            ]
+            path: "Sources"
         ),
         .testTarget(
             name: "SwiftDBTests",

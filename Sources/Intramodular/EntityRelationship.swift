@@ -113,7 +113,7 @@ extension EntityRelationship {
 
 extension EntityRelationship {
     /// This is a hack to get a `String` representation of the `inverse` key path.
-    func _runtime_findInverse() throws -> EntityRelationship<Parent, InverseValue, InverseValueEntity, Value, ValueEntity>? {
+    func _runtime_findInverse() throws -> _opaque_EntityRelationshipAccessor? {
         // Create an empty instance of the inverse entity.
         var subject = InverseValue.RelatableEntityType.init() as! InverseValueEntity
         
@@ -130,8 +130,7 @@ extension EntityRelationship {
                 if value.wrappedValue_didSet_hash != nil {
                     value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                     
-                    // Profit.
-                    return try cast(value, to: <<infer>>)
+                    return value
                 }
             }
         }

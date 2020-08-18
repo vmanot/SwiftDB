@@ -25,7 +25,6 @@ public protocol Entity: _opaque_Entity, EntityRelatable, Model {
     associatedtype RelatableEntityType = Self
     associatedtype Parent: Entity = _DefaultParentEntity
     
-    typealias Relationship<Value: EntityRelatable, ValueEntity: Entity, InverseValue: EntityRelatable, InverseValueEntity: Entity> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity>
     
     static var name: String { get }
 }
