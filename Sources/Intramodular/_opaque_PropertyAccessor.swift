@@ -7,6 +7,7 @@ import Runtime
 import Swallow
 
 /// A prototype for `NSPropertyDescription`.
+@usableFromInline
 protocol _opaque_PropertyAccessor {
     var _opaque_modelEnvironment: _opaque_ModelEnvironment { get }
     

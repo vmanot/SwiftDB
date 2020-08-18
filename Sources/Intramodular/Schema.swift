@@ -21,6 +21,7 @@ public protocol Schema {
 // MARK: - Implementation -
 
 extension Schema {
+    @inlinable
     public var name: String {
         String(describing: type(of: self))
     }
@@ -29,7 +30,8 @@ extension Schema {
 // MARK: - Auxiliary Implementation -
 
 extension NSManagedObjectModel {
-    public convenience init<S: Schema>(_ schema: S) {
+    @usableFromInline
+    convenience init<S: Schema>(_ schema: S) {
         self.init(SchemaDescription(schema))
     }
 }

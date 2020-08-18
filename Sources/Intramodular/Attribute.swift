@@ -10,6 +10,7 @@ import SwiftUI
 /// A property wrapper type that can read and write an attribute managed by CoreData.
 @propertyWrapper
 public struct Attribute<Value: Codable>: _opaque_Attribute {
+    @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     
     @usableFromInline

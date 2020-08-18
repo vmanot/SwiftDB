@@ -58,6 +58,7 @@ extension _opaque_Entity where Self: Entity {
 }
 
 extension _opaque_Entity {
+    @usableFromInline
     var base: NSManagedObject? {
         let instance = AnyNominalOrTupleValue(self)!
         
@@ -70,12 +71,14 @@ extension _opaque_Entity {
         return nil
     }
     
+    @usableFromInline
     var _runtime_propertyAccessors: [_opaque_PropertyAccessor] {
         AnyNominalOrTupleValue(self)!.compactMap { key, value in
             (value as? _opaque_PropertyAccessor)
         }
     }
     
+    @usableFromInline
     mutating func _runtime_configurePropertyAccessors(base: NSManagedObject? = nil) {
         var emptyInstance = AnyNominalOrTupleValue(self)!
         

@@ -9,6 +9,7 @@ import Swallow
 public struct SchemaDescription {
     public let entities: [EntityDescription]
     
+    @inlinable
     public init<S: Schema>(_ schema: S) {
         self.entities = schema.entities.map({ $0.toEntityDescription() })
     }
@@ -17,7 +18,8 @@ public struct SchemaDescription {
 // MARK: - Auxiliary Implementation -
 
 extension NSManagedObjectModel {
-    public convenience init(_ schema: SchemaDescription) {
+    @usableFromInline
+    convenience init(_ schema: SchemaDescription) {
         self.init()
         
         var relationshipNameToRelationship: [String: NSRelationshipDescription] = [:]

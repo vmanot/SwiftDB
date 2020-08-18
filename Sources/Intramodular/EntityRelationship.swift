@@ -18,22 +18,29 @@ public final class EntityRelationship<
     InverseValue: EntityRelatable,
     InverseValueEntity: Entity
 >: _opaque_EntityRelationshipAccessor, _opaque_PropertyAccessor {
+    @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     
     public var base: NSManagedObject?
     public var name: String?
     
+    @inlinable
     public var isOptional: Bool {
         Value.self is _opaque_Optional.Type
     }
     
     public let isTransient: Bool = false
     
+    @usableFromInline
     let inverse: WritableKeyPath<InverseValueEntity, InverseValue>
+    
+    @usableFromInline
     let deleteRule: NSDeleteRule?
     
+    @usableFromInline
     var wrappedValue_didSet_hash: AnyHashable?
     
+    @inlinable
     public var wrappedValue: Value {
         get {
             do {
@@ -52,7 +59,8 @@ public final class EntityRelationship<
         }
     }
     
-    private init(
+    @usableFromInline
+    init(
         _inverse inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
         _deleteRule deleteRule: NSDeleteRule? = nil
     ) {
@@ -62,6 +70,7 @@ public final class EntityRelationship<
 }
 
 extension EntityRelationship {
+    @inlinable
     public convenience init(
         inverse: WritableKeyPath<Parent, InverseValue>,
         deleteRule: NSDeleteRule? = nil
@@ -69,6 +78,7 @@ extension EntityRelationship {
         self.init(_inverse: inverse, _deleteRule: deleteRule)
     }
     
+    @inlinable
     public convenience init(
         inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
         deleteRule: NSDeleteRule? = nil
@@ -76,6 +86,7 @@ extension EntityRelationship {
         self.init(_inverse: inverse, _deleteRule: deleteRule)
     }
     
+    @inlinable
     public convenience init(
         inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
         deleteRule: NSDeleteRule? = nil
@@ -83,6 +94,7 @@ extension EntityRelationship {
         self.init(_inverse: inverse, _deleteRule: deleteRule)
     }
     
+    @inlinable
     public convenience init(
         inverse: WritableKeyPath<Parent, RelatedModels<Parent>>,
         deleteRule: NSDeleteRule? = nil
@@ -90,6 +102,7 @@ extension EntityRelationship {
         self.init(_inverse: inverse, _deleteRule: deleteRule)
     }
     
+    @inlinable
     public convenience init(
         inverse: WritableKeyPath<Parent, RelatedModels<Parent>?>,
         deleteRule: NSDeleteRule? = nil
