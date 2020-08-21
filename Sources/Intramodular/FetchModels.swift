@@ -11,7 +11,7 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
     @FetchRequest var base: FetchedResults<NSManagedObject>
     
     public var wrappedValue: AnyRandomAccessCollection<Result> {
-        .init(base.lazy.map({ Result(base: $0)! }))
+        .init(base.lazy.map({ Result(_runtime_underlyingObject: $0)! }))
     }
 }
 

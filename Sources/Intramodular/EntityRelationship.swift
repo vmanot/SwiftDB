@@ -21,7 +21,7 @@ public final class EntityRelationship<
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     
-    public var base: NSManagedObject?
+    public var underlyingObject: NSManagedObject?
     public var name: String?
     
     @inlinable
@@ -50,7 +50,7 @@ public final class EntityRelationship<
     public var wrappedValue: Value {
         get {
             do {
-                return try Value.decode(from: base.unwrap(), forKey: .init(stringValue: name.unwrap()))
+                return try Value.decode(from: underlyingObject.unwrap(), forKey: .init(stringValue: name.unwrap()))
             } catch {
                 return .init()
             }
@@ -59,8 +59,8 @@ public final class EntityRelationship<
                 wrappedValue_didSet_hash = UUID()
             }
             
-            if let base = base {
-                try! newValue.encode(to: base, forKey: .init(stringValue: name.unwrap()))
+            if let underlyingObject = underlyingObject {
+                try! newValue.encode(to: underlyingObject, forKey: .init(stringValue: name.unwrap()))
             }
         }
     }

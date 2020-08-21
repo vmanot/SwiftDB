@@ -11,7 +11,7 @@ import Swallow
 protocol _opaque_PropertyAccessor {
     var _opaque_modelEnvironment: _opaque_ModelEnvironment { get set }
     
-    var base: NSManagedObject? { get set }
+    var underlyingObject: NSManagedObject? { get set }
     
     var name: String? { get set }
     var isOptional: Bool { get }

@@ -10,13 +10,13 @@ import SwiftUIX
 @propertyWrapper
 public struct ObservedModel<Model: Entity>: DynamicProperty {
     @usableFromInline
-    @ObservedObject var base: NSManagedObject
+    @ObservedObject var _runtime_underlyingObject: NSManagedObject
     
     public var wrappedValue: Model
     
     @inlinable
     public init(wrappedValue: Model) {
-        self.base = wrappedValue.base!
+        self._runtime_underlyingObject = wrappedValue._runtime_underlyingObject!
         self.wrappedValue = wrappedValue
     }
 }

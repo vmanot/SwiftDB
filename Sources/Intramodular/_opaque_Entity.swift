@@ -1,0 +1,120 @@
+//
+// Copyright (c) Vatsal Manot
+//
+
+import Runtime
+import Swallow
+
+/// A shadow protocol for `Entity`.
+public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
+    static var _opaque_ParentType: _opaque_Entity.Type? { get }
+    
+    static var name: String { get }
+    static var managedObjectClassName: String { get }
+    static var managedObjectClass: ObjCClass { get }
+    
+    static func toEntityDescription() -> EntityDescription
+    
+    var _runtime_underlyingObject: NSManagedObject? { get }
+}
+
+extension _opaque_Entity where Self: Entity {
+    public typealias RelatableEntityType = Self
+}
+
+// MARK: - Implementation -
+
+extension _opaque_Entity where Self: Entity {
+    public static var _opaque_ParentType: _opaque_Entity.Type? {
+        return nil
+    }
+    
+    public static var managedObjectClassName: String {
+        "_SwiftDB_NSManagedObject_" + name
+    }
+    
+    public static var managedObjectClass: ObjCClass {
+        ObjCClass(
+            name: managedObjectClassName,
+            superclass: _opaque_ParentType?.managedObjectClass ?? ObjCClass(NSXManagedObject.self)
+        )
+    }
+    
+    public static func toEntityDescription() -> EntityDescription {
+        .init(self)
+    }
+}
+
+extension _opaque_Entity where Self: ChildEntity {
+    public static var _opaque_ParentType: _opaque_Entity.Type? {
+        guard Parent.self != _DefaultParentEntity.self else {
+            return nil
+        }
+        
+        return Parent.self
+    }
+}
+
+extension _opaque_Entity where Self: AnyObject & Entity {
+    public static var _opaque_ParentType: _opaque_Entity.Type? {
+        ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
+    }
+}
+
+extension _opaque_Entity {
+    public var _runtime_underlyingObject: NSManagedObject? {
+        let instance = AnyNominalOrTupleValue(self)!
+        
+        for (_, value) in instance {
+            if let value = value as? _opaque_PropertyAccessor {
+                return value.underlyingObject
+            }
+        }
+        
+        return nil
+    }
+    
+    @usableFromInline
+    var _runtime_propertyAccessors: [_opaque_PropertyAccessor] {
+        AnyNominalOrTupleValue(self)!.compactMap { key, value in
+            (value as? _opaque_PropertyAccessor)
+        }
+    }
+    
+    @usableFromInline
+    mutating func _runtime_configurePropertyAccessors(underlyingObject: NSManagedObject? = nil) {
+        var emptyInstance = AnyNominalOrTupleValue(self)!
+        
+        var isParentSet: Bool = false
+        
+        for (key, value) in emptyInstance {
+            if var attribute = value as? _opaque_PropertyAccessor {
+                attribute.underlyingObject = underlyingObject
+                attribute.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                
+                emptyInstance[key] = attribute
+                
+                if let parentType = Self._opaque_ParentType, !isParentSet {
+                    attribute._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingObject: underlyingObject)
+                    
+                    isParentSet = true
+                }
+            }
+        }
+        
+        self = emptyInstance.value as! Self
+    }
+    
+    @usableFromInline
+    init?(_runtime_underlyingObject object: NSManagedObject?) {
+        if let object = object {
+            guard object.entity.name == Self.name else {
+                return nil
+            }
+        }
+        
+        self.init()
+        
+        _runtime_configurePropertyAccessors(underlyingObject: object)
+    }
+}

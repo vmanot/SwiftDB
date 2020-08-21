@@ -36,11 +36,11 @@ extension PersistentContainer {
         let managedObjectType = type.managedObjectClass.value as! NSManagedObject.Type
         let managedObject = managedObjectType.init(entity: entityDescription, insertInto: viewContext)
         
-        return Instance(base: managedObject)!
+        return Instance(_runtime_underlyingObject: managedObject)!
     }
     
     public func delete<Instance: Entity>(_ instance: Instance) {
-        viewContext!.delete(instance.base!)
+        viewContext!.delete(instance._runtime_underlyingObject!)
     }
 }
 

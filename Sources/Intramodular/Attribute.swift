@@ -9,12 +9,12 @@ import SwiftUI
 
 /// A property wrapper type that can read and write an attribute managed by CoreData.
 @propertyWrapper
-public struct Attribute<Value: Codable>: _opaque_Attribute {
+public struct Attribute<Value>: _opaque_Attribute {
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     
     @usableFromInline
-    var base: NSManagedObject?
+    var underlyingObject: NSManagedObject?
     
     @usableFromInline
     let initialValue: Value?
@@ -36,9 +36,9 @@ public struct Attribute<Value: Codable>: _opaque_Attribute {
     
     public var wrappedValue: Value {
         get {
-            try! decodeImpl(base.unwrap(), .init(stringValue: name.unwrap()))
+            try! decodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()))
         } nonmutating set {
-            try! encodeImpl(base.unwrap(), .init(stringValue: name.unwrap()), newValue)
+            try! encodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()), newValue)
         }
     }
     
@@ -55,6 +55,10 @@ public struct Attribute<Value: Codable>: _opaque_Attribute {
             if let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
                 return result
             }
+        } else if let type = Value.self as? NSSecureCoding.Type {
+            return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
+        } else if let type = Value.self as? NSCoding.Type {
+            return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else {
             return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
         }
@@ -191,7 +195,66 @@ extension Attribute {
     }
 }
 
-extension Attribute {
+extension Attribute where Value: Codable {
+    public init(
+        wrappedValue: Value,
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) {
+        self.init(
+            initialValue: nil,
+            decodeImpl: { object, key in
+                try! _CodableToNSAttributeCoder<Value>.decode(
+                    from: object,
+                    forKey: key,
+                    defaultValue: wrappedValue
+                )
+                .value
+            },
+            encodeImpl: { object, key, newValue in
+                try! _CodableToNSAttributeCoder(newValue).encode(
+                    to: object,
+                    forKey: key
+                )
+            },
+            isOptional: false,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
+    
+    public init<T>(
+        initialValue: Value = nil,
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) where Value == Optional<T> {
+        self.init(
+            initialValue: nil,
+            decodeImpl: { object, key in
+                try! _OptionalCodableToNSAttributeCoder<T>.decode(
+                    from: object,
+                    forKey: key
+                )
+                .value ?? initialValue
+            },
+            encodeImpl: { object, key, newValue in
+                try! _OptionalCodableToNSAttributeCoder(newValue).encode(
+                    to: object,
+                    forKey: key
+                )
+            },
+            isOptional: true,
+            isTransient: isTransient,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
+}
+
+extension Attribute where Value: Codable & NSAttributeCoder {
     public init(
         wrappedValue: Value,
         isTransient: Bool = false,

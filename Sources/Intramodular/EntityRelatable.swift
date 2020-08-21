@@ -33,12 +33,12 @@ extension Entity {
     
     @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        try Self(base: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()).unwrap()
+        try Self(_runtime_underlyingObject: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()).unwrap()
     }
     
     @inlinable
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
-        base.setValue(self.base, forKey: key.stringValue)
+        base.setValue(self._runtime_underlyingObject, forKey: key.stringValue)
     }
 }
 
