@@ -21,6 +21,7 @@ extension _opaque_Entity where Self: Entity {
 }
 
 /// An entity in a data schema.
+@dynamicMemberLookup
 public protocol Entity: _opaque_Entity, EntityRelatable, Model {
     associatedtype RelatableEntityType = Self
     associatedtype Parent: Entity = _DefaultParentEntity
@@ -28,6 +29,8 @@ public protocol Entity: _opaque_Entity, EntityRelatable, Model {
     typealias Relationship<Value: EntityRelatable, ValueEntity: Entity, InverseValue: EntityRelatable, InverseValueEntity: Entity> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity>
     
     static var name: String { get }
+    
+    subscript<Value>(dynamicMember _: ReferenceWritableKeyPath<Parent, Value>) -> Value { get set }
 }
 
 // MARK: - Implementation -
@@ -82,21 +85,31 @@ extension _opaque_Entity {
     mutating func _runtime_configurePropertyAccessors(base: NSManagedObject? = nil) {
         var emptyInstance = AnyNominalOrTupleValue(self)!
         
+        var isParentSet: Bool = false
+        
         for (key, value) in emptyInstance {
             if var attribute = value as? _opaque_PropertyAccessor {
                 attribute.base = base
                 attribute.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 
                 emptyInstance[key] = attribute
+                
+                if let parentType = Self._opaque_ParentType, !isParentSet {
+                    attribute._opaque_modelEnvironment.parent = parentType.init(base: base)
+                    
+                    isParentSet = true
+                }
             }
         }
         
         self = emptyInstance.value as! Self
     }
     
-    public init?(base: NSManagedObject) {
-        guard base.entity.name == Self.name else {
-            return nil
+    public init?(base: NSManagedObject?) {
+        if let base = base {
+            guard base.entity.name == Self.name else {
+                return nil
+            }
         }
         
         self.init()
@@ -134,7 +147,7 @@ class _EntityToNSManagedObjectAdaptor<T: Entity>: NSXManagedObject {
     
 }
 
-public struct _DefaultParentEntity: Entity {    
+public struct _DefaultParentEntity: Entity {
     public static var name: String {
         TODO.unimplemented
     }
