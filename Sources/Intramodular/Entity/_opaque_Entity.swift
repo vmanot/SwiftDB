@@ -30,7 +30,7 @@ extension _opaque_Entity where Self: Entity {
     }
     
     public static var managedObjectClassName: String {
-        name
+        "_SwiftDB_NSManagedObject_" + name
     }
     
     public static var managedObjectClass: ObjCClass {
