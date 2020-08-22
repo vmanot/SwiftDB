@@ -13,9 +13,9 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
     static var managedObjectClassName: String { get }
     static var managedObjectClass: ObjCClass { get }
     
-    static func toEntityDescription() -> EntityDescription
-    
     var _runtime_underlyingObject: NSManagedObject? { get }
+    
+    static func toEntityDescription() -> EntityDescription
 }
 
 extension _opaque_Entity where Self: Entity {
@@ -42,22 +42,6 @@ extension _opaque_Entity where Self: Entity {
     
     public static func toEntityDescription() -> EntityDescription {
         .init(self)
-    }
-}
-
-extension _opaque_Entity where Self: ChildEntity {
-    public static var _opaque_ParentType: _opaque_Entity.Type? {
-        guard Parent.self != _DefaultParentEntity.self else {
-            return nil
-        }
-        
-        return Parent.self
-    }
-}
-
-extension _opaque_Entity where Self: AnyObject & Entity {
-    public static var _opaque_ParentType: _opaque_Entity.Type? {
-        ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
     }
 }
 
@@ -115,11 +99,11 @@ extension _opaque_Entity {
     @usableFromInline
     init?(_runtime_underlyingObject object: NSManagedObject?) {
         if let object = object, let schema = object._SwiftDB_schemaDescription {
-            guard object.entity.hasParentEntityOfName(Self.name) else {
+            guard let entityType = schema.entityNameToTypeMap[object.entity.name]?.value else {
                 return nil
             }
             
-            self = schema.entityNameToTypeMap[object.entity.name]!.value.init() as! Self
+            self = entityType.init() as! Self
         } else {
             self.init()
         }
@@ -128,6 +112,23 @@ extension _opaque_Entity {
     }
 }
 
+extension _opaque_Entity where Self: ChildEntity {
+    public static var _opaque_ParentType: _opaque_Entity.Type? {
+        guard Parent.self != _DefaultParentEntity.self else {
+            return nil
+        }
+        
+        return Parent.self
+    }
+}
+
+extension _opaque_Entity where Self: AnyObject & Entity {
+    public static var _opaque_ParentType: _opaque_Entity.Type? {
+        ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
+    }
+}
+
+// MARK: -
 extension NSEntityDescription {
     fileprivate func hasParentEntityOfName(_ name: String) -> Bool {
         if name == self.name {
