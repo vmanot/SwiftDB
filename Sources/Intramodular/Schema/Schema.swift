@@ -16,8 +16,6 @@ public protocol Schema {
     
     @ArrayBuilder<_opaque_Entity.Type>
     var entities: Entities { get }
-    
-    var customNSManagedObjectModel: NSManagedObjectModel? { get }
 }
 
 // MARK: - Implementation -
@@ -26,10 +24,5 @@ extension Schema {
     @inlinable
     public var name: String {
         String(describing: type(of: self))
-    }
-
-    @inlinable
-    public var customNSManagedObjectModel: NSManagedObjectModel? {
-        nil
     }
 }

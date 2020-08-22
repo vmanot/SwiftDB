@@ -25,7 +25,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: AnyProtocol, Ide
         self.schemaDescription = schemaDescription
         self.base = NSPersistentContainer(
             name: schema.name,
-            managedObjectModel: schema.customNSManagedObjectModel ?? NSManagedObjectModel(schemaDescription)
+            managedObjectModel: NSManagedObjectModel(schemaDescription)
         )
         
         loadPersistentStores()

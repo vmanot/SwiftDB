@@ -94,14 +94,14 @@ extension NSManagedObjectModel {
 
 extension NSPersistentStoreCoordinator {
     private static let _SwiftDB_schemaDescription_objcAssociationKey = ObjCAssociationKey<SchemaDescription>()
-
+    
     var _SwiftDB_schemaDescription: SchemaDescription? {
         get {
             self[Self._SwiftDB_schemaDescription_objcAssociationKey]
         } set {
             self[Self._SwiftDB_schemaDescription_objcAssociationKey] = newValue
         }
-    }    
+    }
 }
 
 extension NSManagedObject {
