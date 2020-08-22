@@ -20,8 +20,10 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: Identifiable, Ob
     @Published private var cloudKitContainerIdentifier: String?
     
     public init(_ schema: Schema) {
-        self.schemaDescription = .init(schema)
-        self.base = NSPersistentContainer(name: schema.name, managedObjectModel: .init(schemaDescription))
+        let schemaDescription = SchemaDescription(schema)
+        
+        self.schemaDescription = schemaDescription
+        self.base = NSPersistentContainer(name: schema.name, managedObjectModel: schema.customNSManagedObjectModel ?? NSManagedObjectModel(schemaDescription))
         
         loadPersistentStores()
     }

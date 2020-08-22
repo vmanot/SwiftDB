@@ -18,7 +18,10 @@ public protocol Model: _opaque_Model {
     associatedtype NextVersion: Model = Never
     
     static var version: Version? { get }
-    
+}
+
+public protocol MigratableModel: Model {
+    /// Migrate from a previous version.
     static func migrate(from _: PreviousVersion) throws -> Self
 }
 
@@ -44,7 +47,9 @@ extension Model {
         
         return nil
     }
-    
+}
+
+extension MigratableModel {
     public static func migrate(from _: PreviousVersion) throws -> Self {
         throw _DefaultMigrationError.unimplemented
     }

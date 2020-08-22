@@ -55,7 +55,7 @@ public struct Attribute<Value>: _opaque_Attribute {
             if let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
                 return result
             }
-        } else if let wrappedValue = wrappedValue as? NSAttributeCoder {
+        } else if let wrappedValue = initialValue as? NSAttributeCoder {
             if let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
                 return result
             }
@@ -124,7 +124,7 @@ extension Attribute where Value: NSAttributeCoder {
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
     }
-    public init<T>(
+    public init<T: NSAttributeCoder>(
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
@@ -168,7 +168,7 @@ extension Attribute where Value: Codable {
         )
     }
     
-    public init<T>(
+    public init<T: Codable>(
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
@@ -192,18 +192,10 @@ extension Attribute where Value: Codable & NSAttributeCoder {
         self.init(
             initialValue: nil,
             decodeImpl: { object, key in
-                try! _CodableToNSAttributeCoder<Value>.decode(
-                    from: object,
-                    forKey: key,
-                    defaultValue: .init(wrappedValue)
-                )
-                .value
+                try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
             },
             encodeImpl: { object, key, newValue in
-                try! _CodableToNSAttributeCoder(newValue).encode(
-                    to: object,
-                    forKey: key
-                )
+                try newValue.encode(to: object, forKey: key)
             },
             isOptional: false,
             isTransient: isTransient,
@@ -212,7 +204,7 @@ extension Attribute where Value: Codable & NSAttributeCoder {
         )
     }
     
-    public init<T>(
+    public init<T: Codable & NSAttributeCoder>(
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
@@ -236,18 +228,10 @@ extension Attribute where Value: Codable & NSPrimitiveAttributeCoder {
         self.init(
             initialValue: nil,
             decodeImpl: { object, key in
-                try! _CodableToNSAttributeCoder<Value>.decode(
-                    from: object,
-                    forKey: key,
-                    defaultValue: .init(wrappedValue)
-                )
-                .value
+                try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
             },
             encodeImpl: { object, key, newValue in
-                try! _CodableToNSAttributeCoder(newValue).encode(
-                    to: object,
-                    forKey: key
-                )
+                try newValue.encode(to: object, forKey: key)
             },
             isOptional: false,
             isTransient: isTransient,

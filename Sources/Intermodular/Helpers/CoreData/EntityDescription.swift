@@ -41,7 +41,7 @@ class _NSEntityDescription: NSEntityDescription {
             return _SwiftDB_propertyDescriptions
         }
         
-        return parent._SwiftDB_propertyDescriptions.merging(_SwiftDB_propertyDescriptions, uniquingKeysWith: { x, _ in x })
+        return parent._SwiftDB_allPropertyDescriptions.merging(_SwiftDB_propertyDescriptions, uniquingKeysWith: { x, _ in x })
     }
     
     public convenience init(_ description: EntityDescription) {
