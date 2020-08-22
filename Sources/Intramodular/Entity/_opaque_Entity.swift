@@ -83,11 +83,11 @@ extension _opaque_Entity {
     
     @usableFromInline
     mutating func _runtime_configurePropertyAccessors(underlyingObject: NSManagedObject? = nil) {
-        var emptyInstance = AnyNominalOrTupleMirror(self)!
+        var instance = AnyNominalOrTupleMirror(self)!
         
         var isParentSet: Bool = false
         
-        for (key, value) in emptyInstance.allChildren {
+        for (key, value) in instance.allChildren {
             if var property = value as? _opaque_PropertyAccessor {
                 property.underlyingObject = underlyingObject
                 property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
@@ -102,11 +102,11 @@ extension _opaque_Entity {
                 
                 property._runtime_initialize()
                 
-                emptyInstance[key] = property
+                instance[key] = property
             }
         }
         
-        self = emptyInstance.value as! Self
+        self = instance.value as! Self
     }
     
     @usableFromInline

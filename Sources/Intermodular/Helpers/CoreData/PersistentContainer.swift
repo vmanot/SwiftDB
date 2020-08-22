@@ -8,7 +8,7 @@ import Merge
 import Swallow
 import SwiftUIX
 
-public final class PersistentContainer<Schema: SwiftDB.Schema>: Identifiable, ObservableObject {
+public final class PersistentContainer<Schema: SwiftDB.Schema>: AnyProtocol, Identifiable, ObservableObject {
     let cancellables = Cancellables()
     let schemaDescription: SchemaDescription
     

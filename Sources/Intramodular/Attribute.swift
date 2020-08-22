@@ -7,9 +7,9 @@ import Runtime
 import Swallow
 import SwiftUI
 
-/// A property wrapper type that can read and write an attribute managed by CoreData.
+/// A property wrapper   that can read and write an attribute managed by CoreData.
 @propertyWrapper
-public struct Attribute<Value>: _opaque_Attribute {
+public final class Attribute<Value>: _opaque_Attribute {
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     
@@ -29,15 +29,29 @@ public struct Attribute<Value>: _opaque_Attribute {
     let encodeImpl: (NSManagedObject, AnyStringKey, Value) throws -> Void
     
     public var name: String?
-    public let isOptional: Bool
+    
+    public var isOptional: Bool {
+        Value.self is _opaque_Optional.Type
+    }
+    
     public var isTransient: Bool = false
     public var allowsExternalBinaryDataStorage: Bool = false
     public var preservesValueInHistoryOnDeletion: Bool = false
     
     public var wrappedValue: Value {
         get {
-            try! decodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()))
-        } nonmutating set {
+            do {
+                return try decodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()))
+            } catch {
+                assertionFailure()
+                
+                if let type = Value.self as? Initiable.Type {
+                    return type.init() as! Value
+                } else {
+                    try! error.throw()
+                }
+            }
+        } set {
             guard underlyingObject?.managedObjectContext != nil else {
                 return
             }
@@ -47,7 +61,7 @@ public struct Attribute<Value>: _opaque_Attribute {
     }
     
     public var projectedValue: Binding<Value> {
-        .init(get: { wrappedValue }, set: { wrappedValue = $0 })
+        .init(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
     }
     
     public var type: EntityAttributeTypeDescription {
@@ -70,7 +84,7 @@ public struct Attribute<Value>: _opaque_Attribute {
         return .undefined
     }
     
-    mutating func _runtime_encodeDefaultValueIfNecessary() {
+    func _runtime_encodeDefaultValueIfNecessary() {
         guard let underlyingObject = underlyingObject, let name = name else {
             return
         }
@@ -79,16 +93,11 @@ public struct Attribute<Value>: _opaque_Attribute {
             _ = self.wrappedValue // force an evaluation
         }
     }
-}
-
-// MARK: - Initialization -
-
-extension Attribute {
+    
     init(
         initialValue: Value?,
         decodeImpl: @escaping (NSManagedObject, AnyStringKey) throws -> Value,
         encodeImpl: @escaping (NSManagedObject, AnyStringKey, Value) throws -> Void,
-        isOptional: Bool,
         isTransient: Bool,
         allowsExternalBinaryDataStorage: Bool,
         preservesValueInHistoryOnDeletion: Bool
@@ -96,7 +105,6 @@ extension Attribute {
         self.initialValue = initialValue
         self.decodeImpl = decodeImpl
         self.encodeImpl = encodeImpl
-        self.isOptional = isOptional
         self.isTransient = isTransient
         self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
         self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
@@ -104,33 +112,26 @@ extension Attribute {
 }
 
 extension Attribute where Value: NSAttributeCoder {
-    public init(
+    public convenience init(
         wrappedValue: Value,
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
     ) {
+        let hasInitialValue = (wrappedValue as? _opaque_Optional)?.isNotNil ?? true
+        
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { object, key in
-                try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
+                if hasInitialValue {
+                    return try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
+                } else {
+                    return try Value.decode(from: object, forKey: key)
+                }
             },
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
             },
-            isOptional: false,
-            isTransient: isTransient,
-            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
-        )
-    }
-    public init<T: NSAttributeCoder>(
-        isTransient: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false,
-        preservesValueInHistoryOnDeletion: Bool = false
-    ) where Value == Optional<T> {
-        self.init(
-            wrappedValue: nil,
             isTransient: isTransient,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
@@ -139,21 +140,31 @@ extension Attribute where Value: NSAttributeCoder {
 }
 
 extension Attribute where Value: Codable {
-    public init(
+    public convenience init(
         wrappedValue: Value,
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
     ) {
+        let hasInitialValue = (wrappedValue as? _opaque_Optional)?.isNotNil ?? true
+        
         self.init(
             initialValue: nil,
             decodeImpl: { object, key in
-                try! _CodableToNSAttributeCoder<Value>.decode(
-                    from: object,
-                    forKey: key,
-                    defaultValue: .init(wrappedValue)
-                )
-                .value
+                if hasInitialValue {
+                    return try! _CodableToNSAttributeCoder<Value>.decode(
+                        from: object,
+                        forKey: key,
+                        defaultValue: .init(wrappedValue)
+                    )
+                    .value
+                } else {
+                    return try! _CodableToNSAttributeCoder<Value>.decode(
+                        from: object,
+                        forKey: key
+                    )
+                    .value
+                }
             },
             encodeImpl: { object, key, newValue in
                 try! _CodableToNSAttributeCoder(newValue).encode(
@@ -161,20 +172,6 @@ extension Attribute where Value: Codable {
                     forKey: key
                 )
             },
-            isOptional: false,
-            isTransient: isTransient,
-            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
-        )
-    }
-    
-    public init<T: Codable>(
-        isTransient: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false,
-        preservesValueInHistoryOnDeletion: Bool = false
-    ) where Value == Optional<T> {
-        self.init(
-            wrappedValue: nil,
             isTransient: isTransient,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
@@ -183,70 +180,26 @@ extension Attribute where Value: Codable {
 }
 
 extension Attribute where Value: Codable & NSAttributeCoder {
-    public init(
+    public convenience init(
         wrappedValue: Value,
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
     ) {
+        let hasInitialValue = (wrappedValue as? _opaque_Optional)?.isNotNil ?? true
+        
         self.init(
             initialValue: nil,
             decodeImpl: { object, key in
-                try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
+                if hasInitialValue {
+                    return try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
+                } else {
+                    return try Value.decode(from: object, forKey: key)
+                }
             },
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
             },
-            isOptional: false,
-            isTransient: isTransient,
-            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
-        )
-    }
-    
-    public init<T: Codable & NSAttributeCoder>(
-        isTransient: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false,
-        preservesValueInHistoryOnDeletion: Bool = false
-    ) where Value == Optional<T> {
-        self.init(
-            wrappedValue: nil,
-            isTransient: isTransient,
-            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
-        )
-    }
-}
-
-extension Attribute where Value: Codable & NSPrimitiveAttributeCoder {
-    public init(
-        wrappedValue: Value,
-        isTransient: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false,
-        preservesValueInHistoryOnDeletion: Bool = false
-    ) {
-        self.init(
-            initialValue: nil,
-            decodeImpl: { object, key in
-                try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
-            },
-            encodeImpl: { object, key, newValue in
-                try newValue.encode(to: object, forKey: key)
-            },
-            isOptional: false,
-            isTransient: isTransient,
-            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
-        )
-    }
-    
-    public init<T>(
-        isTransient: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false,
-        preservesValueInHistoryOnDeletion: Bool = false
-    ) where Value == Optional<T> {
-        self.init(
-            wrappedValue: nil,
             isTransient: isTransient,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
