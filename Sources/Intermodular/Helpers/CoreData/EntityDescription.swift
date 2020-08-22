@@ -31,13 +31,30 @@ public struct EntityDescription: Codable {
 
 // MARK: - Auxiliary Implementation -
 
-extension NSEntityDescription {
+class _NSEntityDescription: NSEntityDescription {
+    weak var parent: _NSEntityDescription?
+    
+    var _SwiftDB_propertyDescriptions: [String: EntityPropertyDescription] = [:]
+    
+    var _SwiftDB_allPropertyDescriptions: [String: EntityPropertyDescription] {
+        guard let parent = parent else {
+            return _SwiftDB_propertyDescriptions
+        }
+        
+        return parent._SwiftDB_propertyDescriptions.merging(_SwiftDB_propertyDescriptions, uniquingKeysWith: { x, _ in x })
+    }
+    
     public convenience init(_ description: EntityDescription) {
         self.init()
         
         name = description.name
         managedObjectClassName = description.managedObjectClassName
         properties = description.properties.map({ $0.toNSPropertyDescription() })
-        subentities = description.subentities.knownValue?.map({ .init($0) }) ?? []
+        
+        for property in description.properties {
+            _SwiftDB_propertyDescriptions[property.name] = property
+        }
+        
+        subentities = description.subentities.knownValue?.map({ _NSEntityDescription($0) }) ?? []
     }
 }

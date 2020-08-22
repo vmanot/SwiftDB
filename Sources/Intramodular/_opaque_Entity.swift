@@ -63,7 +63,7 @@ extension _opaque_Entity where Self: AnyObject & Entity {
 
 extension _opaque_Entity {
     public var _runtime_underlyingObject: NSManagedObject? {
-        let instance = AnyNominalOrTupleValue(self)!
+        let instance = AnyNominalOrTupleMirror(self)!
         
         for (_, value) in instance {
             if let value = value as? _opaque_PropertyAccessor {
@@ -76,18 +76,18 @@ extension _opaque_Entity {
     
     @usableFromInline
     var _runtime_propertyAccessors: [_opaque_PropertyAccessor] {
-        AnyNominalOrTupleValue(self)!.compactMap { key, value in
+        AnyNominalOrTupleMirror(self)!.children.compactMap { key, value in
             (value as? _opaque_PropertyAccessor)
         }
     }
     
     @usableFromInline
     mutating func _runtime_configurePropertyAccessors(underlyingObject: NSManagedObject? = nil) {
-        var emptyInstance = AnyNominalOrTupleValue(self)!
+        var emptyInstance = AnyNominalOrTupleMirror(self)!
         
         var isParentSet: Bool = false
         
-        for (key, value) in emptyInstance {
+        for (key, value) in emptyInstance.allChildren {
             if var attribute = value as? _opaque_PropertyAccessor {
                 attribute.underlyingObject = underlyingObject
                 attribute.name = .init(key.stringValue.dropPrefixIfPresent("_"))

@@ -16,8 +16,6 @@ public protocol Entity: _opaque_Entity, EntityRelatable, Model {
 
 // MARK: - Implementation -
 
-
-
 extension Entity {
     public static var name: String {
         String(describing: Self.self)

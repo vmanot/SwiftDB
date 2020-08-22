@@ -2,6 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Compute
 import CoreData
 import Runtime
 import Swallow
@@ -23,11 +24,11 @@ extension NSManagedObjectModel {
         self.init()
         
         var relationshipNameToRelationship: [String: NSRelationshipDescription] = [:]
-        var parentNameToChildrenMap: [String: [NSEntityDescription]] = [:]
-        var nameToEntityMap: [String: NSEntityDescription] = [:]
+        var parentNameToChildrenMap: [String: [_NSEntityDescription]] = [:]
+        var nameToEntityMap: [String: _NSEntityDescription] = [:]
         
         for entity in schema.entities {
-            let description = NSEntityDescription(entity)
+            let description = _NSEntityDescription(entity)
             
             nameToEntityMap[entity.name] = description
             
@@ -43,18 +44,35 @@ extension NSManagedObjectModel {
         }
         
         for (name, entity) in nameToEntityMap {
-            for property in entity.properties {
-                if let property = property as? NSRelationshipDescription {
-                    property.destinationEntity = nameToEntityMap[property.destinationEntityName!]!
-                    property.inverseRelationship = property.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
-                }
-            }
-            
             if let children = parentNameToChildrenMap[name] {
-                entity.subentities = children
+                entity.subentities = children.map {
+                    $0.then {
+                        $0.parent = entity
+                    }
+                }
             }
         }
         
-        self.entities = .init(nameToEntityMap.values)
+        for entity in nameToEntityMap.values {
+            for property in entity.properties {
+                if let property = property as? NSRelationshipDescription {
+                    if let destinationEntityName = property.destinationEntityName {
+                        property.destinationEntity = nameToEntityMap[destinationEntityName]!
+                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? EntityRelationshipDescription {
+                        property.destinationEntity = nameToEntityMap[_SwiftDB_propertyDescription.destinationEntityName]
+                    } else {
+                        assertionFailure()
+                    }
+                    
+                    if let inverseRelationshipName = property.inverseRelationshipName {
+                        property.inverseRelationship = relationshipNameToRelationship[inverseRelationshipName]
+                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? EntityRelationshipDescription {
+                        property.inverseRelationship = _SwiftDB_propertyDescription.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
+                    }
+                }
+            }
+        }
+        
+        self.entities = .init(nameToEntityMap.values.lazy.map({ $0 as NSEntityDescription }))
     }
 }
