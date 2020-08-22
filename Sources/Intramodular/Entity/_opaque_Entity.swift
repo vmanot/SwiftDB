@@ -88,19 +88,21 @@ extension _opaque_Entity {
         var isParentSet: Bool = false
         
         for (key, value) in emptyInstance.allChildren {
-            if var attribute = value as? _opaque_PropertyAccessor {
-                attribute.underlyingObject = underlyingObject
-                attribute.name = .init(key.stringValue.dropPrefixIfPresent("_"))
-                
-                emptyInstance[key] = attribute
+            if var property = value as? _opaque_PropertyAccessor {
+                property.underlyingObject = underlyingObject
+                property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 
                 if self is _opaque_ChildEntity {
                     if let parentType = Self._opaque_ParentType, !isParentSet {
-                        attribute._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingObject: underlyingObject)
+                        property._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingObject: underlyingObject)
                         
                         isParentSet = true
                     }
                 }
+                
+                property._runtime_initialize()
+                
+                emptyInstance[key] = property
             }
         }
         
@@ -118,7 +120,7 @@ extension _opaque_Entity {
         } else {
             self.init()
         }
-                
+        
         _runtime_configurePropertyAccessors(underlyingObject: object)
     }
 }

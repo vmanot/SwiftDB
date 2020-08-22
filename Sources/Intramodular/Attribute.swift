@@ -38,6 +38,10 @@ public struct Attribute<Value>: _opaque_Attribute {
         get {
             try! decodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()))
         } nonmutating set {
+            guard underlyingObject?.managedObjectContext != nil else {
+                return
+            }
+            
             try! encodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()), newValue)
         }
     }
@@ -64,6 +68,16 @@ public struct Attribute<Value>: _opaque_Attribute {
         }
         
         return .undefined
+    }
+    
+    mutating func _runtime_encodeDefaultValueIfNecessary() {
+        guard let underlyingObject = underlyingObject, let name = name else {
+            return
+        }
+        
+        if !isOptional && !underlyingObject.primitiveValueExists(forKey: name) {
+            _ = self.wrappedValue // force an evaluation
+        }
     }
 }
 
