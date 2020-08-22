@@ -54,6 +54,14 @@ public final class EntityAttributeDescription: EntityPropertyDescription {
         try container.encode(preservesValueInHistoryOnDeletion, forKey: .preservesValueInHistoryOnDeletion)
     }
     
+    public override func hash(into hasher: inout Hasher) {
+        super.hash(into: &hasher)
+        
+        hasher.combine(type)
+        hasher.combine(allowsExternalBinaryDataStorage)
+        hasher.combine(preservesValueInHistoryOnDeletion)
+    }
+    
     public override func toNSPropertyDescription() -> NSPropertyDescription {
         NSAttributeDescription(self)
     }

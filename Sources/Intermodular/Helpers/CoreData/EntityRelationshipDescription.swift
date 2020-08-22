@@ -48,6 +48,15 @@ public final class EntityRelationshipDescription: EntityPropertyDescription {
         fatalError()
     }
     
+    public override func hash(into hasher: inout Hasher) {
+        super.hash(into: &hasher)
+        
+        hasher.combine(destinationEntityName)
+        hasher.combine(inverseRelationshipName)
+        hasher.combine(cardinality)
+        hasher.combine(deleteRule)
+    }
+    
     public override func toNSPropertyDescription() -> NSPropertyDescription {
         NSRelationshipDescription(self)
     }

@@ -6,7 +6,7 @@ import CoreData
 import Foundation
 import Swift
 
-public enum EntityAttributeTypeDescription: Codable {
+public enum EntityAttributeTypeDescription: Codable, Hashable {
     case undefined
     case integer16
     case integer32

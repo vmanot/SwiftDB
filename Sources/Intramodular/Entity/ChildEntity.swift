@@ -5,8 +5,12 @@
 import Runtime
 import Swallow
 
+public protocol _opaque_ChildEntity: _opaque_Entity {
+    
+}
+
 @dynamicMemberLookup
-public protocol ChildEntity: Entity {
+public protocol ChildEntity: _opaque_ChildEntity, Entity {
     associatedtype Parent: Entity = _DefaultParentEntity
     
     subscript<Value>(dynamicMember _: ReferenceWritableKeyPath<Parent, Value>) -> Value { get nonmutating set }

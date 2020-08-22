@@ -5,7 +5,7 @@
 import CoreData
 import Swift
 
-public class EntityPropertyDescription: Codable {
+public class EntityPropertyDescription: Codable, Hashable {
     public enum CodingKeys: String, CodingKey {
         case name
         case isOptional
@@ -42,7 +42,19 @@ public class EntityPropertyDescription: Codable {
         try container.encode(isTransient, forKey: .isTransient)
     }
     
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+        hasher.combine(isOptional)
+        hasher.combine(isTransient)
+    }
+
     public func toNSPropertyDescription() -> NSPropertyDescription {
         Never.materialize(reason: .abstract)
+    }
+}
+
+extension EntityPropertyDescription {
+    public static func == (lhs: EntityPropertyDescription, rhs: EntityPropertyDescription) -> Bool {
+        lhs.hashValue == rhs.hashValue
     }
 }

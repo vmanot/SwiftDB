@@ -6,13 +6,28 @@ import Compute
 import CoreData
 import Runtime
 import Swallow
+import SwiftUI
 
-public struct SchemaDescription {
-    public let entities: [EntityDescription]
+public struct SchemaDescription: Hashable {
+    public let name: String
+    
+    @usableFromInline
+    var entityNameToTypeMap = BidirectionalMap<String,  Metatype<_opaque_Entity.Type>>()
+    @usableFromInline
+    var entityDescriptionToTypeMap = BidirectionalMap<EntityDescription,  Metatype<_opaque_Entity.Type>>()
+    
+    public var entities: AnySequence<EntityDescription> {
+        .init(entityDescriptionToTypeMap.keys)
+    }
     
     @inlinable
-    public init<S: Schema>(_ schema: S) {
-        self.entities = schema.entities.map({ $0.toEntityDescription() })
+    public init(_ schema: Schema) {
+        self.name = schema.name
+        
+        for entityType in schema.entities {
+            entityNameToTypeMap[entityType.name] = .init(entityType)
+            entityDescriptionToTypeMap[entityType.toEntityDescription()] = .init(entityType)
+        }
     }
 }
 
@@ -74,5 +89,37 @@ extension NSManagedObjectModel {
         }
         
         self.entities = .init(nameToEntityMap.values.lazy.map({ $0 as NSEntityDescription }))
+    }
+}
+
+extension NSPersistentStoreCoordinator {
+    private static let _SwiftDB_schemaDescription_objcAssociationKey = ObjCAssociationKey<SchemaDescription>()
+
+    var _SwiftDB_schemaDescription: SchemaDescription? {
+        get {
+            self[Self._SwiftDB_schemaDescription_objcAssociationKey]
+        } set {
+            self[Self._SwiftDB_schemaDescription_objcAssociationKey] = newValue
+        }
+    }    
+}
+
+extension NSManagedObject {
+    var _SwiftDB_schemaDescription: SchemaDescription? {
+        managedObjectContext?.persistentStoreCoordinator?._SwiftDB_schemaDescription
+    }
+}
+
+extension EnvironmentValues {
+    private struct _EnvironmentKey: EnvironmentKey {
+        static let defaultValue: SchemaDescription? = nil
+    }
+    
+    public var schemaDescription: SchemaDescription? {
+        get {
+            self[_EnvironmentKey]
+        } set {
+            self[_EnvironmentKey] = newValue
+        }
     }
 }

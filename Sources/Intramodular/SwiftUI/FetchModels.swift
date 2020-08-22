@@ -8,8 +8,10 @@ import SwiftUIX
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
 public struct FetchModels<Result: Entity>: DynamicProperty {
+    @usableFromInline
     @FetchRequest var base: FetchedResults<NSManagedObject>
     
+    @inlinable
     public var wrappedValue: AnyRandomAccessCollection<Result> {
         .init(base.lazy.map({ Result(_runtime_underlyingObject: $0)! }))
     }

@@ -6,7 +6,7 @@ import CoreData
 import Foundation
 import Swallow
 
-public struct EntityDescription: Codable {
+public struct EntityDescription: Codable, Hashable {
     @Indirect
     public var parent: EntityDescription?
     public let name: String

@@ -8,8 +8,9 @@ import Merge
 import Swallow
 import SwiftUIX
 
-public final class PersistentContainer: Identifiable, ObservableObject {
-    private let cancellables = Cancellables()
+public final class PersistentContainer<Schema: SwiftDB.Schema>: Identifiable, ObservableObject {
+    let cancellables = Cancellables()
+    let schemaDescription: SchemaDescription
     
     @Published public private(set) var id = UUID()
     @Published public private(set) var base: NSPersistentContainer
@@ -18,29 +19,11 @@ public final class PersistentContainer: Identifiable, ObservableObject {
     @Published private var applicationGroupID: String?
     @Published private var cloudKitContainerIdentifier: String?
     
-    public init(name: String) {
-        self.base = NSPersistentContainer(name: name)
-    }
-    
-    public init<S: Schema>(_ schema: S) {
-        self.base = NSPersistentContainer(name: schema.name, managedObjectModel: .init(schema))
+    public init(_ schema: Schema) {
+        self.schemaDescription = .init(schema)
+        self.base = NSPersistentContainer(name: schema.name, managedObjectModel: .init(schemaDescription))
         
         loadPersistentStores()
-    }
-}
-
-extension PersistentContainer {
-    @discardableResult
-    public func create<Instance: Entity>(_ type: Instance.Type) -> Instance {
-        let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
-        let managedObjectType = type.managedObjectClass.value as! NSManagedObject.Type
-        let managedObject = managedObjectType.init(entity: entityDescription, insertInto: viewContext)
-        
-        return Instance(_runtime_underlyingObject: managedObject)!
-    }
-    
-    public func delete<Instance: Entity>(_ instance: Instance) {
-        viewContext!.delete(instance._runtime_underlyingObject!)
     }
 }
 
@@ -78,6 +61,8 @@ extension PersistentContainer {
     func loadPersistentStores() {
         base.loadPersistentStores()
             .map({
+                self.base.persistentStoreCoordinator._SwiftDB_schemaDescription = self.schemaDescription
+                
                 self.base
                     .viewContext
                     .automaticallyMergesChangesFromParent = true
@@ -128,9 +113,27 @@ extension PersistentContainer {
 
 // MARK: - API -
 
+extension PersistentContainer {
+    @discardableResult
+    public func create<Instance: Entity>(_ type: Instance.Type) -> Instance {
+        let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
+        let managedObjectType = type.managedObjectClass.value as! NSManagedObject.Type
+        let managedObject = managedObjectType.init(entity: entityDescription, insertInto: viewContext)
+        
+        return Instance(_runtime_underlyingObject: managedObject)!
+    }
+    
+    public func delete<Instance: Entity>(_ instance: Instance) {
+        viewContext!.delete(instance._runtime_underlyingObject!)
+    }
+}
+
 extension View {
-    public func persistentContainer(_ container: PersistentContainer) -> some View {
+    public func persistentContainer<Schema>(
+        _ container: PersistentContainer<Schema>
+    ) -> some View {
         self.environment(\.managedObjectContext, container.base.viewContext)
+            .environment(\.schemaDescription, container.schemaDescription)
             .environmentObject(container)
     }
 }

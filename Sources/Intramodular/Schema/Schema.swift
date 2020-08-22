@@ -26,12 +26,3 @@ extension Schema {
         String(describing: type(of: self))
     }
 }
-
-// MARK: - Auxiliary Implementation -
-
-extension NSManagedObjectModel {
-    @usableFromInline
-    convenience init<S: Schema>(_ schema: S) {
-        self.init(SchemaDescription(schema))
-    }
-}

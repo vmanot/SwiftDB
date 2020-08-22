@@ -94,10 +94,12 @@ extension _opaque_Entity {
                 
                 emptyInstance[key] = attribute
                 
-                if let parentType = Self._opaque_ParentType, !isParentSet {
-                    attribute._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingObject: underlyingObject)
-                    
-                    isParentSet = true
+                if self is _opaque_ChildEntity {
+                    if let parentType = Self._opaque_ParentType, !isParentSet {
+                        attribute._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingObject: underlyingObject)
+                        
+                        isParentSet = true
+                    }
                 }
             }
         }
@@ -107,14 +109,28 @@ extension _opaque_Entity {
     
     @usableFromInline
     init?(_runtime_underlyingObject object: NSManagedObject?) {
-        if let object = object {
-            guard object.entity.name == Self.name else {
+        if let object = object, let schema = object._SwiftDB_schemaDescription {
+            guard object.entity.hasParentEntityOfName(Self.name) else {
                 return nil
             }
+            
+            self = schema.entityNameToTypeMap[object.entity.name]!.value.init() as! Self
+        } else {
+            self.init()
         }
-        
-        self.init()
-        
+                
         _runtime_configurePropertyAccessors(underlyingObject: object)
+    }
+}
+
+extension NSEntityDescription {
+    fileprivate func hasParentEntityOfName(_ name: String) -> Bool {
+        if name == self.name {
+            return true
+        } else if let superentity = superentity {
+            return superentity.hasParentEntityOfName(name)
+        } else {
+            return false
+        }
     }
 }
