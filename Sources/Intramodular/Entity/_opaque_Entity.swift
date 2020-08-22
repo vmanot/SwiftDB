@@ -30,7 +30,7 @@ extension _opaque_Entity where Self: Entity {
     }
     
     public static var managedObjectClassName: String {
-        "_SwiftDB_NSManagedObject_" + name
+        name
     }
     
     public static var managedObjectClass: ObjCClass {
@@ -90,7 +90,10 @@ extension _opaque_Entity {
         for (key, value) in instance.allChildren {
             if var property = value as? _opaque_PropertyAccessor {
                 property.underlyingObject = underlyingObject
-                property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                
+                if property.name == nil {
+                    property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                }
                 
                 if self is _opaque_ChildEntity {
                     if let parentType = Self._opaque_ParentType, !isParentSet {

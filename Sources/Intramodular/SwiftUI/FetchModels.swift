@@ -12,8 +12,14 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
     @FetchRequest var base: FetchedResults<NSManagedObject>
     
     @inlinable
-    public var wrappedValue: AnyRandomAccessCollection<Result> {
-        .init(base.lazy.map({ Result(_runtime_underlyingObject: $0)! }))
+    @State public var wrappedValue: [Result] = []
+    
+    public mutating func update() {
+        let current = Set(wrappedValue.map({ $0._runtime_underlyingObject! }))
+        
+        if current != Set(base) {
+            _wrappedValue = .init(initialValue: base.map({ Result.init(_runtime_underlyingObject: $0)! }))
+        }
     }
 }
 

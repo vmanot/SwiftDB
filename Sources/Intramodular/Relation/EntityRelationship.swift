@@ -163,7 +163,9 @@ extension EntityRelationship {
                     if var value = value as? _opaque_EntityRelationshipAccessor {
                         // Find the inverse relationship accessor that was "touched".
                         if value.wrappedValue_didSet_hash != nil {
-                            value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                            if value.name == nil {
+                                value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                            }
                             
                             return value
                         }
@@ -185,7 +187,9 @@ extension EntityRelationship {
                     if var value = value as? _opaque_EntityRelationshipAccessor {
                         // Find the inverse relationship accessor that was "touched".
                         if value.wrappedValue_didSet_hash != nil {
-                            value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                            if value.name == nil {
+                                value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
+                            }
                             
                             return value
                         }

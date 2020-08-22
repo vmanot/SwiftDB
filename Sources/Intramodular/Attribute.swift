@@ -41,7 +41,11 @@ public final class Attribute<Value>: _opaque_Attribute {
     public var wrappedValue: Value {
         get {
             do {
-                return try decodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()))
+                guard let underlyingObject = underlyingObject else {
+                    return try initialValue.unwrap()
+                }
+                
+                return try decodeImpl(underlyingObject, .init(stringValue: name.unwrap()))
             } catch {
                 assertionFailure()
                 
@@ -98,6 +102,7 @@ public final class Attribute<Value>: _opaque_Attribute {
         initialValue: Value?,
         decodeImpl: @escaping (NSManagedObject, AnyStringKey) throws -> Value,
         encodeImpl: @escaping (NSManagedObject, AnyStringKey, Value) throws -> Void,
+        name: String?,
         isTransient: Bool,
         allowsExternalBinaryDataStorage: Bool,
         preservesValueInHistoryOnDeletion: Bool
@@ -114,6 +119,7 @@ public final class Attribute<Value>: _opaque_Attribute {
 extension Attribute where Value: NSAttributeCoder {
     public convenience init(
         wrappedValue: Value,
+        name: String? = nil,
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
@@ -132,6 +138,7 @@ extension Attribute where Value: NSAttributeCoder {
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
             },
+            name: name,
             isTransient: isTransient,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
@@ -142,6 +149,7 @@ extension Attribute where Value: NSAttributeCoder {
 extension Attribute where Value: Codable {
     public convenience init(
         wrappedValue: Value,
+        name: String? = nil,
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
@@ -149,7 +157,7 @@ extension Attribute where Value: Codable {
         let hasInitialValue = (wrappedValue as? _opaque_Optional)?.isNotNil ?? true
         
         self.init(
-            initialValue: nil,
+            initialValue: wrappedValue,
             decodeImpl: { object, key in
                 if hasInitialValue {
                     return try! _CodableToNSAttributeCoder<Value>.decode(
@@ -172,6 +180,7 @@ extension Attribute where Value: Codable {
                     forKey: key
                 )
             },
+            name: name,
             isTransient: isTransient,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
@@ -182,6 +191,7 @@ extension Attribute where Value: Codable {
 extension Attribute where Value: Codable & NSAttributeCoder {
     public convenience init(
         wrappedValue: Value,
+        name: String? = nil,
         isTransient: Bool = false,
         allowsExternalBinaryDataStorage: Bool = false,
         preservesValueInHistoryOnDeletion: Bool = false
@@ -189,7 +199,7 @@ extension Attribute where Value: Codable & NSAttributeCoder {
         let hasInitialValue = (wrappedValue as? _opaque_Optional)?.isNotNil ?? true
         
         self.init(
-            initialValue: nil,
+            initialValue: wrappedValue,
             decodeImpl: { object, key in
                 if hasInitialValue {
                     return try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
@@ -200,6 +210,7 @@ extension Attribute where Value: Codable & NSAttributeCoder {
             encodeImpl: { object, key, newValue in
                 try newValue.encode(to: object, forKey: key)
             },
+            name: name,
             isTransient: isTransient,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion

@@ -23,7 +23,10 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: AnyProtocol, Ide
         let schemaDescription = SchemaDescription(schema)
         
         self.schemaDescription = schemaDescription
-        self.base = NSPersistentContainer(name: schema.name, managedObjectModel: schema.customNSManagedObjectModel ?? NSManagedObjectModel(schemaDescription))
+        self.base = NSPersistentContainer(
+            name: schema.name,
+            managedObjectModel: schema.customNSManagedObjectModel ?? NSManagedObjectModel(schemaDescription)
+        )
         
         loadPersistentStores()
     }
@@ -118,11 +121,13 @@ extension PersistentContainer {
 extension PersistentContainer {
     @discardableResult
     public func create<Instance: Entity>(_ type: Instance.Type) -> Instance {
+        let type = type as _opaque_Entity.Type
+        
         let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
         let managedObjectType = type.managedObjectClass.value as! NSManagedObject.Type
         let managedObject = managedObjectType.init(entity: entityDescription, insertInto: viewContext)
         
-        return Instance(_runtime_underlyingObject: managedObject)!
+        return type.init(_runtime_underlyingObject: managedObject)! as! Instance
     }
     
     public func delete<Instance: Entity>(_ instance: Instance) {
