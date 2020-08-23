@@ -124,10 +124,22 @@ extension PersistentContainer {
         let type = type as _opaque_Entity.Type
         
         let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
-        let managedObjectType = type.managedObjectClass.value as! NSManagedObject.Type
-        let managedObject = managedObjectType.init(entity: entityDescription, insertInto: viewContext)
+        let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
+        let managedObject = managedObjectClass.init(entity: entityDescription, insertInto: viewContext)
         
         return type.init(_runtime_underlyingObject: managedObject)! as! Instance
+    }
+    
+    public func fetchFirst<Instance: Entity>(_ type: Instance.Type) throws -> Instance? {
+        let type = type as _opaque_Entity.Type
+        
+        let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
+        
+        guard let managedObject = try viewContext?.fetchFirst(managedObjectClass) else {
+            return nil
+        }
+        
+        return .some(type.init(_runtime_underlyingObject: managedObject)! as! Instance)
     }
     
     public func delete<Instance: Entity>(_ instance: Instance) {

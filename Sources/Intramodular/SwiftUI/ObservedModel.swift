@@ -12,11 +12,14 @@ public struct ObservedModel<Model: Entity>: DynamicProperty {
     @usableFromInline
     @ObservedObject var _runtime_underlyingObject: NSManagedObject
     
-    public var wrappedValue: Model
+    @State public var wrappedValue: Model
     
-    @inlinable
+    public var projectedValue: Binding<Model> {
+        .init(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
+    }
+    
     public init(wrappedValue: Model) {
         self._runtime_underlyingObject = wrappedValue._runtime_underlyingObject!
-        self.wrappedValue = wrappedValue
+        self._wrappedValue = .init(wrappedValue: wrappedValue)
     }
 }
