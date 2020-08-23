@@ -2,10 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Data
-import Runtime
-import Swallow
-import SwiftUI
+import Swift
 
 @usableFromInline
 struct _opaque_ModelEnvironment {

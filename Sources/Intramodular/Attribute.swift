@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Data
 import Runtime
 import Swallow
 import SwiftUI

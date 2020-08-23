@@ -3,5 +3,5 @@
 //
 
 @_exported import CoreData
-@_exported import Data
 @_exported import Foundation
+@_exported import Swift
