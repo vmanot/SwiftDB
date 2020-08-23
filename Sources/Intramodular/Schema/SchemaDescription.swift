@@ -8,6 +8,7 @@ import Runtime
 import Swallow
 import SwiftUI
 
+/// A type-erased description of a `Schema`.
 public struct SchemaDescription: Hashable {
     public let name: String
     

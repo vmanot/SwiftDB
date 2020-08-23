@@ -5,6 +5,7 @@
 import CoreData
 import Runtime
 import Swallow
+import Swift
 
 /// The schema of a data model.
 ///
@@ -12,8 +13,10 @@ import Swallow
 public protocol Schema {
     typealias Entities = [_opaque_Entity.Type]
     
+    /// The name of this schema.
     var name: String { get }
     
+    /// The entities declared by this schema.
     @ArrayBuilder<_opaque_Entity.Type>
     var entities: Entities { get }
 }

@@ -22,6 +22,7 @@ public final class EntityAttributeDescription: EntityPropertyDescription {
         name: String,
         isOptional: Bool,
         isTransient: Bool,
+        renamingIdentifier: String?,
         type: EntityAttributeTypeDescription,
         defaultValue: Any?,
         allowsExternalBinaryDataStorage: Bool,
@@ -32,7 +33,12 @@ public final class EntityAttributeDescription: EntityPropertyDescription {
         self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
         self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
         
-        super.init(name: name, isOptional: isOptional, isTransient: isTransient)
+        super.init(
+            name: name,
+            isOptional: isOptional,
+            isTransient: isTransient,
+            renamingIdentifier: renamingIdentifier
+        )
     }
     
     public required init(from decoder: Decoder) throws {

@@ -25,6 +25,7 @@ public final class EntityRelationshipDescription: EntityPropertyDescription {
         name: String,
         isOptional: Bool,
         isTransient: Bool,
+        renamingIdentifier: String?,
         destinationEntityName: String,
         inverseRelationshipName: String?,
         cardinality: EntityRelationshipCardinality,
@@ -35,7 +36,12 @@ public final class EntityRelationshipDescription: EntityPropertyDescription {
         self.cardinality = cardinality
         self.deleteRule = deleteRule
         
-        super.init(name: name, isOptional: isOptional, isTransient: isTransient)
+        super.init(
+            name: name,
+            isOptional: isOptional,
+            isTransient: isTransient,
+            renamingIdentifier: renamingIdentifier
+        )
     }
     
     public required init(from decoder: Decoder) throws {

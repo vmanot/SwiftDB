@@ -6,24 +6,28 @@ import CoreData
 import Swift
 
 public class EntityPropertyDescription: Codable, Hashable {
-    public enum CodingKeys: String, CodingKey {
+    fileprivate enum CodingKeys: String, CodingKey {
         case name
         case isOptional
         case isTransient
+        case renamingIdentifier
     }
     
-    public private(set) var name: String
-    public private(set) var isOptional: Bool = false
-    public private(set) var isTransient: Bool = false
+    public let name: String
+    public let isOptional: Bool
+    public let isTransient: Bool 
+    public let renamingIdentifier: String?
     
     public init(
         name: String,
         isOptional: Bool,
-        isTransient: Bool
+        isTransient: Bool,
+        renamingIdentifier: String?
     ) {
         self.name = name
         self.isOptional = isOptional
         self.isTransient = isTransient
+        self.renamingIdentifier = renamingIdentifier
     }
     
     public required init(from decoder: Decoder) throws {
@@ -32,6 +36,7 @@ public class EntityPropertyDescription: Codable, Hashable {
         self.name = try container.decode(String.self, forKey: .name)
         self.isOptional = try container.decode(Bool.self, forKey: .isOptional)
         self.isTransient = try container.decode(Bool.self, forKey: .isTransient)
+        self.renamingIdentifier = try container.decode(String?.self, forKey: .renamingIdentifier)
     }
     
     public func encode(to encoder: Encoder) throws {
@@ -40,14 +45,16 @@ public class EntityPropertyDescription: Codable, Hashable {
         try container.encode(name, forKey: .name)
         try container.encode(isOptional, forKey: .isOptional)
         try container.encode(isTransient, forKey: .isTransient)
+        try container.encode(renamingIdentifier, forKey: .renamingIdentifier)
     }
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(name)
         hasher.combine(isOptional)
         hasher.combine(isTransient)
+        hasher.combine(renamingIdentifier)
     }
-
+    
     public func toNSPropertyDescription() -> NSPropertyDescription {
         Never.materialize(reason: .abstract)
     }

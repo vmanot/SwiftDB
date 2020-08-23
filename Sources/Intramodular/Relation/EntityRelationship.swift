@@ -17,7 +17,7 @@ public final class EntityRelationship<
     ValueEntity: Entity,
     InverseValue: EntityRelatable,
     InverseValueEntity: Entity
->: _opaque_EntityRelationshipAccessor, _opaque_PropertyAccessor {
+>: _opaque_EntityRelationshipAccessor, _opaque_PropertyAccessor, PropertyWrapper {
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     
@@ -30,6 +30,8 @@ public final class EntityRelationship<
     }
     
     public let isTransient: Bool = false
+    
+    public var renamingIdentifier: String?
     
     @usableFromInline
     enum InverseKeyPath {
@@ -147,6 +149,8 @@ extension EntityRelationship {
 extension EntityRelationship {
     /// This is a hack to get a `String` representation of the `inverse` key path.
     func _runtime_findInverse() throws -> _opaque_EntityRelationshipAccessor? {
+        let emptyInverseEntity: AnyNominalOrTupleMirror
+        
         switch inverse {
             case .oneToMany(let inverse): do {
                 // Create an empty instance of the inverse entity.
@@ -156,21 +160,7 @@ extension EntityRelationship {
                 // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
                 subject[keyPath: inverse] = subject[keyPath: inverse]
                 
-                let emptyInverseEntity = NominalMirror(reflecting: subject)
-                
-                // Walk through all properties of the empty inverse instance.
-                for (key, value) in emptyInverseEntity.children {
-                    if var value = value as? _opaque_EntityRelationshipAccessor {
-                        // Find the inverse relationship accessor that was "touched".
-                        if value.wrappedValue_didSet_hash != nil {
-                            if value.name == nil {
-                                value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
-                            }
-                            
-                            return value
-                        }
-                    }
-                }
+                emptyInverseEntity = AnyNominalOrTupleMirror(subject)!
             }
             case .manyToMany(let inverse): do {
                 // Create an empty instance of the inverse entity.
@@ -180,23 +170,21 @@ extension EntityRelationship {
                 // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
                 subject[keyPath: inverse] = subject[keyPath: inverse]
                 
-                let emptyInverseEntity = NominalMirror(reflecting: subject)
-                
-                // Walk through all properties of the empty inverse instance.
-                for (key, value) in emptyInverseEntity.children {
-                    if var value = value as? _opaque_EntityRelationshipAccessor {
-                        // Find the inverse relationship accessor that was "touched".
-                        if value.wrappedValue_didSet_hash != nil {
-                            if value.name == nil {
-                                value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
-                            }
-                            
-                            return value
-                        }
+                emptyInverseEntity = AnyNominalOrTupleMirror(subject)!
+            }
+        }
+        
+        // Walk through all properties of the empty inverse instance.
+        for (key, value) in emptyInverseEntity.children {
+            if var value = value as? _opaque_EntityRelationshipAccessor {
+                // Find the inverse relationship accessor that was "touched".
+                if value.wrappedValue_didSet_hash != nil {
+                    if value.name == nil {
+                        value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                     }
+                    
+                    return value
                 }
-                
-                return nil
             }
         }
         
@@ -208,6 +196,7 @@ extension EntityRelationship {
             name: name!,
             isOptional: isOptional,
             isTransient: isTransient,
+            renamingIdentifier: renamingIdentifier,
             destinationEntityName: Value.RelatableEntityType.name,
             inverseRelationshipName: try! _runtime_findInverse()?.name,
             cardinality: .init(source: InverseValue.entityCardinality, destination: Value.entityCardinality),

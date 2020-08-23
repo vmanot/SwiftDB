@@ -9,7 +9,7 @@ import SwiftUI
 
 /// A property wrapper   that can read and write an attribute managed by CoreData.
 @propertyWrapper
-public final class Attribute<Value>: _opaque_Attribute {
+public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     
@@ -35,6 +35,9 @@ public final class Attribute<Value>: _opaque_Attribute {
     }
     
     public var isTransient: Bool = false
+    public var renamingIdentifier: String?
+    
+    public var typeDescriptionHint: EntityAttributeTypeDescription?
     public var allowsExternalBinaryDataStorage: Bool = false
     public var preservesValueInHistoryOnDeletion: Bool = false
     
@@ -68,7 +71,7 @@ public final class Attribute<Value>: _opaque_Attribute {
         .init(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
     }
     
-    public var type: EntityAttributeTypeDescription {
+    public var typeDescription: EntityAttributeTypeDescription {
         if let type = Value.self as? NSPrimitiveAttributeCoder.Type {
             if let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
                 return result
@@ -77,6 +80,8 @@ public final class Attribute<Value>: _opaque_Attribute {
             if let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
                 return result
             }
+        } else if let typeDescriptionHint = typeDescriptionHint {
+            return typeDescriptionHint
         } else if let type = Value.self as? NSSecureCoding.Type {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else if let type = Value.self as? NSCoding.Type {
@@ -88,22 +93,13 @@ public final class Attribute<Value>: _opaque_Attribute {
         return .undefined
     }
     
-    func _runtime_encodeDefaultValueIfNecessary() {
-        guard let underlyingObject = underlyingObject, let name = name else {
-            return
-        }
-        
-        if !isOptional && !underlyingObject.primitiveValueExists(forKey: name) {
-            _ = self.wrappedValue // force an evaluation
-        }
-    }
-    
     init(
         initialValue: Value?,
         decodeImpl: @escaping (NSManagedObject, AnyStringKey) throws -> Value,
         encodeImpl: @escaping (NSManagedObject, AnyStringKey, Value) throws -> Void,
         name: String?,
         isTransient: Bool,
+        typeDescriptionHint: EntityAttributeTypeDescription?,
         allowsExternalBinaryDataStorage: Bool,
         preservesValueInHistoryOnDeletion: Bool
     ) {
@@ -111,6 +107,7 @@ public final class Attribute<Value>: _opaque_Attribute {
         self.decodeImpl = decodeImpl
         self.encodeImpl = encodeImpl
         self.isTransient = isTransient
+        self.typeDescriptionHint = typeDescriptionHint
         self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
         self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
     }
@@ -140,6 +137,7 @@ extension Attribute where Value: NSAttributeCoder {
             },
             name: name,
             isTransient: isTransient,
+            typeDescriptionHint: nil,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
@@ -182,6 +180,7 @@ extension Attribute where Value: Codable {
             },
             name: name,
             isTransient: isTransient,
+            typeDescriptionHint: nil,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
@@ -212,6 +211,38 @@ extension Attribute where Value: Codable & NSAttributeCoder {
             },
             name: name,
             isTransient: isTransient,
+            typeDescriptionHint: nil,
+            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
+            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
+        )
+    }
+}
+
+extension Attribute where Value: Codable & NSPrimitiveAttributeCoder {
+    public convenience init(
+        wrappedValue: Value,
+        name: String? = nil,
+        isTransient: Bool = false,
+        allowsExternalBinaryDataStorage: Bool = false,
+        preservesValueInHistoryOnDeletion: Bool = false
+    ) {
+        let hasInitialValue = (wrappedValue as? _opaque_Optional)?.isNotNil ?? true
+        
+        self.init(
+            initialValue: wrappedValue,
+            decodeImpl: { object, key in
+                if hasInitialValue {
+                    return try Value.decode(from: object, forKey: key, defaultValue: wrappedValue)
+                } else {
+                    return try Value.decode(from: object, forKey: key)
+                }
+            },
+            encodeImpl: { object, key, newValue in
+                try newValue.encode(to: object, forKey: key)
+            },
+            name: name,
+            isTransient: isTransient,
+            typeDescriptionHint: EntityAttributeTypeDescription(Value.toNSAttributeType()),
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
@@ -226,7 +257,8 @@ extension Attribute {
             name: name!.stringValue,
             isOptional: isOptional,
             isTransient: isTransient,
-            type: type,
+            renamingIdentifier: renamingIdentifier,
+            type: typeDescription,
             defaultValue: initialValue as? NSPrimitiveAttributeCoder,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion

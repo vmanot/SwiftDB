@@ -79,7 +79,7 @@ extension _opaque_Entity {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 }
                 
-                if self is _opaque_ChildEntity {
+                if self is _opaque_Subentity {
                     if let parentType = Self._opaque_ParentType, !isParentSet {
                         property._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingObject: underlyingObject)
                         
@@ -109,16 +109,6 @@ extension _opaque_Entity {
         }
         
         _runtime_configurePropertyAccessors(underlyingObject: object)
-    }
-}
-
-extension _opaque_Entity where Self: ChildEntity {
-    public static var _opaque_ParentType: _opaque_Entity.Type? {
-        guard Parent.self != _DefaultParentEntity.self else {
-            return nil
-        }
-        
-        return Parent.self
     }
 }
 
