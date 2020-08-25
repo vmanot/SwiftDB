@@ -2,6 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Merge
 import Runtime
 import Swallow
 import SwiftUI
@@ -63,6 +64,21 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
             }
             
             try! encodeImpl(underlyingObject.unwrap(), .init(stringValue: name.unwrap()), newValue)
+        }
+    }
+    
+    @inlinable
+    public static subscript<EnclosingSelf: ObservableObject>(
+        _enclosingInstance object: EnclosingSelf,
+        wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value>,
+        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Attribute>
+    ) -> Value {
+        get {
+            object[keyPath: storageKeyPath].wrappedValue
+        } set {
+            object[keyPath: storageKeyPath].wrappedValue = newValue
+            
+            (object.objectWillChange as? _opaque_VoidSender)?.send()
         }
     }
     

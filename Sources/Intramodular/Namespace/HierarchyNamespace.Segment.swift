@@ -61,7 +61,7 @@ extension HierarchicalNamespaceSegment: Codable {
             case .aggregate(let value):
                 try encoder.encode(value)
             case .none:
-                try encoder.encodeNil()
+                try encoder.encodeSingleNil()
         }
     }
 }
