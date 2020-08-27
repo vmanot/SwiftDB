@@ -20,7 +20,7 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
     public mutating func update() {
         if wrappedValueHash != Set(base).hashValue {
             _wrappedValueHash = .init(initialValue: Set(wrappedValue.map({ $0._runtime_underlyingObject! })).hashValue)
-            _wrappedValue = .init(initialValue: base.map({ Result.init(_runtime_underlyingObject: $0)! }))
+            _wrappedValue = .init(initialValue: base.map({ Result.init(_runtime_underlyingObject: $0) }))
         }
     }
 }

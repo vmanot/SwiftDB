@@ -4,36 +4,59 @@
 
 import Runtime
 import Swallow
+import Swift
 
+/// A type-erased shadow protocol for `EntityRelatable`.
 public protocol _opaque_EntityRelatable {
     @inlinable
     static var entityCardinality: EntityCardinality { get }
     
     @inlinable
-    init()
+    init(noRelatedModels: ())
 }
 
+/// A type that can be related to/fro an entity.
 public protocol EntityRelatable: _opaque_EntityRelatable {
     associatedtype RelatableEntityType: Entity
     
+    /// The cardinality of the number of models this type exports.
+    @inlinable
+    static var entityCardinality: EntityCardinality { get }
+    
+    /// Exports all the models associated with this instance.
+    @inlinable
+    func exportRelatableModels() throws -> [RelatableEntityType]
+    
+    /// Creates a new instance by decoding from the given database reference.
     @inlinable
     static func decode(from _: NSManagedObject, forKey _: AnyStringKey) throws -> Self
     
+    /// Encodes a relationship to this instance's related models into the given database reference.
     @inlinable
     func encode(to _: NSManagedObject, forKey _: AnyStringKey) throws
 }
 
 // MARK: - Implementation -
 
-extension Entity {
+extension EntityRelatable where Self: Entity {
     @inlinable
     public static var entityCardinality: EntityCardinality {
         .one
     }
     
     @inlinable
+    public init(noRelatedModels: Void) {
+        self.init(_runtime_underlyingObject: nil)
+    }
+    
+    @inlinable
+    public func exportRelatableModels() throws -> [Self.RelatableEntityType] {
+        return [try cast(self)]
+    }
+    
+    @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        try Self(_runtime_underlyingObject: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()).unwrap()
+        Self(_runtime_underlyingObject: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap())
     }
     
     @inlinable
@@ -49,8 +72,8 @@ extension Optional: _opaque_EntityRelatable where Wrapped: _opaque_EntityRelatab
     }
     
     @inlinable
-    public init() {
-        self = .some(.init())
+    public init(noRelatedModels: Void) {
+        self = .some(.init(noRelatedModels: ()))
     }
 }
 
@@ -58,8 +81,12 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     public typealias RelatableEntityType = Wrapped.RelatableEntityType
     
     @inlinable
-    public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws {
-        try self?.encode(to: base, forKey: key)
+    public func exportRelatableModels() throws -> [RelatableEntityType] {
+        if let wrapped = self {
+            return try wrapped.exportRelatableModels()
+        } else {
+            return []
+        }
     }
     
     @inlinable
@@ -69,5 +96,10 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
         } else {
             return .none
         }
+    }
+    
+    @inlinable
+    public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws {
+        try self?.encode(to: base, forKey: key)
     }
 }

@@ -6,33 +6,19 @@ import CoreData
 import Runtime
 import Swallow
 
+@usableFromInline
 protocol _opaque_EntityRelationshipAccessor: _opaque_PropertyAccessor {
     var wrappedValue_didSet_hash: AnyHashable? { get set }
 }
 
 @propertyWrapper
 public final class EntityRelationship<
-    Parent: Entity,
+    Parent: Entity & Identifiable,
     Value: EntityRelatable,
-    ValueEntity: Entity,
+    ValueEntity: Entity & Identifiable,
     InverseValue: EntityRelatable,
-    InverseValueEntity: Entity
->: _opaque_EntityRelationshipAccessor, _opaque_PropertyAccessor, PropertyWrapper {
-    @usableFromInline
-    var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
-    
-    public var underlyingObject: NSManagedObject?
-    public var name: String?
-    
-    @inlinable
-    public var isOptional: Bool {
-        Value.self is _opaque_Optional.Type
-    }
-    
-    public let isTransient: Bool = false
-    
-    public var renamingIdentifier: String?
-    
+    InverseValueEntity: Entity & Identifiable
+>: _opaque_EntityRelationshipAccessor, PropertyWrapper {
     @usableFromInline
     enum InverseKeyPath {
         case oneToMany(WritableKeyPath<InverseValueEntity, InverseValue>)
@@ -40,13 +26,28 @@ public final class EntityRelationship<
     }
     
     @usableFromInline
-    let inverse: InverseKeyPath
+    var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
+    @usableFromInline
+    var underlyingObject: NSManagedObject?
     
+    @usableFromInline
+    var name: String?
+    @usableFromInline
+    let isTransient: Bool = false
+    @usableFromInline
+    var renamingIdentifier: String?
+    @usableFromInline
+    let inverse: InverseKeyPath
     @usableFromInline
     let deleteRule: NSDeleteRule?
     
     @usableFromInline
     var wrappedValue_didSet_hash: AnyHashable?
+    
+    @usableFromInline
+    var isOptional: Bool {
+        Value.self is _opaque_Optional.Type
+    }
     
     @inlinable
     public var wrappedValue: Value {
@@ -54,7 +55,7 @@ public final class EntityRelationship<
             do {
                 return try Value.decode(from: underlyingObject.unwrap(), forKey: .init(stringValue: name.unwrap()))
             } catch {
-                return .init()
+                return .init(noRelatedModels: ())
             }
         } set {
             defer {
@@ -148,6 +149,7 @@ extension EntityRelationship {
 
 extension EntityRelationship {
     /// This is a hack to get a `String` representation of the `inverse` key path.
+    @usableFromInline
     func _runtime_findInverse() throws -> _opaque_EntityRelationshipAccessor? {
         let emptyInverseEntity: AnyNominalOrTupleMirror
         

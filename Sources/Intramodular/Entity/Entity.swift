@@ -10,7 +10,7 @@ import Swallow
 public protocol Entity: _opaque_Entity, EntityRelatable, Model {
     associatedtype RelatableEntityType = Self
     
-    typealias Relationship<Value: EntityRelatable, ValueEntity: Entity, InverseValue: EntityRelatable, InverseValueEntity: Entity> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity>
+    typealias Relationship<Value: EntityRelatable, ValueEntity: Entity & Identifiable, InverseValue: EntityRelatable, InverseValueEntity: Entity & Identifiable> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity> where Self: Identifiable
     
     static var name: String { get }
 }
@@ -20,6 +20,23 @@ public protocol Entity: _opaque_Entity, EntityRelatable, Model {
 extension Entity {
     public static var name: String {
         String(describing: Self.self)
+    }
+
+    public static var managedObjectClassName: String {
+        "_SwiftDB_NSManagedObject_" + name
+    }
+    
+    public static var managedObjectClass: ObjCClass {
+        ObjCClass(
+            name: managedObjectClassName,
+            superclass: nil
+                ?? _opaque_Parent?.managedObjectClass
+                ?? ObjCClass(NSXManagedObject.self)
+        )
+    }
+    
+    public static func toEntityDescription() -> EntityDescription {
+        .init(self)
     }
 }
 
@@ -32,7 +49,7 @@ extension EntityDescription {
         instance._runtime_configurePropertyAccessors()
         
         self.init(
-            parent: type._opaque_ParentType?.toEntityDescription(),
+            parent: type._opaque_Parent?.toEntityDescription(),
             name: type.name,
             managedObjectClassName: type.managedObjectClass.name,
             subentities: .unknown,

@@ -127,7 +127,7 @@ extension PersistentContainer {
         let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
         let managedObject = managedObjectClass.init(entity: entityDescription, insertInto: viewContext)
         
-        return type.init(_runtime_underlyingObject: managedObject)! as! Instance
+        return type.init(_runtime_underlyingObject: managedObject) as! Instance
     }
     
     public func fetchFirst<Instance: Entity>(_ type: Instance.Type) throws -> Instance? {
@@ -139,7 +139,7 @@ extension PersistentContainer {
             return nil
         }
         
-        return .some(type.init(_runtime_underlyingObject: managedObject)! as! Instance)
+        return .some(type.init(_runtime_underlyingObject: managedObject) as! Instance)
     }
     
     public func delete<Instance: Entity>(_ instance: Instance) {
