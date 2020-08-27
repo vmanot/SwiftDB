@@ -16,7 +16,7 @@ protocol _opaque_Attribute: _opaque_PropertyAccessor {
     var preservesValueInHistoryOnDeletion: Bool { get }
 }
 
-/// A property wrapper   that can read and write an attribute managed by CoreData.
+/// A property accessor for entity attributes.
 @propertyWrapper
 public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
     @usableFromInline
@@ -37,7 +37,7 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
     public var typeDescriptionHint: EntityAttributeTypeDescription?
     public var allowsExternalBinaryDataStorage: Bool = false
     public var preservesValueInHistoryOnDeletion: Bool = false
-
+    
     @usableFromInline
     var hasNonNilInitialValue: Bool {
         if let initialValue = initialValue {
@@ -54,7 +54,7 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
     public var isOptional: Bool {
         Value.self is _opaque_Optional.Type
     }
-        
+    
     public var wrappedValue: Value {
         get {
             do {

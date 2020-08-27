@@ -6,8 +6,6 @@ import Swallow
 
 /// Represents a namespace in a hierarchy-based system.
 public struct HierarchicalNamespace: Codable, Hashable {
-    public typealias Segment = HierarchicalNamespaceSegment
-    
     public var segments: [Segment]
     
     public static var none: HierarchicalNamespace {

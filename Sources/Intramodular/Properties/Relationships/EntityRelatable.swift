@@ -23,10 +23,6 @@ public protocol EntityRelatable: _opaque_EntityRelatable {
     @inlinable
     static var entityCardinality: EntityCardinality { get }
     
-    /// Exports all the models associated with this instance.
-    @inlinable
-    func exportRelatableModels() throws -> [RelatableEntityType]
-    
     /// Creates a new instance by decoding from the given database reference.
     @inlinable
     static func decode(from _: NSManagedObject, forKey _: AnyStringKey) throws -> Self
@@ -34,6 +30,10 @@ public protocol EntityRelatable: _opaque_EntityRelatable {
     /// Encodes a relationship to this instance's related models into the given database reference.
     @inlinable
     func encode(to _: NSManagedObject, forKey _: AnyStringKey) throws
+    
+    /// Exports all the models associated with this instance.
+    @inlinable
+    func exportRelatableModels() throws -> [RelatableEntityType]
 }
 
 // MARK: - Implementation -
@@ -50,11 +50,6 @@ extension EntityRelatable where Self: Entity {
     }
     
     @inlinable
-    public func exportRelatableModels() throws -> [Self.RelatableEntityType] {
-        return [try cast(self)]
-    }
-    
-    @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
         Self(_runtime_underlyingObject: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap())
     }
@@ -62,6 +57,11 @@ extension EntityRelatable where Self: Entity {
     @inlinable
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
         base.setValue(self._runtime_underlyingObject, forKey: key.stringValue)
+    }
+    
+    @inlinable
+    public func exportRelatableModels() throws -> [Self.RelatableEntityType] {
+        return [try cast(self)]
     }
 }
 
@@ -81,15 +81,6 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     public typealias RelatableEntityType = Wrapped.RelatableEntityType
     
     @inlinable
-    public func exportRelatableModels() throws -> [RelatableEntityType] {
-        if let wrapped = self {
-            return try wrapped.exportRelatableModels()
-        } else {
-            return []
-        }
-    }
-    
-    @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Optional<Wrapped> {
         if base.value(forKey: key.stringValue) != nil {
             return .some(try Wrapped.decode(from: base, forKey: key))
@@ -101,5 +92,14 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     @inlinable
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws {
         try self?.encode(to: base, forKey: key)
+    }
+    
+    @inlinable
+    public func exportRelatableModels() throws -> [RelatableEntityType] {
+        if let wrapped = self {
+            return try wrapped.exportRelatableModels()
+        } else {
+            return []
+        }
     }
 }

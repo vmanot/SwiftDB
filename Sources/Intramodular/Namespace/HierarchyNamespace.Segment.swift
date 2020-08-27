@@ -4,15 +4,17 @@
 
 import Swallow
 
-public enum HierarchicalNamespaceSegment: Hashable {
-    case string(String)
-    case aggregate([Self])
-    case none
+extension HierarchicalNamespace {
+    public enum Segment: Hashable {
+        case string(String)
+        case aggregate([Self])
+        case none
+    }
 }
 
 // MARK: - Extensions -
 
-extension HierarchicalNamespaceSegment {
+extension HierarchicalNamespace.Segment {
     public var isNone: Bool {
         if case .none = self {
             return true
@@ -39,7 +41,7 @@ extension HierarchicalNamespaceSegment {
 
 // MARK: - Protocol Implementations -
 
-extension HierarchicalNamespaceSegment: Codable {
+extension HierarchicalNamespace.Segment: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
@@ -66,7 +68,7 @@ extension HierarchicalNamespaceSegment: Codable {
     }
 }
 
-extension HierarchicalNamespaceSegment: CustomStringConvertible {
+extension HierarchicalNamespace.Segment: CustomStringConvertible {
     public var description: String {
         switch self {
             case .string(let value):
@@ -79,7 +81,7 @@ extension HierarchicalNamespaceSegment: CustomStringConvertible {
     }
 }
 
-extension HierarchicalNamespaceSegment: ExpressibleByArrayLiteral {
+extension HierarchicalNamespace.Segment: ExpressibleByArrayLiteral {
     public typealias ArrayLiteralElement = Self
     
     public init(arrayLiteral elements: ArrayLiteralElement...) {
@@ -87,7 +89,7 @@ extension HierarchicalNamespaceSegment: ExpressibleByArrayLiteral {
     }
 }
 
-extension HierarchicalNamespaceSegment: ExpressibleByStringLiteral {
+extension HierarchicalNamespace.Segment: ExpressibleByStringLiteral {
     public typealias StringLiteralType = String
     
     public init(stringLiteral value: StringLiteralType) {
@@ -95,7 +97,7 @@ extension HierarchicalNamespaceSegment: ExpressibleByStringLiteral {
     }
 }
 
-extension HierarchicalNamespaceSegment: LosslessStringConvertible {
+extension HierarchicalNamespace.Segment: LosslessStringConvertible {
     public init(_ description: String) {
         guard !description.isEmpty else {
             self = .none

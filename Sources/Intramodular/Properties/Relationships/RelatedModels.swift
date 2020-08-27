@@ -6,6 +6,7 @@ import CoreData
 import Swallow
 import SwiftUIX
 
+/// An collection of models related to an entity.
 public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     @inlinable
     public static var entityCardinality: EntityCardinality {
@@ -33,11 +34,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
 
 extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
-    
-    public func exportRelatableModels() -> [Model] {
-        .init(self)
-    }
-
+        
     @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
         let key = key.stringValue
@@ -54,6 +51,10 @@ extension RelatedModels: EntityRelatable {
     @inlinable
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
         base.setValue(self.base as NSSet, forKey: key.stringValue)
+    }
+    
+    public func exportRelatableModels() -> [Model] {
+        .init(self)
     }
 }
 

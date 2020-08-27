@@ -11,6 +11,7 @@ protocol _opaque_EntityRelationshipAccessor: _opaque_PropertyAccessor {
     var wrappedValue_didSet_hash: AnyHashable? { get set }
 }
 
+/// A property accessor for entity relationships.
 @propertyWrapper
 public final class EntityRelationship<
     Parent: Entity & Identifiable,
