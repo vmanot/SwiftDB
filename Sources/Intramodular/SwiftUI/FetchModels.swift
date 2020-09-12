@@ -10,24 +10,43 @@ import SwiftUIX
 public struct FetchModels<Result: Entity>: DynamicProperty {
     @usableFromInline
     @FetchRequest var base: FetchedResults<NSManagedObject>
+    
+    public var wrappedValue: [Result] = []
     @usableFromInline
     var wrappedValueHash: Int?
     
-    public var wrappedValue: [Result] = []
-    
     public mutating func update() {
-        if wrappedValueHash != Set(base).hashValue {
-            var hasher = Hasher()
-            
-            wrappedValueHash = hasher.finalize()
-            wrappedValue = base.lazy.filter({
-                $0.managedObjectContext != nil
-            }).map({ object -> Result in
-                hasher.combine(object)
-                
-                return Result(_runtime_underlyingObject: object)
-            })
+        guard needsUpdate else {
+            return
         }
+        
+        var hasher = Hasher()
+        
+        wrappedValue = base.lazy.filter({
+            !$0.isDeleted && $0.managedObjectContext != nil
+        }).map({ object -> Result in
+            hasher.combine(object)
+            
+            return Result(_runtime_underlyingObject: object)
+        })
+        
+        wrappedValueHash = hasher.finalize()
+    }
+    
+    private var needsUpdate: Bool {
+        guard base.count == wrappedValue.count else {
+            return true
+        }
+        
+        return wrappedValueHash != getBaseHash()
+    }
+    
+    private func getBaseHash() -> Int {
+        var hasher = Hasher()
+        
+        base.forEach({ hasher.combine($0) })
+        
+        return hasher.finalize()
     }
 }
 
