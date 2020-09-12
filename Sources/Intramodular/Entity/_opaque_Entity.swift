@@ -15,11 +15,11 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
     var _opaque_objectWillChange: _opaque_VoidSender? { get }
     
     var _runtime_underlyingObject: NSManagedObject? { get }
-
+    
     static var name: String { get }
     static var managedObjectClassName: String { get }
     static var managedObjectClass: ObjCClass { get }
-
+    
     static func toEntityDescription() -> EntityDescription
 }
 
@@ -83,6 +83,14 @@ extension _opaque_Entity {
         }
         
         _runtime_configurePropertyAccessors(underlyingObject: object)
+        
+        if let objectWillChange = _opaque_objectWillChange, let object = object as? NSXManagedObject {
+            object
+                .objectWillChange
+                .publish(to: objectWillChange)
+                .sink()
+                .store(in: object.cancellables)
+        }
     }
 }
 
@@ -94,7 +102,7 @@ extension _opaque_Entity where Self: Entity {
     public static var _opaque_ID: Any.Type? {
         nil
     }
-
+    
     public var _opaque_id: AnyHashable? {
         nil
     }
@@ -102,11 +110,9 @@ extension _opaque_Entity where Self: Entity {
     public var _opaque_objectWillChange: _opaque_VoidSender? {
         nil
     }
-
+    
     public var _runtime_underlyingObject: NSManagedObject? {
-        let instance = AnyNominalOrTupleMirror(self)!
-        
-        for (_, value) in instance {
+        for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
             if let value = value as? _opaque_PropertyAccessor {
                 return value.underlyingObject
             }
@@ -126,7 +132,7 @@ extension _opaque_Entity where Self: Entity & Identifiable {
     public static var _opaque_ID: Any.Type? {
         ID.self
     }
-
+    
     public var _opaque_id: AnyHashable? {
         AnyHashable(id)
     }

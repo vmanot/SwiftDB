@@ -3,10 +3,13 @@
 //
 
 import CoreData
+import Merge
 import Swift
 
 /// A `NSManagedObject` subclass with modern provisions.
 open class NSXManagedObject: NSManagedObject {
+    lazy private(set) var cancellables = Cancellables()
+    
     var areInitialAttributesSetup: Bool = false
     
     open func setupInitialAttributes() {

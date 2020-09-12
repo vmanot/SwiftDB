@@ -14,6 +14,8 @@ public protocol NSAttributeCoder {
     func encode<Key: CodingKey>(to _: NSManagedObject, forKey _: Key) throws
     
     func getNSAttributeType() -> NSAttributeType
+    
+    static func toNSAttributeTypeIfPossible() -> NSAttributeType?
 }
 
 // MARK: - Implementation -
@@ -49,6 +51,10 @@ extension NSAttributeCoder {
         }
         
         return try decode(from: object, forKey: key)
+    }
+    
+    public static func toNSAttributeTypeIfPossible() -> NSAttributeType? {
+        return nil
     }
 }
 
@@ -88,7 +94,21 @@ extension Optional: NSAttributeCoder where Wrapped: NSAttributeCoder {
     }
     
     public func getNSAttributeType() -> NSAttributeType {
-        self?.getNSAttributeType() ?? .undefinedAttributeType
+        if let wrapped = self {
+            return wrapped.getNSAttributeType()
+        } else if let result = Wrapped.toNSAttributeTypeIfPossible() {
+            return result
+        } else if let wrappedType = Wrapped.self as? ExpressibleByNilLiteral.Type {
+            return (wrappedType.init(nilLiteral: ()) as! Wrapped).getNSAttributeType()
+        } else if let wrappedType = Wrapped.self as? Initiable.Type {
+            return (wrappedType.init() as! Wrapped).getNSAttributeType()
+        } else {
+            return .undefinedAttributeType
+        }
+    }
+    
+    public static func toNSAttributeTypeIfPossible() -> NSAttributeType? {
+        Wrapped.toNSAttributeTypeIfPossible() ?? Optional.none.getNSAttributeType()
     }
 }
 
@@ -111,6 +131,10 @@ extension RawRepresentable where RawValue: NSAttributeCoder, Self: NSAttributeCo
     
     public func getNSAttributeType() -> NSAttributeType {
         rawValue.getNSAttributeType()
+    }
+    
+    public static func toNSAttributeTypeIfPossible() -> NSAttributeType? {
+        RawValue.toNSAttributeTypeIfPossible()
     }
 }
 

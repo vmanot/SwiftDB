@@ -103,14 +103,10 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
     }
     
     public var typeDescription: EntityAttributeTypeDescription {
-        if let type = Value.self as? NSPrimitiveAttributeCoder.Type {
-            if let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
-                return result
-            }
-        } else if let wrappedValue = initialValue as? NSAttributeCoder {
-            if let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
-                return result
-            }
+        if let type = Value.self as? NSPrimitiveAttributeCoder.Type, let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
+            return result
+        } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
+            return result
         } else if let typeDescriptionHint = typeDescriptionHint {
             return typeDescriptionHint
         } else if let type = Value.self as? NSSecureCoding.Type {
@@ -120,8 +116,6 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
         } else {
             return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
         }
-        
-        return .undefined
     }
     
     init(

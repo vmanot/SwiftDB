@@ -7,13 +7,13 @@ import Swallow
 public protocol HierarchicalNamespaceRepresentable: AnyProtocol {
     init?(namespace: HierarchicalNamespace)
     init?(namespaceSegment: HierarchicalNamespace.Segment)
-
+    
     func toNamespace() -> HierarchicalNamespace
 }
 
 public protocol NamespaceSegmentRepresentable: HierarchicalNamespaceRepresentable {
     init?(namespaceSegment: HierarchicalNamespace.Segment)
-
+    
     func toNamespaceSegment() -> HierarchicalNamespace.Segment
 }
 
@@ -30,10 +30,10 @@ extension NamespaceSegmentRepresentable {
         guard let segment = namespace.singleSegment else {
             return nil
         }
-
+        
         self.init(namespaceSegment: segment)
     }
-
+    
     public func toNamespace() -> HierarchicalNamespace {
         return .init(toNamespaceSegment())
     }
@@ -46,10 +46,10 @@ extension AnyStringIdentifier: NamespaceSegmentRepresentable {
         guard case let .string(value) = namespaceSegment else {
             return nil
         }
-
+        
         self.init(value)
     }
-
+    
     public func toNamespaceSegment() -> HierarchicalNamespace.Segment {
         return .string(value)
     }

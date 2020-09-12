@@ -23,6 +23,6 @@ extension EntityRelationship {
     }
     
     public func decode(from decoder: Decoder) throws {
-        
+        TODO.unimplemented
     }
 }

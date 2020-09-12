@@ -41,7 +41,7 @@ extension NSPrimitiveAttributeCoder {
         guard object.managedObjectContext != nil else {
             return
         }
-
+        
         let key = key.stringValue
         
         object.willChangeValue(forKey: key)
@@ -56,6 +56,10 @@ extension NSPrimitiveAttributeCoder {
     public func getNSAttributeType() -> NSAttributeType {
         Self.toNSAttributeType()
     }
+    
+    public static func toNSAttributeTypeIfPossible() -> NSAttributeType? {
+        Self.toNSAttributeType()
+    }
 }
 
 // MARK: - Conditional Conformances -
@@ -63,6 +67,12 @@ extension NSPrimitiveAttributeCoder {
 extension Optional: NSPrimitiveAttributeCoder where Wrapped: NSPrimitiveAttributeCoder {
     public static func toNSAttributeType() -> NSAttributeType {
         Wrapped.toNSAttributeType()
+    }
+}
+
+extension RawRepresentable where RawValue: NSPrimitiveAttributeCoder {
+    public static func toNSAttributeType() -> NSAttributeType {
+        RawValue.toNSAttributeType()
     }
 }
 
