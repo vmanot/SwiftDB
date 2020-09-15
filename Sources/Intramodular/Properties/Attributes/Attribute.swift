@@ -18,7 +18,7 @@ protocol _opaque_Attribute: _opaque_PropertyAccessor {
 
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
+public final class Attribute<Value>: _opaque_Attribute, ObservableObject, PropertyWrapper {
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     @usableFromInline
@@ -30,6 +30,10 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
     let decodeImpl: (Attribute) throws -> Value
     @usableFromInline
     let encodeImpl: (Attribute, Value) throws -> Void
+    
+    public lazy var objectWillChange = ObservableObjectPublisher()
+    
+    private var objectWillChangeConduit: AnyCancellable? = nil
     
     public var name: String?
     public var isTransient: Bool = false
@@ -71,6 +75,10 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
                 }
             }
         } set {
+            if objectWillChangeConduit != nil {
+                objectWillChange.send()
+            }
+            
             if let underlyingObject = underlyingObject {
                 guard underlyingObject.managedObjectContext != nil else {
                     return
@@ -83,18 +91,23 @@ public final class Attribute<Value>: _opaque_Attribute, PropertyWrapper {
         }
     }
     
-    @inlinable
     public static subscript<EnclosingSelf: Entity>(
         _enclosingInstance instance: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value>,
         storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Attribute>
     ) -> Value {
         get {
-            instance[keyPath: storageKeyPath].wrappedValue
+            let _self = instance[keyPath: storageKeyPath]
+            
+            if let objectWillChange = instance._opaque_objectWillChange, _self.objectWillChangeConduit == nil {
+                _self.objectWillChangeConduit = _self.objectWillChange
+                    .publish(to: objectWillChange)
+                    .sink()
+            }
+            
+            return instance[keyPath: storageKeyPath].wrappedValue
         } set {
             instance[keyPath: storageKeyPath].wrappedValue = newValue
-            
-            instance._opaque_objectWillChange?.send()
         }
     }
     
