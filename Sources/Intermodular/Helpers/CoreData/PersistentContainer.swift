@@ -99,11 +99,7 @@ extension PersistentContainer {
             })
             .subscribe(storeIn: cancellables)
     }
-    
-    public func loadViewContext() {
-        loadPersistentStores()
-    }
-    
+        
     public func save() {
         if base.viewContext.hasChanges {
             try! base.viewContext.save()
@@ -122,7 +118,7 @@ extension PersistentContainer {
         
         base = NSPersistentContainer(name: base.name)
         
-        loadViewContext()
+        loadPersistentStores()
     }
 }
 
