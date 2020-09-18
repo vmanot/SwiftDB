@@ -39,7 +39,7 @@ extension NamespaceSegmentRepresentable {
     }
 }
 
-// MARK: - Concrete Implementations -
+// MARK: - Conformances -
 
 extension AnyStringIdentifier: NamespaceSegmentRepresentable {
     public init?(namespaceSegment: HierarchicalNamespace.Segment) {

@@ -160,7 +160,7 @@ extension Wrapper where Value: NSAttributeCoder, Self: NSAttributeCoder {
     }
 }
 
-// MARK: - Concrete Implementations -
+// MARK: - Conformances -
 
 extension NSObject: NSAttributeCoder {
     public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {

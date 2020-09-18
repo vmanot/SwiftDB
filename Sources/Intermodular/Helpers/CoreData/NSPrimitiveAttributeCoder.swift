@@ -76,7 +76,7 @@ extension RawRepresentable where RawValue: NSPrimitiveAttributeCoder {
     }
 }
 
-// MARK: - Concrete Implementations -
+// MARK: - Conformances -
 
 extension Bool: NSPrimitiveAttributeCoder {
     public static func toNSAttributeType() -> NSAttributeType {

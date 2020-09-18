@@ -8,27 +8,47 @@ import Merge
 import Swallow
 import SwiftUIX
 
-public final class PersistentContainer<Schema: SwiftDB.Schema>: AnyProtocol, Identifiable, ObservableObject {
-    let cancellables = Cancellables()
-    let schemaDescription: SchemaDescription
+public final class PersistentContainer<Schema: SwiftDB.Schema>: AnyProtocol, CancellablesHolder, Identifiable, ObservableObject {
+    public let cancellables = Cancellables()
+    
+    fileprivate let schema: SchemaDescription
+    fileprivate let applicationGroupID: String?
+    fileprivate let cloudKitContainerIdentifier: String?
     
     @Published public private(set) var id = UUID()
     @Published public private(set) var base: NSPersistentContainer
     @Published public private(set) var viewContext: NSManagedObjectContext?
     
-    @Published private var applicationGroupID: String?
-    @Published private var cloudKitContainerIdentifier: String?
-    
-    public init(_ schema: Schema) {
-        let schemaDescription = SchemaDescription(schema)
+    public init(
+        _ schema: Schema,
+        applicationGroupID: String? = nil,
+        cloudKitContainerIdentifier: String? = nil
+    ) {
+        self.schema = SchemaDescription(schema)
+        self.applicationGroupID = applicationGroupID
+        self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
         
-        self.schemaDescription = schemaDescription
-        self.base = NSPersistentContainer(
-            name: schema.name,
-            managedObjectModel: NSManagedObjectModel(schemaDescription)
-        )
+        if cloudKitContainerIdentifier == nil {
+            self.base = NSPersistentContainer(
+                name: schema.name,
+                managedObjectModel: NSManagedObjectModel(self.schema)
+            )
+        } else {
+            self.base = NSPersistentCloudKitContainer(
+                name: schema.name,
+                managedObjectModel: NSManagedObjectModel(self.schema)
+            )
+        }
         
         loadPersistentStores()
+    }
+    
+    public convenience init(_ schema: Schema) {
+        self.init(
+            schema,
+            applicationGroupID: nil,
+            cloudKitContainerIdentifier: nil
+        )
     }
 }
 
@@ -60,13 +80,16 @@ extension PersistentContainer {
             description.cloudKitContainerOptions = .init(containerIdentifier: cloudKitContainerIdentifier)
             
             description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+            description.setOption(true as NSObject, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
         }
     }
     
-    func loadPersistentStores() {
+    private func loadPersistentStores() {
+        setupPersistentStoreDescription()
+        
         base.loadPersistentStores()
             .map({
-                self.base.persistentStoreCoordinator._SwiftDB_schemaDescription = self.schemaDescription
+                self.base.persistentStoreCoordinator._SwiftDB_schemaDescription = self.schema
                 
                 self.base
                     .viewContext
@@ -76,11 +99,8 @@ extension PersistentContainer {
             })
             .subscribe(storeIn: cancellables)
     }
-}
-
-extension PersistentContainer {
+    
     public func loadViewContext() {
-        setupPersistentStoreDescription()
         loadPersistentStores()
     }
     
@@ -103,16 +123,6 @@ extension PersistentContainer {
         base = NSPersistentContainer(name: base.name)
         
         loadViewContext()
-    }
-}
-
-extension PersistentContainer {
-    public func applicationGroupID(_ id: String) -> PersistentContainer {
-        then({ $0.applicationGroupID = id })
-    }
-    
-    public func cloudKitContainerIdentifier(_ id: String) -> PersistentContainer {
-        then({ $0.cloudKitContainerIdentifier = id })
     }
 }
 
@@ -152,7 +162,7 @@ extension View {
         _ container: PersistentContainer<Schema>
     ) -> some View {
         self.environment(\.managedObjectContext, container.base.viewContext)
-            .environment(\.schemaDescription, container.schemaDescription)
+            .environment(\.schemaDescription, container.schema)
             .environmentObject(container)
     }
 }
