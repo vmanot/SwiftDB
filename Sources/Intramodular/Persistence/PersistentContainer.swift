@@ -8,7 +8,11 @@ import Merge
 import Swallow
 import SwiftUIX
 
-public final class PersistentContainer<Schema: SwiftDB.Schema>: AnyProtocol, CancellablesHolder, Identifiable, ObservableObject {
+public protocol _opaque_PersistentContainer: AnyProtocol {
+    func _opaque_create(_: _opaque_Entity.Type) -> _opaque_Entity
+}
+
+public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_PersistentContainer, CancellablesHolder, Identifiable, ObservableObject {
     public let cancellables = Cancellables()
     
     fileprivate let schema: SchemaDescription
@@ -99,7 +103,7 @@ extension PersistentContainer {
             })
             .subscribe(storeIn: cancellables)
     }
-        
+    
     public func save() {
         if base.viewContext.hasChanges {
             try! base.viewContext.save()
@@ -122,9 +126,38 @@ extension PersistentContainer {
     }
 }
 
+extension PersistentContainer {
+    public func fetchAllInstances() -> [Any]! {
+        try! base.viewContext.save()
+        
+        var result: [Any] = []
+        
+        for (name, type) in schema.entityNameToTypeMap {
+            let instances = try! base.viewContext
+                .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
+                .map({ type.value.init(_runtime_underlyingObject: $0) })
+            
+            result.append(contentsOf: instances)
+        }
+        
+        return result
+    }
+}
+
 // MARK: - API -
 
 extension PersistentContainer {
+    @discardableResult
+    public func _opaque_create(_ type: _opaque_Entity.Type) -> _opaque_Entity {
+        let type = type as _opaque_Entity.Type
+        
+        let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
+        let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
+        let managedObject = managedObjectClass.init(entity: entityDescription, insertInto: viewContext)
+        
+        return type.init(_runtime_underlyingObject: managedObject)
+    }
+    
     @discardableResult
     public func create<Instance: Entity>(_ type: Instance.Type) -> Instance {
         let type = type as _opaque_Entity.Type
@@ -160,5 +193,39 @@ extension View {
         self.environment(\.managedObjectContext, container.base.viewContext)
             .environment(\.schemaDescription, container.schema)
             .environmentObject(container)
+    }
+}
+
+// MARK: - Helpers -
+
+extension CodingUserInfoKey {
+    fileprivate static let _SwiftDB_PersistentContainer = CodingUserInfoKey(rawValue: "_SwiftDB_PersistentContainer")!
+}
+
+extension Dictionary where Key == CodingUserInfoKey, Value == Any {
+    var _SwiftDB_PersistentContainer: _opaque_PersistentContainer! {
+        get {
+            self[._SwiftDB_PersistentContainer] as? _opaque_PersistentContainer
+        } set {
+            self[._SwiftDB_PersistentContainer] = newValue
+        }
+    }
+}
+
+extension JSONDecoder {
+    public var persistentContainer: _opaque_PersistentContainer? {
+        get {
+            userInfo[._SwiftDB_PersistentContainer] as? _opaque_PersistentContainer
+        } set {
+            userInfo[._SwiftDB_PersistentContainer] = newValue
+        }
+    }
+}
+
+extension JSONEncoder {
+    public func encode<Schema>(
+        _ container: PersistentContainer<Schema>
+    ) -> Data {
+        TODO.unimplemented
     }
 }

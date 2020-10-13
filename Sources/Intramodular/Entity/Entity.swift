@@ -21,7 +21,7 @@ extension Entity {
     public static var name: String {
         String(describing: Self.self)
     }
-
+    
     public static var managedObjectClassName: String {
         "_SwiftDB_NSManagedObject_" + name
     }
@@ -65,14 +65,14 @@ class _EntityToNSManagedObjectAdaptor<T: Entity>: NSXManagedObject {
 
 public struct _DefaultParentEntity: Entity {
     public static var name: String {
-        TODO.unimplemented
+        Never.materialize(reason: .abstract)
     }
     
     public static var version: Version? {
-        TODO.unimplemented
+        Never.materialize(reason: .abstract)
     }
     
     public init() {
-        TODO.unimplemented
+        self = Never.materialize(reason: .abstract)
     }
 }

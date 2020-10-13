@@ -23,6 +23,24 @@ extension EntityRelationship {
     }
     
     public func decode(from decoder: Decoder) throws {
-        TODO.unimplemented
+        guard let identifierType = Value.RelatableEntityType._opaque_ID as? Decodable.Type else {
+            assertionFailure()
+            
+            return
+        }
+        
+        let decodedIDs = try identifierType.decodeArray(from: decoder)
+        
+        if decodedIDs.isEmpty {
+            return
+        } else {
+            TODO.unimplemented
+        }
+    }
+}
+
+extension Decodable {
+    public static func decodeArray(from decoder: Decoder) throws -> [Decodable] {
+        try decoder.decode(single: [Self].self)
     }
 }

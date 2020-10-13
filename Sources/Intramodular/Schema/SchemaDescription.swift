@@ -10,6 +10,9 @@ import SwiftUI
 
 /// A type-erased description of a `Schema`.
 public struct SchemaDescription: Hashable {
+    @usableFromInline
+    let _runtime: _Runtime = .default
+    
     public let name: String
     
     @usableFromInline
@@ -26,6 +29,8 @@ public struct SchemaDescription: Hashable {
         self.name = schema.name
         
         for entityType in schema.entities {
+            _runtime.typeCache.entity[entityType.name] = .init(entityType)
+            
             entityNameToTypeMap[entityType.name] = .init(entityType)
             entityDescriptionToTypeMap[entityType.toEntityDescription()] = .init(entityType)
         }

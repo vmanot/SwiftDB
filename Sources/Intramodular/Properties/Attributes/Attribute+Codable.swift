@@ -10,7 +10,7 @@ import SwiftUI
 extension Attribute {
     public func encode(to encoder: Encoder) throws {
         if let wrappedValue = wrappedValue as? Codable {
-           try wrappedValue.encode(to: encoder)
+            try wrappedValue.encode(to: encoder)
         } else if let wrappedValue = wrappedValue as? NSCoding {
             try wrappedValue.encode(to: encoder)
         } else {
