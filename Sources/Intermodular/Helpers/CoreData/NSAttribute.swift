@@ -84,7 +84,13 @@ public struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
     
     @inlinable
     public static func decode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
-        .init(try ObjectDecoder().decode(T.self, from: object.value(forKey: key.stringValue).unwrap()))
+        let value = object.value(forKey: key.stringValue)
+        
+        if value == nil, let _T = T.self as? _opaque_Optional.Type {
+            return .init(_T.init(none: ()) as! T)
+        }
+        
+        return .init(try ObjectDecoder().decode(T.self, from: try value.unwrap()))
     }
     
     @inlinable

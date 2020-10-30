@@ -22,7 +22,8 @@ public final class EntityRelationship<
 >: _opaque_EntityRelationshipAccessor, PropertyWrapper {
     @usableFromInline
     enum InverseKeyPath {
-        case oneToMany(WritableKeyPath<InverseValueEntity, InverseValue>)
+        case toOne(WritableKeyPath<ValueEntity, InverseValue>)
+        case oneToMany(WritableKeyPath<ValueEntity, InverseValue>)
         case manyToMany(WritableKeyPath<ValueEntity, RelatedModels<Parent>>)
     }
     
@@ -77,75 +78,6 @@ public final class EntityRelationship<
         self.inverse = inverse
         self.deleteRule = deleteRule
     }
-    
-    @usableFromInline
-    init(
-        _inverse inverse: WritableKeyPath<ValueEntity, RelatedModels<Parent>>,
-        _deleteRule deleteRule: NSDeleteRule? = nil
-    ) {
-        self.inverse = .manyToMany(inverse)
-        self.deleteRule = deleteRule
-    }
-}
-
-extension EntityRelationship {
-    @inlinable
-    public convenience init(
-        inverse: WritableKeyPath<Parent, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
-    ) where InverseValueEntity == Parent {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
-    }
-    
-    @inlinable
-    public convenience init(
-        inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
-    ) where Value == InverseValueEntity, ValueEntity == InverseValueEntity {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
-    }
-    
-    @_disfavoredOverload
-    @inlinable
-    public convenience init(
-        inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
-    ) where Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
-    }
-    
-    @_disfavoredOverload
-    @inlinable
-    public convenience init(
-        inverse: WritableKeyPath<Parent, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
-    ) where Parent == InverseValueEntity, Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
-    }
-    
-    @inlinable
-    public convenience init(
-        inverse: WritableKeyPath<Parent, RelatedModels<Parent>>,
-        deleteRule: NSDeleteRule? = nil
-    ) where Value == Optional<InverseValueEntity>, ValueEntity == Value.RelatableEntityType, InverseValue == RelatedModels<Parent>, InverseValueEntity == Parent {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
-    }
-    
-    @inlinable
-    public convenience init(
-        inverse: WritableKeyPath<Parent, RelatedModels<Parent>?>,
-        deleteRule: NSDeleteRule? = nil
-    ) where ValueEntity == Value.RelatableEntityType, InverseValue == Optional<RelatedModels<Parent>>, InverseValueEntity == Parent {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
-    }
-    
-    @inlinable
-    public convenience init(
-        inverse: WritableKeyPath<Parent, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
-    ) where Parent == InverseValueEntity, Value == RelatedModels<InverseValueEntity>, Value == RelatedModels<ValueEntity> {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
-    }
 }
 
 extension EntityRelationship {
@@ -155,9 +87,19 @@ extension EntityRelationship {
         let emptyInverseEntity: AnyNominalOrTupleMirror
         
         switch inverse {
+            case .toOne(let inverse): do {
+                // Create an empty instance of the inverse entity.
+                var subject = ValueEntity.init()
+                
+                // "Touch" the inverse key path (by reassigning its value to itself).
+                // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
+                subject[keyPath: inverse] = subject[keyPath: inverse]
+                
+                emptyInverseEntity = AnyNominalOrTupleMirror(subject)!
+            }
             case .oneToMany(let inverse): do {
                 // Create an empty instance of the inverse entity.
-                var subject = InverseValue.RelatableEntityType.init() as! InverseValueEntity
+                var subject = destinationEntityType.init() as! ValueEntity
                 
                 // "Touch" the inverse key path (by reassigning its value to itself).
                 // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
@@ -200,11 +142,111 @@ extension EntityRelationship {
             isOptional: isOptional,
             isTransient: isTransient,
             renamingIdentifier: renamingIdentifier,
-            destinationEntityName: Value.RelatableEntityType.name,
+            destinationEntityName: destinationEntityType.name,
             inverseRelationshipName: try! _runtime_findInverse()?.name,
             cardinality: .init(source: InverseValue.entityCardinality, destination: Value.entityCardinality),
             deleteRule: deleteRule
         )
+    }
+    
+    private var destinationEntityType: _opaque_Entity.Type {
+        if ValueEntity.isSuperclass(of: Value.RelatableEntityType.self) {
+            return Value.RelatableEntityType.self
+        } else if Value.RelatableEntityType.isSuperclass(of: ValueEntity.self) {
+            return ValueEntity.self
+        } else {
+            return Value.RelatableEntityType.self
+        }
+    }
+}
+
+extension _opaque_Entity {
+    public static func isSuperclass(of other: _opaque_Entity.Type) -> Bool {
+        if other == Self.self {
+            return false
+        } else if other is Self.Type {
+            return true
+        } else {
+            return false
+        }
+    }
+}
+extension EntityRelationship {
+    @_disfavoredOverload
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Value == InverseValueEntity, ValueEntity == InverseValueEntity {
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+    }
+    
+    @_disfavoredOverload
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+    }
+    
+    @inlinable
+    @_disfavoredOverload
+    public convenience init(
+        inverse: WritableKeyPath<Parent, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Parent == InverseValueEntity, Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+    }
+    
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<ValueEntity, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Parent == InverseValueEntity, Value == RelatedModels<ValueEntity>, InverseValue == Optional<Parent>  {
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+    }
+    
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<Parent, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Parent == InverseValueEntity, Value == RelatedModels<InverseValueEntity>, Value == RelatedModels<ValueEntity>, InverseValue == Optional<Parent> {
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+    }
+}
+
+extension EntityRelationship {
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<ValueEntity, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Parent == InverseValueEntity, Value == Optional<ValueEntity>, InverseValue == RelatedModels<Parent> {
+        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
+    }
+    
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<InverseValueEntity, RelatedModels<Parent>>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Parent == InverseValueEntity, Value == Optional<ValueEntity>, ValueEntity == InverseValueEntity, InverseValue == RelatedModels<Parent> {
+        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
+    }
+    
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<Parent, RelatedModels<Parent>?>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Parent == ValueEntity, Parent == InverseValueEntity, ValueEntity == Value.RelatableEntityType, InverseValue == Optional<RelatedModels<Parent>> {
+        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
+    }
+    
+    @inlinable
+    public convenience init(
+        inverse: WritableKeyPath<Parent, InverseValue>,
+        deleteRule: NSDeleteRule? = nil
+    ) where Parent == InverseValueEntity, Value == RelatedModels<InverseValueEntity>, Value == RelatedModels<ValueEntity> {
+        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
     }
 }
 
