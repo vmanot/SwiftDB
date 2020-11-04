@@ -38,7 +38,7 @@ public enum EntityAttributeTypeDescription: Codable, Hashable {
             return nil
         }
     }
-
+    
     public static func transformable(class: AnyClass, transformerName: String? = nil) -> Self {
         .transformable(className: NSStringFromClass(`class`), transformerName: transformerName)
     }

@@ -7,38 +7,50 @@ import Swallow
 
 /// A shadow protocol for `Model`.
 public protocol _opaque_Model {
-    static var _opaque_PreviousVersion: _opaque_Model.Type { get }
-    static var _opaque_NextVersion: _opaque_Model.Type { get }
+    static var _opaque_PreviousVersion: _opaque_Model.Type? { get }
+    static var _opaque_NextVersion: _opaque_Model.Type? { get }
     
     static var version: Version? { get }
 }
 
 /// A type that represents a data model.
 public protocol Model: _opaque_Model {
-    associatedtype PreviousVersion: Model = Never
-    associatedtype NextVersion: Model = Never
-    
     static var version: Version? { get }
 }
 
 public protocol MigratableModel: Model {
+    associatedtype PreviousVersion: Model = Never
+    associatedtype NextVersion: Model = Never
+    
     /// Migrate from a previous version.
     static func migrate(from _: PreviousVersion) throws -> Self
 }
 
 // MARK: - Implementation -
 
-extension _opaque_Model where Self: Model {
-    public static var _opaque_PreviousVersion: _opaque_Model.Type {
-        PreviousVersion.self
+extension _opaque_Model {
+    public static var _opaque_PreviousVersion: _opaque_Model.Type? {
+        nil
     }
     
-    public static var _opaque_NextVersion: _opaque_Model.Type {
-        NextVersion.self
+    public static var _opaque_NextVersion: _opaque_Model.Type? {
+        nil
+    }
+    
+    static public var version: Version? {
+        return nil
     }
 }
 
-extension Model {
+extension _opaque_Model where Self: MigratableModel {
+    public static var _opaque_PreviousVersion: _opaque_Model.Type? {
+        PreviousVersion.self
+    }
+    
+    public static var _opaque_NextVersion: _opaque_Model.Type? {
+        NextVersion.self
+    }
+    
     static public var version: Version? {
         guard PreviousVersion.self == Never.self else {
             assertionFailure()
@@ -48,9 +60,7 @@ extension Model {
         
         return nil
     }
-}
-
-extension MigratableModel {
+    
     public static func migrate(from _: PreviousVersion) throws -> Self {
         throw _DefaultMigrationError.unimplemented
     }

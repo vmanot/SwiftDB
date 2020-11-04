@@ -3,9 +3,12 @@
 //
 
 import CoreData
+import FoundationX
 import Swift
 
-public class EntityPropertyDescription: Codable, Hashable {
+public class EntityPropertyDescription: Codable, Hashable, Model {
+    public static let version: Version? = "0.0.0"
+    
     fileprivate enum CodingKeys: String, CodingKey {
         case name
         case isOptional
@@ -15,7 +18,7 @@ public class EntityPropertyDescription: Codable, Hashable {
     
     public let name: String
     public let isOptional: Bool
-    public let isTransient: Bool 
+    public let isTransient: Bool
     public let renamingIdentifier: String?
     
     public init(
