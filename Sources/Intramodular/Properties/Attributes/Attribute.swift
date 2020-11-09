@@ -102,7 +102,6 @@ public final class Attribute<Value>: _opaque_Attribute, ObservableObject, Proper
             if let objectWillChange = instance._opaque_objectWillChange, _self.objectWillChangeConduit == nil {
                 _self.objectWillChangeConduit = _self.objectWillChange
                     .publish(to: objectWillChange)
-                    .sink()
             }
             
             return instance[keyPath: storageKeyPath].wrappedValue

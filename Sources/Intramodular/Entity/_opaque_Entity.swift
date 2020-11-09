@@ -88,7 +88,6 @@ extension _opaque_Entity {
             object
                 .objectWillChange
                 .publish(to: objectWillChange)
-                .sink()
                 .store(in: object.cancellables)
         }
     }

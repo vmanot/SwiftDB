@@ -63,7 +63,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
 extension PersistentContainer {
     public var sqliteStoreURL: URL? {
         guard let applicationGroupID = applicationGroupID else {
-            return nil
+            return base.persistentStoreDescriptions.first?.url
         }
         
         return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(schema.name + ".sqlite")

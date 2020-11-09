@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "SwiftDB", targets: ["SwiftDB"])
     ],
     dependencies: [
+        .package(url: "https://github.com/vmanot/API.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Runtime.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
@@ -24,6 +25,7 @@ let package = Package(
         .target(
             name: "SwiftDB",
             dependencies: [
+                "API",
                 "Merge",
                 "Runtime",
                 "Swallow",
