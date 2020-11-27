@@ -39,7 +39,7 @@ extension HierarchicalNamespace.Segment {
     }
 }
 
-// MARK: - Protocol Implementations -
+// MARK: - Protocol Conformances -
 
 extension HierarchicalNamespace.Segment: Codable {
     public init(from decoder: Decoder) throws {
