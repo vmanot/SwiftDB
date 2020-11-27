@@ -114,16 +114,20 @@ public final class Attribute<Value>: _opaque_Attribute, ObservableObject, Proper
         .init(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
     }
     
+    public var _runtime_wrappedValueType: Any.Type {
+        (Value.self as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? Value.self
+    }
+    
     public var typeDescription: EntityAttributeTypeDescription {
-        if let type = Value.self as? NSPrimitiveAttributeCoder.Type, let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
+        if let type = _runtime_wrappedValueType as? NSPrimitiveAttributeCoder.Type, let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
             return result
         } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
             return result
         } else if let typeDescriptionHint = typeDescriptionHint {
             return typeDescriptionHint
-        } else if let type = Value.self as? NSSecureCoding.Type {
+        } else if let type = _runtime_wrappedValueType as? NSSecureCoding.Type {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
-        } else if let type = Value.self as? NSCoding.Type {
+        } else if let type = _runtime_wrappedValueType as? NSCoding.Type {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else {
             return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
