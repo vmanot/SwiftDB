@@ -252,11 +252,3 @@ extension JSONDecoder {
         }
     }
 }
-
-extension JSONEncoder {
-    public func encode<Schema>(
-        _ container: PersistentContainer<Schema>
-    ) -> Data {
-        TODO.unimplemented
-    }
-}
