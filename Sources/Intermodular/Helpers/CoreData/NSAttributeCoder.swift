@@ -24,7 +24,7 @@ extension NSAttributeCoder {
     public static func decodePrimitive<Key: CodingKey>(
         from object: NSManagedObject,
         forKey key: Key,
-        defaultValue: @autoclosure() -> Self
+        defaultValue: @autoclosure () -> Self
     ) throws -> Self {
         guard object.primitiveValueExists(forKey: key.stringValue) else {
             let defaultValue = defaultValue()

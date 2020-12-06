@@ -17,7 +17,7 @@ protocol _opaque_PropertyAccessor: _opaque_PropertyWrapper {
     /// Needed for required attributes, otherwise the underlying object crashes on save.
     mutating func _runtime_encodeDefaultValueIfNecessary()
     
-    var underlyingObject: NSManagedObject? { get set }
+    var underlyingObject: DatabaseObject? { get set }
     
     var name: String? { get set }
     var key: AnyStringKey? { get }
@@ -49,7 +49,7 @@ extension _opaque_PropertyAccessor where Self: PropertyWrapper {
             return
         }
         
-        if !isOptional && !underlyingObject.primitiveValueExists(forKey: name) {
+        if !isOptional && !underlyingObject.containsValue(forKey: AnyStringKey(stringValue: name)) {
             _ = self.wrappedValue // force an evaluation
         }
     }

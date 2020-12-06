@@ -34,7 +34,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
 
 extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
-        
+    
     @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
         let key = key.stringValue
@@ -59,18 +59,15 @@ extension RelatedModels: EntityRelatable {
 }
 
 extension RelatedModels {
-    @inlinable
     public mutating func insert(_ model: Model) {
-        base.insert(model._runtime_underlyingObject!)
+        base.insert((model._runtime_underlyingObject as! _CoreData.DatabaseObject).base)
     }
     
-    @inlinable
     public mutating func remove(_ model: Model) {
-        base.remove(model._runtime_underlyingObject!)
+        base.remove((model._runtime_underlyingObject as! _CoreData.DatabaseObject).base)
     }
     
-    @inlinable
     public mutating func set<S: Sequence>(_ models: S) where S.Element == Model {
-        base = Set(models.lazy.map({ $0._runtime_underlyingObject! }))
+        base = Set(models.lazy.map({ $0._runtime_underlyingObject as! _CoreData.DatabaseObject }).map({ $0.base }))
     }
 }

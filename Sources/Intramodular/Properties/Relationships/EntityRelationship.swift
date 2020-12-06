@@ -30,7 +30,7 @@ public final class EntityRelationship<
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     @usableFromInline
-    var underlyingObject: NSManagedObject?
+    var underlyingObject: DatabaseObject?
     
     @usableFromInline
     var name: String?
@@ -51,11 +51,10 @@ public final class EntityRelationship<
         Value.self is _opaque_Optional.Type
     }
     
-    @inlinable
     public var wrappedValue: Value {
         get {
             do {
-                return try Value.decode(from: underlyingObject.unwrap(), forKey: .init(stringValue: name.unwrap()))
+                return try Value.decode(from: (underlyingObject.unwrap() as! _CoreData.DatabaseObject).base, forKey: .init(stringValue: name.unwrap()))
             } catch {
                 return .init(noRelatedModels: ())
             }
@@ -65,7 +64,7 @@ public final class EntityRelationship<
             }
             
             if let underlyingObject = underlyingObject {
-                try! newValue.encode(to: underlyingObject, forKey: .init(stringValue: name.unwrap()))
+                try! underlyingObject.encode(newValue, forKey: key.unwrap())
             }
         }
     }
