@@ -6,8 +6,8 @@ import CoreData
 import Swallow
 
 extension NSEntityDescription {
-    public var allKeys: [AnyCodingKey] {
-        properties.map({ .init(stringValue: $0.name) }) + (superentity?.allKeys ?? [])
+    public var allKeys: [CodingKey] {
+        properties.map({ AnyStringKey(stringValue: $0.name) }) + (superentity?.allKeys ?? [])
     }
     
     public func contains<Key: CodingKey>(key: Key) -> Bool {

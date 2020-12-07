@@ -7,28 +7,40 @@ import Swallow
 import Task
 
 extension _CoreData {
-    struct DatabaseContext {
+    struct DatabaseObjectContext {
         let base: NSManagedObjectContext
     }
 }
 
-extension _CoreData.DatabaseContext: DatabaseContext {
-    public typealias Object = _CoreData.DatabaseObject
-    public typealias ObjectID = _CoreData.DatabaseObject.ID
+extension _CoreData.DatabaseObjectContext: DatabaseObjectContext {
+    typealias Zone = _CoreData.Zone
+    typealias Object = _CoreData.DatabaseObject
+    typealias ObjectType = String
+    typealias ObjectID = _CoreData.DatabaseObject.ID
     
-    func createObject(ofType type: String) throws -> Object {
-        return .init(base: NSEntityDescription.insertNewObject(forEntityName: type, into: base))
+    func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
+        let object = Object(base: NSEntityDescription.insertNewObject(forEntityName: type, into: base))
+        
+        if let zone = zone {
+            base.assign(object.base, to: zone.base)
+        }
+        
+        return object
+    }
+   
+    func zone(for object: Object) throws -> Zone? {
+        object.base.objectID.persistentStore.map({ Zone(base: $0) })
     }
     
-    public func update(_ object: Object) throws {
+    func update(_ object: Object) throws {
         
     }
     
-    public func delete(_ object: Object) throws {
+    func delete(_ object: Object) throws {
         base.delete(object.base)
     }
     
-    public func save() -> AnyTask<Void, SaveError> {
+    func save() -> AnyTask<Void, SaveError> {
         guard base.hasChanges else {
             return .just(.success(()))
         }
@@ -54,7 +66,7 @@ extension _CoreData.DatabaseContext: DatabaseContext {
     }
 }
 
-extension DatabaseObjectMergeConflict where Context == _CoreData.DatabaseContext {
+extension DatabaseObjectMergeConflict where Context == _CoreData.DatabaseObjectContext {
     init(conflict: NSMergeConflict) {
         self.source = .init(base: conflict.sourceObject)
     }

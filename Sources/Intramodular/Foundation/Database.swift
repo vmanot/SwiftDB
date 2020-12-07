@@ -3,11 +3,15 @@
 //
 
 import Swallow
+import Task
 
-public protocol DatabaseZone {
+public protocol Database: Named, Identifiable where ID: Codable {
+    associatedtype ObjectContext: DatabaseObjectContext
     
-}
-
-public protocol Database {
+    typealias Zone = ObjectContext.Zone
     
+    func fetchAllZones() -> AnyTask<[Zone], Error>
+    func fetchZone(named _: String) -> AnyTask<Zone, Error>
+    
+    func context(forZones _: [Zone]) -> ObjectContext
 }

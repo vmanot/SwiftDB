@@ -2,47 +2,70 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
+import CloudKit
 import Swallow
 import Task
 
 extension _CloudKit {
-    final class DatabaseContext {
+    final class DatabaseObjectContext {
         var ckContainer: CKContainer?
         var ckDatabase: CKDatabase
+        var ckRecordZones: [CKRecordZone]
         
         var records: [CKRecord.ID: CKRecord?] = [:]
         
-        init(database: CKDatabase, in container: CKContainer?) {
+        init(container: CKContainer?, database: CKDatabase, zones: [CKRecordZone]) {
             self.ckContainer = container
             self.ckDatabase = database
+            self.ckRecordZones = zones
         }
     }
 }
 
-extension _CloudKit.DatabaseContext: DatabaseContext {
-    public typealias Object = _CloudKit.DatabaseObject
-    public typealias ObjectType = String
-    public typealias ObjectID = _CloudKit.DatabaseObject.ID
+extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
+    typealias Object = _CloudKit.DatabaseObject
+    typealias ObjectType = String
+    typealias ObjectID = _CloudKit.DatabaseObject.ID
+    typealias Zone = _CloudKit.Zone
     
-    func createObject(ofType type: String) throws -> Object {
-        let record = CKRecord(recordType: type)
+    func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
+        let record: CKRecord
+        
+        if let zone = zone {
+            record = CKRecord(
+                recordType: type,
+                recordID: .init(
+                    recordName: name ?? UUID().uuidString,
+                    zoneID: .init(zoneName: zone.name, ownerName: zone.ownerName)
+                )
+            )
+        } else {
+            record = CKRecord(
+                recordType: type,
+                recordID: .init(recordName: name ?? UUID().uuidString)
+            )
+        }
         
         records[record.recordID] = record
         
         return .init(base: record)
     }
     
-    public func update(_ object: Object) throws {
+    func zone(for object: Object) throws -> Zone? {
+        ckRecordZones
+            .first(where: { $0.zoneID == object.base.recordID.zoneID })
+            .map({ Zone(base: $0) })
+    }
+    
+    func update(_ object: Object) throws {
         
     }
     
-    public func delete(_ object: Object) throws {
+    func delete(_ object: Object) throws {
         records[object.base.recordID] = nil
     }
     
-    public func save() -> AnyTask<Void, SaveError> {
-        let ckContainer = self.ckContainer
+    func save() -> AnyTask<Void, SaveError> {
         let ckDatabase = self.ckDatabase
         let records = self.records
         
@@ -55,7 +78,7 @@ extension _CloudKit.DatabaseContext: DatabaseContext {
             operation.isAtomic = true
             operation.database = ckDatabase
             
-            var conflicts: [DatabaseObjectMergeConflict<_CloudKit.DatabaseContext>]? = []
+            var conflicts: [DatabaseObjectMergeConflict<_CloudKit.DatabaseObjectContext>]? = []
             
             operation.perRecordProgressBlock = { record, progress in
                 
@@ -72,21 +95,19 @@ extension _CloudKit.DatabaseContext: DatabaseContext {
             
             operation.modifyRecordsCompletionBlock = { savedRecords, deletedRecords, error in
                 if let error = error {
-                    attemptToFullfill(.failure(error as! _CloudKit.DatabaseContext.SaveError))
+                    attemptToFullfill(.failure(error as! _CloudKit.DatabaseObjectContext.SaveError))
                 } else {
                     attemptToFullfill(.success(()))
                 }
             }
             
-            ckContainer?.add(operation)
-            
-            operation.start()
+            ckDatabase.add(operation)
         }
         .eraseToAnyTask()
     }
 }
 
-extension DatabaseObjectMergeConflict where Context == _CloudKit.DatabaseContext {
+extension DatabaseObjectMergeConflict where Context == _CloudKit.DatabaseObjectContext {
     init(record: CKRecord, error: CKError) {
         self.source = .init(base: record)
     }

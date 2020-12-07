@@ -39,7 +39,7 @@ extension _CoreData.DatabaseObject: DatabaseObject {
     
     func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         if let value = value as? NSAttributeCoder {
-           try value.encodePrimitive(to: base, forKey: AnyCodingKey(key))
+            try value.encodePrimitive(to: base, forKey: AnyCodingKey(key))
         } else if let value = value as? Codable {
             try value.encode(to: self, forKey: AnyCodingKey(key))
         }
@@ -48,7 +48,7 @@ extension _CoreData.DatabaseObject: DatabaseObject {
     fileprivate enum DecodingError: Error {
         case some
     }
-
+    
     func decode<Value>(_ valueType: Value.Type, forKey key: CodingKey) throws -> Value {
         if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
             return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value

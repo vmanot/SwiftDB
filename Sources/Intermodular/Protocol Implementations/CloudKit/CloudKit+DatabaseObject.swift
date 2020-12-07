@@ -20,11 +20,11 @@ extension _CloudKit.DatabaseObject: DatabaseObject {
     var isInitialized: Bool {
         true
     }
-
+    
     var allKeys: [CodingKey] {
         base.allKeys().map({ AnyStringKey(stringValue: $0) })
     }
-        
+    
     func contains(_ key: CodingKey) -> Bool {
         allKeys.contains(where: { AnyCodingKey($0) == .init(key) })
     }
@@ -32,7 +32,7 @@ extension _CloudKit.DatabaseObject: DatabaseObject {
     func containsValue(forKey key: CodingKey) -> Bool {
         base.object(forKey: key.stringValue) != nil
     }
-
+    
     func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }
