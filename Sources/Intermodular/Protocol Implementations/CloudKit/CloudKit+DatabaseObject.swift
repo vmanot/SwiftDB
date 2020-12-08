@@ -7,41 +7,45 @@ import Swallow
 import Task
 
 extension _CloudKit {
-    struct DatabaseObject {
-        struct ID: Hashable {
+    public final class DatabaseObject {
+        public struct ID: Hashable {
             let base: CKRecord.ID
         }
         
         let base: CKRecord
+        
+        init(base: CKRecord) {
+            self.base = base
+        }
     }
 }
 
 extension _CloudKit.DatabaseObject: DatabaseObject {
-    var isInitialized: Bool {
+    public var isInitialized: Bool {
         true
     }
     
-    var allKeys: [CodingKey] {
+    public var allKeys: [CodingKey] {
         base.allKeys().map({ AnyStringKey(stringValue: $0) })
     }
     
-    func contains(_ key: CodingKey) -> Bool {
+    public func contains(_ key: CodingKey) -> Bool {
         allKeys.contains(where: { AnyCodingKey($0) == .init(key) })
     }
     
-    func containsValue(forKey key: CodingKey) -> Bool {
+    public func containsValue(forKey key: CodingKey) -> Bool {
         base.object(forKey: key.stringValue) != nil
     }
     
-    func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
+    public func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }
     
-    func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
+    public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         fatalError()
     }
     
-    func decode<Value>(_: Value.Type, forKey key: CodingKey) throws -> Value {
+    public func decode<Value>(_: Value.Type, forKey key: CodingKey) throws -> Value {
         fatalError()
     }
 }

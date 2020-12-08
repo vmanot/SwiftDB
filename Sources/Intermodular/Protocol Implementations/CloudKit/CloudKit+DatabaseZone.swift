@@ -7,24 +7,30 @@ import Swallow
 import Task
 
 extension _CloudKit {
-    struct Zone: DatabaseZone {
-        struct ID: Codable & Hashable {
-            let zoneName: String
-            let ownerName: String
-        }
-        
+    public struct Zone: DatabaseZone {
         let base: CKRecordZone
         
-        var name: String {
-            base.zoneID.zoneName
+        init(base: CKRecordZone) {
+            self.base = base
         }
+    }
+}
 
-        var ownerName: String {
-            base.zoneID.ownerName
-        }
-
-        var id: ID {
-            .init(zoneName: base.zoneID.zoneName, ownerName: base.zoneID.ownerName)
-        }
+extension _CloudKit.Zone {
+    public struct ID: Codable & Hashable {
+        let zoneName: String
+        let ownerName: String
+    }
+    
+    public var name: String {
+        base.zoneID.zoneName
+    }
+    
+    public var ownerName: String {
+        base.zoneID.ownerName
+    }
+    
+    public var id: ID {
+        .init(zoneName: base.zoneID.zoneName, ownerName: base.zoneID.ownerName)
     }
 }

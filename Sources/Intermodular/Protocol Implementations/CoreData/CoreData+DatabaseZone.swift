@@ -7,14 +7,18 @@ import Swallow
 import Task
 
 extension _CoreData {
-    struct Zone: DatabaseZone {
+    public struct Zone: DatabaseZone {
         let base: NSPersistentStore
         
-        var name: String {
+        init(base: NSPersistentStore) {
+            self.base = base
+        }
+        
+        public var name: String {
             base.configurationName
         }
         
-        var id: String {
+        public var id: String {
             base.identifier
         }
     }

@@ -7,7 +7,7 @@ import Swallow
 import Task
 
 extension _CloudKit {
-    final class DatabaseObjectContext {
+    public final class DatabaseObjectContext {
         var ckContainer: CKContainer?
         var ckDatabase: CKDatabase
         var ckRecordZones: [CKRecordZone]
@@ -23,12 +23,12 @@ extension _CloudKit {
 }
 
 extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
-    typealias Object = _CloudKit.DatabaseObject
-    typealias ObjectType = String
-    typealias ObjectID = _CloudKit.DatabaseObject.ID
-    typealias Zone = _CloudKit.Zone
+    public typealias Object = _CloudKit.DatabaseObject
+    public typealias ObjectType = String
+    public typealias ObjectID = _CloudKit.DatabaseObject.ID
+    public typealias Zone = _CloudKit.Zone
     
-    func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
+    public func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
         let record: CKRecord
         
         if let zone = zone {
@@ -51,21 +51,21 @@ extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
         return .init(base: record)
     }
     
-    func zone(for object: Object) throws -> Zone? {
+    public func zone(for object: Object) throws -> Zone? {
         ckRecordZones
             .first(where: { $0.zoneID == object.base.recordID.zoneID })
             .map({ Zone(base: $0) })
     }
     
-    func update(_ object: Object) throws {
+    public func update(_ object: Object) throws {
         
     }
     
-    func delete(_ object: Object) throws {
+    public func delete(_ object: Object) throws {
         records[object.base.recordID] = nil
     }
     
-    func save() -> AnyTask<Void, SaveError> {
+    public func save() -> AnyTask<Void, SaveError> {
         let ckDatabase = self.ckDatabase
         let records = self.records
         

@@ -27,7 +27,7 @@ public struct DatabaseObjectContextSaveError<Context: DatabaseObjectContext>: Er
 public protocol DatabaseObjectContext {
     associatedtype Zone: DatabaseZone
     associatedtype Object: DatabaseObject
-    associatedtype ObjectType: LosslessStringConvertible
+    associatedtype ObjectType: Codable & LosslessStringConvertible
     associatedtype ObjectID: Hashable
     
     typealias SaveError = DatabaseObjectContextSaveError<Self>

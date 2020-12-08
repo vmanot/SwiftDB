@@ -7,18 +7,22 @@ import Swallow
 import Task
 
 extension _CoreData {
-    struct DatabaseObjectContext {
+    public struct DatabaseObjectContext {
         let base: NSManagedObjectContext
+        
+        init(base: NSManagedObjectContext) {
+            self.base = base
+        }
     }
 }
 
 extension _CoreData.DatabaseObjectContext: DatabaseObjectContext {
-    typealias Zone = _CoreData.Zone
-    typealias Object = _CoreData.DatabaseObject
-    typealias ObjectType = String
-    typealias ObjectID = _CoreData.DatabaseObject.ID
+    public typealias Zone = _CoreData.Zone
+    public typealias Object = _CoreData.DatabaseObject
+    public typealias ObjectType = String
+    public typealias ObjectID = _CoreData.DatabaseObject.ID
     
-    func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
+    public func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
         let object = Object(base: NSEntityDescription.insertNewObject(forEntityName: type, into: base))
         
         if let zone = zone {
@@ -27,20 +31,20 @@ extension _CoreData.DatabaseObjectContext: DatabaseObjectContext {
         
         return object
     }
-   
-    func zone(for object: Object) throws -> Zone? {
+    
+    public func zone(for object: Object) throws -> Zone? {
         object.base.objectID.persistentStore.map({ Zone(base: $0) })
     }
     
-    func update(_ object: Object) throws {
+    public func update(_ object: Object) throws {
         
     }
     
-    func delete(_ object: Object) throws {
+    public func delete(_ object: Object) throws {
         base.delete(object.base)
     }
     
-    func save() -> AnyTask<Void, SaveError> {
+    public func save() -> AnyTask<Void, SaveError> {
         guard base.hasChanges else {
             return .just(.success(()))
         }

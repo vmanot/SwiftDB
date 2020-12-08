@@ -15,7 +15,6 @@ extension _CoreData {
         }
     }
 }
-typealias CoreData = _CoreData
 
 extension _CoreData.Database: Database {
     typealias Zone = _CoreData.Zone

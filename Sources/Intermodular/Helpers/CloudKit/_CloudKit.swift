@@ -2,6 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-enum _CloudKit {
+public enum _CloudKit {
     
 }

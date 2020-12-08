@@ -11,6 +11,6 @@ extension NSEntityDescription {
     }
     
     public func contains<Key: CodingKey>(key: Key) -> Bool {
-        return allKeys.contains(where: { $0.stringValue == key.stringValue })
+        allKeys.contains(where: { $0.stringValue == key.stringValue })
     }
 }

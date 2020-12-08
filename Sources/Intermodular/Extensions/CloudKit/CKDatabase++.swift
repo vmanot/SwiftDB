@@ -6,6 +6,6 @@ import CloudKit
 import Swallow
 import Task
 
-extension CKContainer {
+extension CKDatabase {
 
 }
