@@ -7,9 +7,9 @@ import Swallow
 import Task
 
 extension _CloudKit {
-    public final class DatabaseObject {
-        public struct ID: Hashable {
-            let base: CKRecord.ID
+    public final class DatabaseRecord {
+        public struct ID: Codable & Hashable {
+            let value: String
         }
         
         let base: CKRecord
@@ -20,7 +20,7 @@ extension _CloudKit {
     }
 }
 
-extension _CloudKit.DatabaseObject: DatabaseObject {
+extension _CloudKit.DatabaseRecord: DatabaseRecord {
     public var isInitialized: Bool {
         true
     }
@@ -47,5 +47,11 @@ extension _CloudKit.DatabaseObject: DatabaseObject {
     
     public func decode<Value>(_: Value.Type, forKey key: CodingKey) throws -> Value {
         fatalError()
+    }
+}
+
+extension _CloudKit.DatabaseRecord: Identifiable {
+    public var id: ID {
+        .init(value: base.recordID.recordName)
     }
 }

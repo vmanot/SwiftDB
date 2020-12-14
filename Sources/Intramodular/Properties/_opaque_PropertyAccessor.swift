@@ -17,7 +17,7 @@ protocol _opaque_PropertyAccessor: _opaque_PropertyWrapper {
     /// Needed for required attributes, otherwise the underlying object crashes on save.
     mutating func _runtime_encodeDefaultValueIfNecessary()
     
-    var underlyingObject: DatabaseObject? { get set }
+    var underlyingObject: DatabaseRecord? { get set }
     
     var name: String? { get set }
     var key: AnyStringKey? { get }

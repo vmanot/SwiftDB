@@ -14,7 +14,7 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
     var _opaque_id: AnyHashable? { get }
     var _opaque_objectWillChange: _opaque_VoidSender? { get }
     
-    var _runtime_underlyingObject: DatabaseObject? { get }
+    var _runtime_underlyingObject: DatabaseRecord? { get }
     
     static var name: String { get }
     static var managedObjectClassName: String { get }
@@ -45,7 +45,7 @@ extension _opaque_Entity {
         
         for (key, value) in instance.allChildren {
             if var property = value as? _opaque_PropertyAccessor {
-                property.underlyingObject = underlyingObject.map(_CoreData.DatabaseObject.init)
+                property.underlyingObject = underlyingObject.map(_CoreData.DatabaseRecord.init)
                 
                 if property.name == nil {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
@@ -110,7 +110,7 @@ extension _opaque_Entity where Self: Entity {
         nil
     }
     
-    public var _runtime_underlyingObject: DatabaseObject? {
+    public var _runtime_underlyingObject: DatabaseRecord? {
         for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
             if let value = value as? _opaque_PropertyAccessor {
                 return value.underlyingObject

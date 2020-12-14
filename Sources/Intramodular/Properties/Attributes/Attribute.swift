@@ -20,7 +20,7 @@ public final class Attribute<Value>: _opaque_Attribute, ObservableObject, Proper
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     @usableFromInline
-    var underlyingObject: DatabaseObject?
+    var underlyingObject: DatabaseRecord?
     @usableFromInline
     var initialValue: Value?
     

@@ -7,7 +7,7 @@ import Swallow
 import Task
 
 extension _CloudKit {
-    public struct Zone: DatabaseZone {
+    public struct DatabaseZone {
         let base: CKRecordZone
         
         init(base: CKRecordZone) {
@@ -16,7 +16,7 @@ extension _CloudKit {
     }
 }
 
-extension _CloudKit.Zone {
+extension _CloudKit.DatabaseZone: DatabaseZone {
     public struct ID: Codable & Hashable {
         let zoneName: String
         let ownerName: String

@@ -121,9 +121,11 @@ extension PersistentContainer {
     }
     
     public func save() {
-        if base.viewContext.hasChanges {
-            try! base.viewContext.save()
+        guard base.viewContext.hasChanges else {
+            return
         }
+        
+        try! base.viewContext.save()
         
         objectWillChange.send()
     }
@@ -213,7 +215,7 @@ extension PersistentContainer {
     }
     
     public func delete(_ instance: _opaque_Entity) throws {
-        try _CoreData.DatabaseObjectContext(base: try viewContext.unwrap()).delete(try instance._runtime_underlyingObject.unwrap() as! _CoreData.DatabaseObjectContext.Object)
+        try _CoreData.DatabaseRecordContext(base: try viewContext.unwrap()).delete(try instance._runtime_underlyingObject.unwrap() as! _CoreData.DatabaseRecordContext.Object)
     }
 }
 

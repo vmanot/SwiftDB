@@ -7,7 +7,7 @@ import Swallow
 import Task
 
 extension _CoreData {
-    public struct DatabaseObjectContext {
+    public struct DatabaseRecordContext {
         let base: NSManagedObjectContext
         
         init(base: NSManagedObjectContext) {
@@ -16,13 +16,13 @@ extension _CoreData {
     }
 }
 
-extension _CoreData.DatabaseObjectContext: DatabaseObjectContext {
+extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = _CoreData.Zone
-    public typealias Object = _CoreData.DatabaseObject
-    public typealias ObjectType = String
-    public typealias ObjectID = _CoreData.DatabaseObject.ID
+    public typealias Object = _CoreData.DatabaseRecord
+    public typealias RecordType = String
+    public typealias RecordID = _CoreData.DatabaseRecord.ID
     
-    public func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
+    public func createRecord(ofType type: RecordType, name: String?, in zone: Zone?) throws -> Object {
         let object = Object(base: NSEntityDescription.insertNewObject(forEntityName: type, into: base))
         
         if let zone = zone {
@@ -60,7 +60,7 @@ extension _CoreData.DatabaseObjectContext: DatabaseObjectContext {
                     
                     attemptToFulfill(.failure(
                         SaveError(
-                            mergeConflicts: (error.userInfo["conflictList"] as? [NSMergeConflict]).map({ $0.map(DatabaseObjectMergeConflict.init) })
+                            mergeConflicts: (error.userInfo["conflictList"] as? [NSMergeConflict]).map({ $0.map(DatabaseRecordMergeConflict.init) })
                         )
                     ))
                 }
@@ -70,7 +70,7 @@ extension _CoreData.DatabaseObjectContext: DatabaseObjectContext {
     }
 }
 
-extension DatabaseObjectMergeConflict where Context == _CoreData.DatabaseObjectContext {
+extension DatabaseRecordMergeConflict where Context == _CoreData.DatabaseRecordContext {
     init(conflict: NSMergeConflict) {
         self.source = .init(base: conflict.sourceObject)
     }

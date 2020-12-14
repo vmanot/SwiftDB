@@ -31,10 +31,15 @@ public struct EntityDescription: Codable, Hashable {
 
 // MARK: - Auxiliary Implementation -
 
-class _NSEntityDescription: NSEntityDescription {
+class _NSEntityDescription: NSEntityDescription, NSSecureCoding {
     weak var parent: _NSEntityDescription?
     
     var _SwiftDB_propertyDescriptions: [String: EntityPropertyDescription] = [:]
+    
+    @objc(supportsSecureCoding)
+    static var supportsSecureCoding: Bool {
+        true
+    }
     
     var _SwiftDB_allPropertyDescriptions: [String: EntityPropertyDescription] {
         guard let parent = parent else {

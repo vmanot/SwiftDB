@@ -30,7 +30,7 @@ public final class EntityRelationship<
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     @usableFromInline
-    var underlyingObject: DatabaseObject?
+    var underlyingObject: DatabaseRecord?
     
     @usableFromInline
     var name: String?
@@ -54,7 +54,7 @@ public final class EntityRelationship<
     public var wrappedValue: Value {
         get {
             do {
-                return try Value.decode(from: (underlyingObject.unwrap() as! _CoreData.DatabaseObject).base, forKey: .init(stringValue: name.unwrap()))
+                return try Value.decode(from: (underlyingObject.unwrap() as! _CoreData.DatabaseRecord).base, forKey: .init(stringValue: name.unwrap()))
             } catch {
                 return .init(noRelatedModels: ())
             }

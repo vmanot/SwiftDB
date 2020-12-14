@@ -4,11 +4,11 @@
 
 import Swallow
 
-public protocol _opaque_DatabaseObject {
+public protocol _opaque_DatabaseRecord {
     
 }
 
-public protocol DatabaseObject: _opaque_DatabaseObject {
+public protocol DatabaseRecord: _opaque_DatabaseRecord {
     var isInitialized: Bool { get }
     var allKeys: [CodingKey] { get }
     
@@ -23,7 +23,7 @@ public protocol DatabaseObject: _opaque_DatabaseObject {
 
 // MARK: - Implementation -
 
-extension DatabaseObject {
+extension DatabaseRecord {
     func decode<Value>(
         _ type: Value.Type,
         forKey key: CodingKey,

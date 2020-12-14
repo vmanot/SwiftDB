@@ -7,7 +7,7 @@ import Swallow
 import Task
 
 extension _CoreData {
-    public struct DatabaseObject {
+    public struct DatabaseRecord {
         public struct ID: Hashable {
             let base: NSManagedObjectID
             
@@ -24,7 +24,7 @@ extension _CoreData {
     }
 }
 
-extension _CoreData.DatabaseObject: DatabaseObject {
+extension _CoreData.DatabaseRecord: DatabaseRecord {
     public var isInitialized: Bool {
         base.managedObjectContext != nil
     }
@@ -73,7 +73,7 @@ extension _CoreData.DatabaseObject: DatabaseObject {
 // MARK: - Auxiliary Implementation -
 
 fileprivate extension Decodable where Self: Encodable {
-    static func decode(from object: _CoreData.DatabaseObject, forKey key: CodingKey) throws -> Self {
+    static func decode(from object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws -> Self {
         return try _CodableToNSAttributeCoder<Self>.decode(
             from: object.base,
             forKey: AnyCodingKey(key)
@@ -81,7 +81,7 @@ fileprivate extension Decodable where Self: Encodable {
         .value
     }
     
-    func encode(to object: _CoreData.DatabaseObject, forKey key: CodingKey) throws  {
+    func encode(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {
         try _CodableToNSAttributeCoder<Self>(self).encode(
             to: object.base,
             forKey: AnyCodingKey(key)

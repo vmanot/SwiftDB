@@ -3,8 +3,7 @@
 //
 
 import CloudKit
-import Swallow
 
-extension CKDatabase {
+extension CKDatabase.Scope: Codable {
     
 }

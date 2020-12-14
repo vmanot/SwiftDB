@@ -9,7 +9,7 @@ import Swallow
 import SwiftUI
 
 /// A type-erased description of a `Schema`.
-public struct SchemaDescription: Hashable, Codable {
+public struct SchemaDescription: Codable, Hashable, Named {
     @usableFromInline
     var _runtime: _Runtime {
         .default

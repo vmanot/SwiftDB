@@ -7,28 +7,28 @@ import Swallow
 import Task
 
 extension _CloudKit {
-    public final class DatabaseObjectContext {
+    public final class DatabaseRecordContext {
         var ckContainer: CKContainer?
         var ckDatabase: CKDatabase
-        var ckRecordZones: [CKRecordZone]
+        var zones: [Zone]
         
         var records: [CKRecord.ID: CKRecord?] = [:]
         
-        init(container: CKContainer?, database: CKDatabase, zones: [CKRecordZone]) {
+        init(container: CKContainer?, database: CKDatabase, zones: [Zone]) {
             self.ckContainer = container
             self.ckDatabase = database
-            self.ckRecordZones = zones
+            self.zones = zones
         }
     }
 }
 
-extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
-    public typealias Object = _CloudKit.DatabaseObject
-    public typealias ObjectType = String
-    public typealias ObjectID = _CloudKit.DatabaseObject.ID
-    public typealias Zone = _CloudKit.Zone
+extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
+    public typealias Object = _CloudKit.DatabaseRecord
+    public typealias RecordType = String
+    public typealias RecordID = _CloudKit.DatabaseRecord.ID
+    public typealias Zone = _CloudKit.DatabaseZone
     
-    public func createObject(ofType type: ObjectType, name: String?, in zone: Zone?) throws -> Object {
+    public func createRecord(ofType type: RecordType, name: String?, in zone: Zone?) throws -> Object {
         let record: CKRecord
         
         if let zone = zone {
@@ -52,7 +52,8 @@ extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
     }
     
     public func zone(for object: Object) throws -> Zone? {
-        ckRecordZones
+        zones.lazy
+            .map({ $0.base })
             .first(where: { $0.zoneID == object.base.recordID.zoneID })
             .map({ Zone(base: $0) })
     }
@@ -78,7 +79,7 @@ extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
             operation.isAtomic = true
             operation.database = ckDatabase
             
-            var conflicts: [DatabaseObjectMergeConflict<_CloudKit.DatabaseObjectContext>]? = []
+            var conflicts: [DatabaseRecordMergeConflict<_CloudKit.DatabaseRecordContext>]? = []
             
             operation.perRecordProgressBlock = { record, progress in
                 
@@ -95,7 +96,7 @@ extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
             
             operation.modifyRecordsCompletionBlock = { savedRecords, deletedRecords, error in
                 if let error = error {
-                    attemptToFullfill(.failure(error as! _CloudKit.DatabaseObjectContext.SaveError))
+                    attemptToFullfill(.failure(error as! _CloudKit.DatabaseRecordContext.SaveError))
                 } else {
                     attemptToFullfill(.success(()))
                 }
@@ -107,7 +108,7 @@ extension _CloudKit.DatabaseObjectContext: DatabaseObjectContext {
     }
 }
 
-extension DatabaseObjectMergeConflict where Context == _CloudKit.DatabaseObjectContext {
+extension DatabaseRecordMergeConflict where Context == _CloudKit.DatabaseRecordContext {
     init(record: CKRecord, error: CKError) {
         self.source = .init(base: record)
     }
