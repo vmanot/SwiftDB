@@ -17,17 +17,19 @@ extension _CloudKit {
 }
 
 extension _CloudKit.DatabaseZone: DatabaseZone {
-    public struct ID: Codable & Hashable {
-        let zoneName: String
-        let ownerName: String
-    }
-    
     public var name: String {
         base.zoneID.zoneName
     }
     
     public var ownerName: String {
         base.zoneID.ownerName
+    }
+}
+
+extension _CloudKit.DatabaseZone {
+    public struct ID: Codable & Hashable {
+        let zoneName: String
+        let ownerName: String
     }
     
     public var id: ID {
