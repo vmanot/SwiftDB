@@ -44,6 +44,10 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         base.delete(object.base)
     }
     
+    public func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error> {
+        fatalError(reason: .unimplemented)
+    }
+    
     public func save() -> AnyTask<Void, SaveError> {
         guard base.hasChanges else {
             return .just(.success(()))

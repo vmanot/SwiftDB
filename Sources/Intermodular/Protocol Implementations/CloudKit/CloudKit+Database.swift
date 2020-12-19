@@ -9,13 +9,19 @@ import Task
 
 extension _CloudKit {
     public final class Database {
+        public let schema: SchemaDescription?
         public let configuration: Configuration
         public let state: State
         
         internal let base: CKContainer
         internal var ckDatabase: CKDatabase
         
-        public init(configuration: Configuration, state: State) throws {
+        public init(
+            schema: SchemaDescription?,
+            configuration: Configuration,
+            state: State
+        ) throws {
+            self.schema = schema
             self.configuration = configuration
             self.state = state
             
@@ -25,6 +31,7 @@ extension _CloudKit {
         }
         
         public init(container: CKContainer, scope: CKDatabase.Scope) throws {
+            self.schema = nil
             self.configuration = .init(
                 containerIdentifier: container.containerIdentifier!,
                 scope: scope

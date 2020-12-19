@@ -8,38 +8,47 @@ import Task
 
 extension _CoreData {
     public final class Database {
+        public struct Configuration: Codable {
+            public let name: String
+            
+            public init(name: String) {
+                self.name = name
+            }
+        }
+        
+        public struct State: Codable, ExpressibleByNilLiteral {
+            public init(nilLiteral: Void) {
+                
+            }
+        }
+        
+        public let schema: SchemaDescription?
         public let configuration: Configuration
         public let state: State
         
-        private let base: NSPersistentContainer
+        fileprivate let base: NSPersistentContainer
         
-        public init(configuration: Configuration, state: State) {
+        public init(
+            schema: SchemaDescription?,
+            configuration: Configuration,
+            state: State
+        ) {
+            self.schema = schema
             self.configuration = configuration
             self.state = state
             
-            self.base = .init(name: configuration.name)
+            if let schema = schema {
+                self.base = .init(name: configuration.name, managedObjectModel: .init(schema))
+            } else {
+                self.base = .init(name: configuration.name)
+            }
         }
         
         public init(container: NSPersistentContainer) {
+            self.schema = nil // FIXME!!!Ω
             self.configuration = .init(name: container.name)
             self.state = nil
             self.base = container
-        }
-    }
-}
-
-extension _CoreData.Database {
-    public struct Configuration: Codable {
-        public let name: String
-        
-        public init(name: String) {
-            self.name = name
-        }
-    }
-    
-    public struct State: Codable, ExpressibleByNilLiteral {
-        public init(nilLiteral: Void) {
-            
         }
     }
 }

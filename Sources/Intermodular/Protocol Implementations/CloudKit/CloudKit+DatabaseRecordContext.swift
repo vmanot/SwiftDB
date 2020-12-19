@@ -66,6 +66,10 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         records[object.base.recordID] = nil
     }
     
+    public func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error> {
+        fatalError(reason: .unimplemented)
+    }
+    
     public func save() -> AnyTask<Void, SaveError> {
         let ckDatabase = self.ckDatabase
         let records = self.records

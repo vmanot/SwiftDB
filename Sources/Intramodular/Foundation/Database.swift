@@ -12,11 +12,12 @@ public protocol Database: Named, Identifiable where ID: Codable {
     
     typealias Zone = RecordContext.Zone
     
+    var schema: SchemaDescription? { get }
     var configuration: Configuration { get }
     var state: State { get }
     var capabilities: [DatabaseCapability] { get }
     
-    init(configuration: Configuration, state: State) throws
+    init(schema: SchemaDescription?, configuration: Configuration, state: State) throws
     
     func fetchAllZones() -> AnyTask<[Zone], Error>
     func fetchZone(named _: String) -> AnyTask<Zone, Error>
