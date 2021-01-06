@@ -3,8 +3,8 @@
 //
 
 import CoreData
+import Merge
 import Swallow
-import Task
 
 extension _CoreData {
     public final class Database {

@@ -19,7 +19,6 @@ let package = Package(
         .package(url: "https://github.com/vmanot/Runtime.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
         .package(url: "https://github.com/SwiftUIX/SwiftUIX.git", .branch("master")),
-        .package(url: "https://github.com/vmanot/Task.git", .branch("master"))
         
     ],
     targets: [
@@ -30,8 +29,7 @@ let package = Package(
                 "Merge",
                 "Runtime",
                 "Swallow",
-                "SwiftUIX",
-                "Task"
+                "SwiftUIX"
             ],
             path: "Sources"
         ),

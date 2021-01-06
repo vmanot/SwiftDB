@@ -4,8 +4,8 @@
 
 import CoreData
 import FoundationX
+import Merge
 import Swallow
-import Task
 
 public struct DatabaseRecordMergeConflict<Context: DatabaseRecordContext> {
     let source: Context.Record

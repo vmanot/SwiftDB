@@ -2,8 +2,8 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Merge
 import Swallow
-import Task
 
 public protocol Database: Named, Identifiable where ID: Codable {
     associatedtype Configuration: Codable

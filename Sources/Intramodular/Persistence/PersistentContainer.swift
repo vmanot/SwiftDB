@@ -117,7 +117,7 @@ extension PersistentContainer {
                 
                 self.viewContext = self.base.viewContext
             })
-            .subscribe(storeIn: cancellables)
+            .subscribe(in: cancellables)
     }
     
     public func save() {
