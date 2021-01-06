@@ -74,8 +74,10 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
 }
 
+// MARK: - Helpers -
+
 extension DatabaseRecordMergeConflict where Context == _CoreData.DatabaseRecordContext {
-    init(conflict: NSMergeConflict) {
+    fileprivate init(conflict: NSMergeConflict) {
         self.source = .init(base: conflict.sourceObject)
     }
 }

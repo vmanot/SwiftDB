@@ -7,10 +7,6 @@ import FoundationX
 import Merge
 import Swallow
 
-public struct DatabaseRecordMergeConflict<Context: DatabaseRecordContext> {
-    let source: Context.Record
-}
-
 public struct DatabaseRecordContextSaveError<Context: DatabaseRecordContext>: Error {
     let mergeConflicts: [DatabaseRecordMergeConflict<Context>]?
     
