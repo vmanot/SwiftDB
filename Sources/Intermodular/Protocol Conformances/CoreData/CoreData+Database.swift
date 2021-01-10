@@ -82,8 +82,8 @@ extension _CoreData.Database: Database {
             .convertToTask()
     }
     
-    public func recordContext(forZones _: [Zone]) -> RecordContext {
-        .init(base: base.viewContext)
+    public func recordContext(forZones zones: [Zone]) -> RecordContext {
+        .init(managedObjectContext: base.viewContext, affectedStores: zones.map({ $0.base }))
     }
 }
 

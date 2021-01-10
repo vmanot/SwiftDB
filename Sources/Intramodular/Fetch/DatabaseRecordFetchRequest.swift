@@ -18,7 +18,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Hashable {
 }
 
 extension DatabaseFetchRequest {
-    public struct Result: Hashable {
-        
+    public struct Result {
+        let records: [Context.Record]?
     }
 }
