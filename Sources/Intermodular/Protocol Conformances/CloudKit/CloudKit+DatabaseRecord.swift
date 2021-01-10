@@ -9,7 +9,7 @@ import Swallow
 extension _CloudKit {
     public final class DatabaseRecord {
         public struct ID: Codable & Hashable {
-            let value: String
+            let rawValue: String
         }
         
         let base: CKRecord
@@ -52,6 +52,6 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord {
 
 extension _CloudKit.DatabaseRecord: Identifiable {
     public var id: ID {
-        .init(value: base.recordID.recordName)
+        .init(rawValue: base.recordID.recordName)
     }
 }

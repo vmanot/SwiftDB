@@ -26,7 +26,13 @@ public protocol DatabaseRecordContext {
     typealias FetchRequest = DatabaseFetchRequest<Self>
     typealias SaveError = DatabaseRecordContextSaveError<Self>
     
-    func createRecord(ofType type: RecordType, name: String?, in zone: Zone?) throws -> Record
+    func createRecord(
+        ofType type: RecordType,
+        id: RecordID?,
+        in zone: Zone?
+    ) throws -> Record
+    
+    func recordID(from record: Record) throws -> RecordID
     
     func zone(for: Record) throws -> Zone?
     func update(_: Record) throws

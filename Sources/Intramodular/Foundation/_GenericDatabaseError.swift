@@ -5,5 +5,5 @@
 import Swift
 
 public enum _GenericDatabaseError: Hashable {
-
+    
 }

@@ -23,26 +23,30 @@ extension _CloudKit {
 }
 
 extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
-    public typealias Object = _CloudKit.DatabaseRecord
+    public typealias Record = _CloudKit.DatabaseRecord
     public typealias RecordType = String
     public typealias RecordID = _CloudKit.DatabaseRecord.ID
     public typealias Zone = _CloudKit.DatabaseZone
     
-    public func createRecord(ofType type: RecordType, name: String?, in zone: Zone?) throws -> Object {
+    public func createRecord(
+        ofType type: RecordType,
+        id: RecordID?,
+        in zone: Zone?
+    ) throws -> Record {
         let record: CKRecord
         
         if let zone = zone {
             record = CKRecord(
                 recordType: type,
                 recordID: .init(
-                    recordName: name ?? UUID().uuidString,
+                    recordName: id?.rawValue ?? UUID().uuidString,
                     zoneID: .init(zoneName: zone.name, ownerName: zone.ownerName)
                 )
             )
         } else {
             record = CKRecord(
                 recordType: type,
-                recordID: .init(recordName: name ?? UUID().uuidString)
+                recordID: .init(recordName: id?.rawValue ?? UUID().uuidString)
             )
         }
         
@@ -51,18 +55,22 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         return .init(base: record)
     }
     
-    public func zone(for object: Object) throws -> Zone? {
+    public func recordID(from record: Record) throws -> Record.ID {
+        .init(rawValue: record.base.recordID.recordName)
+    }
+    
+    public func zone(for object: Record) throws -> Zone? {
         zones.lazy
             .map({ $0.base })
             .first(where: { $0.zoneID == object.base.recordID.zoneID })
             .map({ Zone(base: $0) })
     }
     
-    public func update(_ object: Object) throws {
+    public func update(_ object: Record) throws {
         
     }
     
-    public func delete(_ object: Object) throws {
+    public func delete(_ object: Record) throws {
         records[object.base.recordID] = nil
     }
     

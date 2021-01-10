@@ -18,12 +18,16 @@ extension _CoreData {
 
 extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = _CoreData.Zone
-    public typealias Object = _CoreData.DatabaseRecord
+    public typealias Record = _CoreData.DatabaseRecord
     public typealias RecordType = String
     public typealias RecordID = _CoreData.DatabaseRecord.ID
     
-    public func createRecord(ofType type: RecordType, name: String?, in zone: Zone?) throws -> Object {
-        let object = Object(base: NSEntityDescription.insertNewObject(forEntityName: type, into: base))
+    public func createRecord(
+        ofType type: RecordType,
+        id: RecordID?,
+        in zone: Zone?
+    ) throws -> Record {
+        let object = Record(base: NSEntityDescription.insertNewObject(forEntityName: type, into: base))
         
         if let zone = zone {
             base.assign(object.base, to: zone.base)
@@ -32,15 +36,19 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         return object
     }
     
-    public func zone(for object: Object) throws -> Zone? {
+    public func recordID(from record: Record) throws -> RecordID {
+        .init(base: record.base.objectID)
+    }
+    
+    public func zone(for object: Record) throws -> Zone? {
         object.base.objectID.persistentStore.map({ Zone(base: $0) })
     }
     
-    public func update(_ object: Object) throws {
+    public func update(_ object: Record) throws {
         
     }
     
-    public func delete(_ object: Object) throws {
+    public func delete(_ object: Record) throws {
         base.delete(object.base)
     }
     

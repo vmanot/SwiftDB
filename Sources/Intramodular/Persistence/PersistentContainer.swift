@@ -215,7 +215,7 @@ extension PersistentContainer {
     }
     
     public func delete(_ instance: _opaque_Entity) throws {
-        try _CoreData.DatabaseRecordContext(base: try viewContext.unwrap()).delete(try instance._runtime_underlyingObject.unwrap() as! _CoreData.DatabaseRecordContext.Object)
+        try _CoreData.DatabaseRecordContext(base: try viewContext.unwrap()).delete(try instance._runtime_underlyingObject.unwrap() as! _CoreData.DatabaseRecordContext.Record)
     }
 }
 
