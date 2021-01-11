@@ -36,7 +36,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         let object = Record(base: NSEntityDescription.insertNewObject(forEntityName: type, into: managedObjectContext))
         
         if let zone = zone {
-            managedObjectContext.assign(object.base, to: zone.base)
+            managedObjectContext.assign(object.base, to: zone.persistentStore)
         }
         
         return object
@@ -47,7 +47,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func zone(for object: Record) throws -> Zone? {
-        object.base.objectID.persistentStore.map({ Zone(base: $0) })
+        object.base.objectID.persistentStore.map({ Zone(persistentStore: $0) })
     }
     
     public func update(_ object: Record) throws {

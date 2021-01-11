@@ -23,11 +23,23 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
     @Published public private(set) var base: NSPersistentContainer
     @Published public private(set) var viewContext: NSManagedObjectContext?
     
+    let database: _CoreData.Database
+    
     public init(
         _ schema: Schema,
         applicationGroupID: String? = nil,
         cloudKitContainerIdentifier: String? = nil
     ) {
+        self.database = _CoreData.Database(
+            schema: .init(schema),
+            configuration: _CoreData.Database.Configuration(
+                name: schema.name,
+                applicationGroupID: applicationGroupID,
+                cloudKitContainerIdentifier: cloudKitContainerIdentifier
+            ),
+            state: nil
+        )
+        
         self.schema = SchemaDescription(schema)
         self.applicationGroupID = applicationGroupID
         self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
@@ -218,7 +230,8 @@ extension PersistentContainer {
         try _CoreData.DatabaseRecordContext(
             managedObjectContext: try viewContext.unwrap(),
             affectedStores: nil
-        ).delete(try instance._runtime_underlyingObject.unwrap() as! _CoreData.DatabaseRecordContext.Record)
+        )
+        .delete(try instance._runtime_underlyingObject.unwrap() as! _CoreData.DatabaseRecordContext.Record)
     }
 }
 
@@ -244,16 +257,6 @@ extension Dictionary where Key == CodingUserInfoKey, Value == Any {
             self[._SwiftDB_PersistentContainer] as? _opaque_PersistentContainer
         } set {
             self[._SwiftDB_PersistentContainer] = newValue
-        }
-    }
-}
-
-extension JSONDecoder {
-    public var persistentContainer: _opaque_PersistentContainer? {
-        get {
-            userInfo[._SwiftDB_PersistentContainer] as? _opaque_PersistentContainer
-        } set {
-            userInfo[._SwiftDB_PersistentContainer] = newValue
         }
     }
 }

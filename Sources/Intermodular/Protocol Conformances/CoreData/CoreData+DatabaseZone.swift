@@ -7,19 +7,19 @@ import Merge
 import Swallow
 
 extension _CoreData {
-    public struct Zone: DatabaseZone {
-        let base: NSPersistentStore
+    public struct Zone: DatabaseZone, Identifiable, Named {
+        let persistentStore: NSPersistentStore
         
-        init(base: NSPersistentStore) {
-            self.base = base
+        init(persistentStore: NSPersistentStore) {
+            self.persistentStore = persistentStore
         }
         
         public var name: String {
-            base.configurationName
+            persistentStore.configurationName
         }
         
         public var id: String {
-            base.identifier
+            persistentStore.identifier
         }
     }
 }

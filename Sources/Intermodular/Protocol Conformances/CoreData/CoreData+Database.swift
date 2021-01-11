@@ -10,9 +10,17 @@ extension _CoreData {
     public final class Database {
         public struct Configuration: Codable {
             public let name: String
+            public let applicationGroupID: String?
+            public let cloudKitContainerIdentifier: String?
             
-            public init(name: String) {
+            public init(
+                name: String,
+                applicationGroupID: String?,
+                cloudKitContainerIdentifier: String?
+            ) {
                 self.name = name
+                self.applicationGroupID = applicationGroupID
+                self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
             }
         }
         
@@ -45,8 +53,12 @@ extension _CoreData {
         }
         
         public init(container: NSPersistentContainer) {
-            self.schema = nil // FIXME!!!Ω
-            self.configuration = .init(name: container.name)
+            self.schema = nil // FIXME!!!
+            self.configuration = .init(
+                name: container.name,
+                applicationGroupID: nil,
+                cloudKitContainerIdentifier: nil
+            )
             self.state = nil
             self.base = container
         }
@@ -66,11 +78,11 @@ extension _CoreData.Database: Database {
                 self.base
                     .persistentStoreCoordinator
                     .persistentStores
-                    .map({ _CoreData.Zone(base: $0) })
+                    .map({ _CoreData.Zone(persistentStore: $0) })
             }
             .convertToTask()
         } else {
-            return .just(.success(base.persistentStoreCoordinator.persistentStores.map({ Zone(base: $0) })))
+            return .just(.success(base.persistentStoreCoordinator.persistentStores.map({ Zone(persistentStore: $0) })))
         }
     }
     
@@ -83,7 +95,7 @@ extension _CoreData.Database: Database {
     }
     
     public func recordContext(forZones zones: [Zone]) -> RecordContext {
-        .init(managedObjectContext: base.viewContext, affectedStores: zones.map({ $0.base }))
+        .init(managedObjectContext: base.viewContext, affectedStores: zones.map({ $0.persistentStore }))
     }
 }
 
