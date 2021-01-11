@@ -17,7 +17,7 @@ protocol _opaque_PropertyAccessor: _opaque_PropertyWrapper {
     /// Needed for required attributes, otherwise the underlying object crashes on save.
     mutating func _runtime_encodeDefaultValueIfNecessary()
     
-    var underlyingObject: DatabaseRecord? { get set }
+    var underlyingRecord: DatabaseRecord? { get set }
     
     var name: String? { get set }
     var key: AnyStringKey? { get }
@@ -45,11 +45,11 @@ extension _opaque_PropertyAccessor where Self: PropertyWrapper {
     
     @usableFromInline
     mutating func _runtime_encodeDefaultValueIfNecessary() {
-        guard let underlyingObject = underlyingObject, let name = name else {
+        guard let underlyingRecord = underlyingRecord, let name = name else {
             return
         }
         
-        if !isOptional && !underlyingObject.containsValue(forKey: AnyStringKey(stringValue: name)) {
+        if !isOptional && !underlyingRecord.containsValue(forKey: AnyStringKey(stringValue: name)) {
             _ = self.wrappedValue // force an evaluation
         }
     }

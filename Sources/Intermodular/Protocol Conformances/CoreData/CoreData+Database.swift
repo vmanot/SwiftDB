@@ -78,7 +78,7 @@ extension _CoreData.Database: Database {
                 self.base
                     .persistentStoreCoordinator
                     .persistentStores
-                    .map({ _CoreData.Zone(persistentStore: $0) })
+                    .map({ _CoreData.Database.Zone(persistentStore: $0) })
             }
             .convertToTask()
         } else {

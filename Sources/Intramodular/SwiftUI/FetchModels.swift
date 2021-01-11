@@ -27,7 +27,7 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
         }).map({ object -> Result in
             hasher.combine(object)
             
-            return Result(_runtime_underlyingObject: object)
+            return Result(_runtime_underlyingRecord: object)
         })
         
         wrappedValueHash = hasher.finalize()

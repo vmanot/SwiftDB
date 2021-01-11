@@ -2,8 +2,8 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Foundation
 import CoreData
+import FoundationX
 import Swallow
 
 public protocol NSPrimitiveAttributeCoder: NSAttributeCoder {
@@ -17,16 +17,20 @@ extension NSPrimitiveAttributeCoder {
         object.primitiveValue(forKey: key.stringValue) as! Self
     }
     
-    public static func decode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) -> Self {
         let key = key.stringValue
         
-        object.willAccessValue(forKey: key)
-        
-        defer {
-            object.didAccessValue(forKey: key)
+        if let object = object as? NSManagedObject {
+            object.willAccessValue(forKey: key)
+            
+            defer {
+                object.didAccessValue(forKey: key)
+            }
+            
+            return object.primitiveValue(forKey: key) as! Self
+        } else {
+            return object.value(forKey: key) as! Self
         }
-        
-        return object.primitiveValue(forKey: key) as! Self
     }
     
     public func encodePrimitive<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) {
@@ -37,20 +41,24 @@ extension NSPrimitiveAttributeCoder {
         return object.setPrimitiveValue(self, forKey: key.stringValue)
     }
     
-    public func encode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) {
-        guard object.managedObjectContext != nil else {
-            return
-        }
-        
+    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) {
         let key = key.stringValue
         
-        object.willChangeValue(forKey: key)
-        
-        defer {
-            object.didChangeValue(forKey: key)
+        if let object = object as? NSManagedObject {
+            guard object.managedObjectContext != nil else {
+                return
+            }
+            
+            object.willChangeValue(forKey: key)
+            
+            defer {
+                object.didChangeValue(forKey: key)
+            }
+            
+            return object.setPrimitiveValue(self, forKey: key)
+        } else {
+            object.setValue(self, forKey: key)
         }
-        
-        return object.setPrimitiveValue(self, forKey: key)
     }
     
     public func getNSAttributeType() -> NSAttributeType {
@@ -93,7 +101,7 @@ extension Character: NSPrimitiveAttributeCoder {
         .init(String.decodePrimitive(from: object, forKey: key))
     }
     
-    public static func decode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) -> Self {
         .init(String.decode(from: object, forKey: key))
     }
     
@@ -101,7 +109,7 @@ extension Character: NSPrimitiveAttributeCoder {
         try stringValue.encodePrimitive(to: object, forKey: key)
     }
     
-    public func encode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) {
+    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) {
         stringValue.encode(to: object, forKey: key)
     }
 }

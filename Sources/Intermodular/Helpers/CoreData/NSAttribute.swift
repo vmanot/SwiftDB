@@ -83,7 +83,7 @@ public struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
     }
     
     @inlinable
-    public static func decode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
         let value = object.value(forKey: key.stringValue)
         
         if value == nil, let _T = T.self as? _opaque_Optional.Type {
@@ -103,11 +103,13 @@ public struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
     }
     
     @inlinable
-    public func encode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
-        guard object.managedObjectContext != nil else {
-            return
+    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+        if let object = object as? NSManagedObject {
+            guard object.managedObjectContext != nil else {
+                return
+            }
         }
-        
+
         object.setValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
     }
     
@@ -134,7 +136,7 @@ public struct _OptionalCodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
     }
     
     @inlinable
-    public static func decode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
         guard let value = object.value(forKey: key.stringValue) else {
             return .init(nil)
         }
@@ -156,9 +158,11 @@ public struct _OptionalCodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
     }
     
     @inlinable
-    public func encode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
-        guard object.managedObjectContext != nil else {
-            return
+    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+        if let object = object as? NSManagedObject {
+            guard object.managedObjectContext != nil else {
+                return
+            }
         }
         
         guard let value = value else {

@@ -7,20 +7,13 @@ import Runtime
 import Swallow
 import SwiftUI
 
-/// A shadow protocol for `Attribute`.
-protocol _opaque_Attribute: _opaque_PropertyAccessor {
-    var typeDescription: EntityAttributeTypeDescription { get }
-    var allowsExternalBinaryDataStorage: Bool { get }
-    var preservesValueInHistoryOnDeletion: Bool { get }
-}
-
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: _opaque_Attribute, ObservableObject, PropertyWrapper {
+public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject, PropertyWrapper {
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     @usableFromInline
-    var underlyingObject: DatabaseRecord?
+    var underlyingRecord: DatabaseRecord?
     @usableFromInline
     var initialValue: Value?
     
@@ -64,8 +57,8 @@ public final class Attribute<Value>: _opaque_Attribute, ObservableObject, Proper
                 objectWillChange.send()
             }
             
-            if let underlyingObject = underlyingObject {
-                guard underlyingObject.isInitialized else {
+            if let underlyingRecord = underlyingRecord {
+                guard underlyingRecord.isInitialized else {
                     return
                 }
                 
@@ -150,10 +143,10 @@ extension Attribute where Value: NSAttributeCoder {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
-                try attribute.underlyingObject.unwrap().decode(Value.self, forKey: attribute.key.unwrap())
+                try attribute.underlyingRecord.unwrap().decode(Value.self, forKey: attribute.key.unwrap())
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingObject.unwrap().encode(newValue, forKey: attribute.key.unwrap())
+                try attribute.underlyingRecord.unwrap().encode(newValue, forKey: attribute.key.unwrap())
             },
             name: name,
             isTransient: isTransient,
@@ -175,14 +168,14 @@ extension Attribute where Value: Codable {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
-                try attribute.underlyingObject.unwrap().decode(
+                try attribute.underlyingRecord.unwrap().decode(
                     Value.self,
                     forKey: attribute.key.unwrap(),
                     initialValue: attribute.initialValue
                 )
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingObject.unwrap().encode(
+                try attribute.underlyingRecord.unwrap().encode(
                     newValue,
                     forKey: attribute.key.unwrap()
                 )
@@ -207,14 +200,14 @@ extension Attribute where Value: Codable & NSAttributeCoder {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
-                try attribute.underlyingObject.unwrap().decode(
+                try attribute.underlyingRecord.unwrap().decode(
                     Value.self,
                     forKey: attribute.key.unwrap(),
                     initialValue: attribute.initialValue
                 )
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingObject.unwrap().encode(
+                try attribute.underlyingRecord.unwrap().encode(
                     newValue,
                     forKey: attribute.key.unwrap()
                 )
@@ -239,14 +232,14 @@ extension Attribute where Value: Codable & NSPrimitiveAttributeCoder {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
-                try attribute.underlyingObject.unwrap().decode(
+                try attribute.underlyingRecord.unwrap().decode(
                     Value.self,
                     forKey: attribute.key.unwrap(),
                     initialValue: attribute.initialValue
                 )
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingObject.unwrap().encode(
+                try attribute.underlyingRecord.unwrap().encode(
                     newValue,
                     forKey: attribute.key.unwrap()
                 )
@@ -272,7 +265,7 @@ extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSP
             initialValue: wrappedValue,
             decodeImpl: { attribute in
                 try Value(
-                    rawValue: try attribute.underlyingObject.unwrap().decode(
+                    rawValue: try attribute.underlyingRecord.unwrap().decode(
                         Value.RawValue.self,
                         forKey: attribute.key.unwrap(),
                         initialValue: attribute.initialValue?.rawValue
@@ -280,7 +273,7 @@ extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSP
                 ).unwrap()
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingObject.unwrap().encode(
+                try attribute.underlyingRecord.unwrap().encode(
                     newValue.rawValue,
                     forKey: attribute.key.unwrap()
                 )
@@ -304,7 +297,7 @@ extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSP
             initialValue: wrappedValue,
             decodeImpl: { attribute in
                 try Value(
-                    rawValue: try attribute.underlyingObject.unwrap().decode(
+                    rawValue: try attribute.underlyingRecord.unwrap().decode(
                         Value.RawValue.self,
                         forKey: attribute.key.unwrap(),
                         initialValue: attribute.initialValue?.rawValue
@@ -312,7 +305,7 @@ extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSP
                 ).unwrap()
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingObject.unwrap().encode(
+                try attribute.underlyingRecord.unwrap().encode(
                     newValue.rawValue,
                     forKey: attribute.key.unwrap()
                 )
@@ -344,7 +337,7 @@ extension Attribute {
 }
 
 extension NSAttributeDescription {
-    convenience init(_ attribute: _opaque_Attribute) {
+    convenience init(_ attribute: _opaque_PropertyAccessor) {
         self.init(attribute.toEntityPropertyDescription() as! EntityAttributeDescription)
     }
 }

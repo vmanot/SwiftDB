@@ -6,7 +6,7 @@ import CoreData
 import Merge
 import Swallow
 
-extension _CoreData {
+extension _CoreData.Database {
     public struct Zone: DatabaseZone, Identifiable, Named {
         let persistentStore: NSPersistentStore
         

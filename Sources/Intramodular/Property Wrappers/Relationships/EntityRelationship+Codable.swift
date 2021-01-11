@@ -23,19 +23,21 @@ extension EntityRelationship {
     }
     
     public func decode(from decoder: Decoder) throws {
-        guard let identifierType = Value.RelatableEntityType._opaque_ID as? Decodable.Type else {
-            assertionFailure()
-            
-            return
-        }
-        
-        let decodedIDs = try identifierType.decodeArray(from: decoder)
-        
-        if decodedIDs.isEmpty {
-            return
-        } else {
-            TODO.unimplemented
-        }
+        /*guard let container = decoder.userInfo._SwiftDB_PersistentContainer else {
+         fatalError()
+         }
+         
+         guard let identifierType = Value.RelatableEntityType._opaque_ID as? Decodable.Type else {
+         fatalError()
+         }
+         
+         let decodedIDs = try identifierType.decodeArray(from: decoder)
+         
+         if decodedIDs.isEmpty {
+         return
+         } else {
+         TODO.unimplemented
+         }*/
     }
 }
 

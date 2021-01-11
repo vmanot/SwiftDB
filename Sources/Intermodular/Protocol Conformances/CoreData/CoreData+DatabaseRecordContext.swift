@@ -23,7 +23,7 @@ extension _CoreData {
 }
 
 extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
-    public typealias Zone = _CoreData.Zone
+    public typealias Zone = _CoreData.Database.Zone
     public typealias Record = _CoreData.DatabaseRecord
     public typealias RecordType = String
     public typealias RecordID = _CoreData.DatabaseRecord.ID

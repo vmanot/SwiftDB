@@ -55,3 +55,22 @@ extension _CloudKit.DatabaseRecord: Identifiable {
         .init(rawValue: base.recordID.recordName)
     }
 }
+
+// MARK: - Auxiliary Implementation -
+
+fileprivate extension Decodable where Self: Encodable {
+    static func decode(from object: _CloudKit.DatabaseRecord, forKey key: CodingKey) throws -> Self {
+        return try _CodableToNSAttributeCoder<Self>.decode(
+            from: object.base,
+            forKey: AnyCodingKey(key)
+        )
+        .value
+    }
+    
+    func encode(to object: _CloudKit.DatabaseRecord, forKey key: CodingKey) throws  {
+        try _CodableToNSAttributeCoder<Self>(self).encode(
+            to: object.base,
+            forKey: AnyCodingKey(key)
+        )
+    }
+}

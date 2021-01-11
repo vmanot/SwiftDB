@@ -46,17 +46,17 @@ extension EntityRelatable where Self: Entity {
     
     @inlinable
     public init(noRelatedModels: Void) {
-        self.init(_runtime_underlyingObject: nil)
+        self.init(_runtime_underlyingRecord: nil)
     }
     
     @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        Self(_runtime_underlyingObject: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap())
+        Self(_runtime_underlyingRecord: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap())
     }
     
     @inlinable
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
-        base.setValue(self._runtime_underlyingObject, forKey: key.stringValue)
+        base.setValue(self._runtime_underlyingRecord, forKey: key.stringValue)
     }
     
     @inlinable

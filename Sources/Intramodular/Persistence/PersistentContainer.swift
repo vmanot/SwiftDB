@@ -180,7 +180,7 @@ extension PersistentContainer {
         for (name, type) in schema.entityNameToTypeMap {
             let instances = try! base.viewContext
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
-                .map({ type.value.init(_runtime_underlyingObject: $0) })
+                .map({ type.value.init(_runtime_underlyingRecord: $0) })
             
             result.append(contentsOf: instances)
         }
@@ -200,7 +200,7 @@ extension PersistentContainer {
         let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
         let managedObject = managedObjectClass.init(entity: entityDescription, insertInto: viewContext)
         
-        return type.init(_runtime_underlyingObject: managedObject)
+        return type.init(_runtime_underlyingRecord: managedObject)
     }
     
     @discardableResult
@@ -211,7 +211,7 @@ extension PersistentContainer {
         let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
         let managedObject = managedObjectClass.init(entity: entityDescription, insertInto: viewContext)
         
-        return type.init(_runtime_underlyingObject: managedObject) as! Instance
+        return type.init(_runtime_underlyingRecord: managedObject) as! Instance
     }
     
     public func fetchFirst<Instance: Entity>(_ type: Instance.Type) throws -> Instance? {
@@ -223,7 +223,7 @@ extension PersistentContainer {
             return nil
         }
         
-        return .some(type.init(_runtime_underlyingObject: managedObject) as! Instance)
+        return .some(type.init(_runtime_underlyingRecord: managedObject) as! Instance)
     }
     
     public func delete(_ instance: _opaque_Entity) throws {
@@ -231,7 +231,7 @@ extension PersistentContainer {
             managedObjectContext: try viewContext.unwrap(),
             affectedStores: nil
         )
-        .delete(try instance._runtime_underlyingObject.unwrap() as! _CoreData.DatabaseRecordContext.Record)
+        .delete(try instance._runtime_underlyingRecord.unwrap() as! _CoreData.DatabaseRecordContext.Record)
     }
 }
 

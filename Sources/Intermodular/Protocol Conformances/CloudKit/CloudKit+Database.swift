@@ -70,6 +70,7 @@ extension _CloudKit.Database {
 
 extension _CloudKit.Database: Database {
     public typealias RecordContext = _CloudKit.DatabaseRecordContext
+    public typealias Zone = _CloudKit.DatabaseZone
     
     public var capabilities: [DatabaseCapability] {
         []

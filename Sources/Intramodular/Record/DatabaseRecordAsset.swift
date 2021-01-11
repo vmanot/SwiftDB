@@ -2,8 +2,9 @@
 // Copyright (c) Vatsal Manot
 //
 
+import CloudKit
 import Swift
 
-public protocol DatabaseAsset {
+public protocol DatabaseRecordAsset {
     
 }

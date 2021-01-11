@@ -9,8 +9,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     associatedtype Configuration: Codable
     associatedtype State: Codable & ExpressibleByNilLiteral
     associatedtype RecordContext: DatabaseRecordContext
-    
-    typealias Zone = RecordContext.Zone
+    associatedtype Zone where Zone == RecordContext.Zone
     
     var schema: SchemaDescription? { get }
     var configuration: Configuration { get }

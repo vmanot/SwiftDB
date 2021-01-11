@@ -14,7 +14,7 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
     var _opaque_id: AnyHashable? { get }
     var _opaque_objectWillChange: _opaque_VoidSender? { get }
     
-    var _runtime_underlyingObject: DatabaseRecord? { get }
+    var _runtime_underlyingRecord: DatabaseRecord? { get }
     
     static var name: String { get }
     static var managedObjectClassName: String { get }
@@ -38,14 +38,14 @@ extension _opaque_Entity {
     }
     
     @usableFromInline
-    mutating func _runtime_configurePropertyAccessors(underlyingObject: NSManagedObject? = nil) {
+    mutating func _runtime_configurePropertyAccessors(underlyingRecord: NSManagedObject? = nil) {
         var instance = AnyNominalOrTupleMirror(self)!
         
         var isParentSet: Bool = false
         
         for (key, value) in instance.allChildren {
             if var property = value as? _opaque_PropertyAccessor {
-                property.underlyingObject = underlyingObject.map(_CoreData.DatabaseRecord.init)
+                property.underlyingRecord = underlyingRecord.map(_CoreData.DatabaseRecord.init)
                 
                 if property.name == nil {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
@@ -53,7 +53,7 @@ extension _opaque_Entity {
                 
                 if self is _opaque_Subentity {
                     if let parentType = Self._opaque_Parent, !isParentSet {
-                        property._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingObject: underlyingObject)
+                        property._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingRecord: underlyingRecord)
                         
                         isParentSet = true
                     }
@@ -69,7 +69,7 @@ extension _opaque_Entity {
     }
     
     @usableFromInline
-    init(_runtime_underlyingObject object: NSManagedObject?) {
+    init(_runtime_underlyingRecord object: NSManagedObject?) {
         if let object = object, let schema = object._SwiftDB_schemaDescription {
             if let entityType = schema.entityNameToTypeMap[object.entity.name]?.value {
                 self = entityType.init() as! Self
@@ -82,7 +82,7 @@ extension _opaque_Entity {
             self.init()
         }
         
-        _runtime_configurePropertyAccessors(underlyingObject: object)
+        _runtime_configurePropertyAccessors(underlyingRecord: object)
         
         if let objectWillChange = _opaque_objectWillChange, let object = object as? NSXManagedObject {
             object
@@ -110,10 +110,10 @@ extension _opaque_Entity where Self: Entity {
         nil
     }
     
-    public var _runtime_underlyingObject: DatabaseRecord? {
+    public var _runtime_underlyingRecord: DatabaseRecord? {
         for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
             if let value = value as? _opaque_PropertyAccessor {
-                return value.underlyingObject
+                return value.underlyingRecord
             }
         }
         
