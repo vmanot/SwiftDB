@@ -70,7 +70,7 @@ extension _opaque_Entity {
     
     @usableFromInline
     init(_runtime_underlyingRecord object: NSManagedObject?) {
-        if let object = object, let schema = object._SwiftDB_schemaDescription {
+        if let object = object, let schema = object._SwiftDB_databaseSchema {
             if let entityType = schema.entityNameToTypeMap[object.entity.name]?.value {
                 self = entityType.init() as! Self
             } else {

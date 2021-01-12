@@ -2,47 +2,13 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Compute
 import CoreData
 import Runtime
-import Swallow
-import SwiftUI
-
-/// A type-erased description of a `Schema`.
-public struct SchemaDescription: Codable, Hashable, Named {
-    @usableFromInline
-    var _runtime: _Runtime {
-        .default
-    }
-    
-    public let name: String
-    public let entities: [EntityDescription]
-    
-    @usableFromInline
-    @TransientProperty
-    var entityNameToTypeMap = BidirectionalMap<String,  Metatype<_opaque_Entity.Type>>()
-    @usableFromInline
-    @TransientProperty
-    var entityDescriptionToTypeMap = BidirectionalMap<EntityDescription,  Metatype<_opaque_Entity.Type>>()
-    
-    @inlinable
-    public init(_ schema: Schema) {
-        self.name = schema.name
-        self.entities = schema.entities.map({ $0.toEntityDescription() })
-        
-        for (entity, entityType) in entities.zip(schema.entities) {
-            _runtime.typeCache.entity[entity.name] = .init(entityType)
-            entityNameToTypeMap[entity.name] = .init(entityType)
-            entityDescriptionToTypeMap[entity] = .init(entityType)
-        }
-    }
-}
-
-// MARK: - Auxiliary Implementation -
+import Swift
 
 extension NSManagedObjectModel {
     @usableFromInline
-    convenience init(_ schema: SchemaDescription) {
+    convenience init(_ schema: DatabaseSchema) {
         self.init()
         
         var relationshipNameToRelationship: [String: NSRelationshipDescription] = [:]
@@ -100,33 +66,13 @@ extension NSManagedObjectModel {
 }
 
 extension NSPersistentStoreCoordinator {
-    private static let _SwiftDB_schemaDescription_objcAssociationKey = ObjCAssociationKey<SchemaDescription>()
+    private static let _SwiftDB_databaseSchema_objcAssociationKey = ObjCAssociationKey<DatabaseSchema>()
     
-    var _SwiftDB_schemaDescription: SchemaDescription? {
+    var _SwiftDB_databaseSchema: DatabaseSchema? {
         get {
-            self[Self._SwiftDB_schemaDescription_objcAssociationKey]
+            self[Self._SwiftDB_databaseSchema_objcAssociationKey]
         } set {
-            self[Self._SwiftDB_schemaDescription_objcAssociationKey] = newValue
-        }
-    }
-}
-
-extension NSManagedObject {
-    var _SwiftDB_schemaDescription: SchemaDescription? {
-        managedObjectContext?.persistentStoreCoordinator?._SwiftDB_schemaDescription
-    }
-}
-
-extension EnvironmentValues {
-    private struct _EnvironmentKey: EnvironmentKey {
-        static let defaultValue: SchemaDescription? = nil
-    }
-    
-    public var schemaDescription: SchemaDescription? {
-        get {
-            self[_EnvironmentKey]
-        } set {
-            self[_EnvironmentKey] = newValue
+            self[Self._SwiftDB_databaseSchema_objcAssociationKey] = newValue
         }
     }
 }

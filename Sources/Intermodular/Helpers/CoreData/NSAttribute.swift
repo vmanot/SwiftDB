@@ -109,7 +109,7 @@ public struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
                 return
             }
         }
-
+        
         object.setValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
     }
     

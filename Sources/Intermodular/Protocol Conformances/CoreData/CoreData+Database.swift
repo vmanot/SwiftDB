@@ -30,14 +30,14 @@ extension _CoreData {
             }
         }
         
-        public let schema: SchemaDescription?
+        public let schema: DatabaseSchema?
         public let configuration: Configuration
         public let state: State
         
         fileprivate let base: NSPersistentContainer
         
         public init(
-            schema: SchemaDescription?,
+            schema: DatabaseSchema?,
             configuration: Configuration,
             state: State
         ) {

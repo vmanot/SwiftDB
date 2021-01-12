@@ -12,3 +12,7 @@ public struct DatabaseCapability: Codable, Hashable, RawRepresentable {
         self.rawValue = rawValue
     }
 }
+
+extension DatabaseCapability {
+    public static let schemaless = Self(rawValue: "schemaless")
+}

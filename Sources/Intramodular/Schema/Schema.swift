@@ -9,7 +9,7 @@ import Swift
 
 /// The schema of a data model.
 ///
-/// This can loosely by considered the equivalent of an `NSManagedObjectModel`.
+/// This can loosely by considered the equivalent of an `NSManagedObjectModel` for CoreData.
 public protocol Schema: Named {
     typealias Entities = [_opaque_Entity.Type]
     

@@ -9,7 +9,7 @@ import Swallow
 
 extension _CloudKit {
     public final class Database {
-        public let schema: SchemaDescription?
+        public let schema: DatabaseSchema?
         public let configuration: Configuration
         public let state: State
         
@@ -17,7 +17,7 @@ extension _CloudKit {
         internal var ckDatabase: CKDatabase
         
         public init(
-            schema: SchemaDescription?,
+            schema: DatabaseSchema?,
             configuration: Configuration,
             state: State
         ) throws {

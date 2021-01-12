@@ -28,38 +28,3 @@ public struct EntityDescription: Codable, Hashable {
         self.properties = properties
     }
 }
-
-// MARK: - Auxiliary Implementation -
-
-class _NSEntityDescription: NSEntityDescription, NSSecureCoding {
-    weak var parent: _NSEntityDescription?
-    
-    var _SwiftDB_propertyDescriptions: [String: EntityPropertyDescription] = [:]
-    
-    @objc(supportsSecureCoding)
-    static var supportsSecureCoding: Bool {
-        true
-    }
-    
-    var _SwiftDB_allPropertyDescriptions: [String: EntityPropertyDescription] {
-        guard let parent = parent else {
-            return _SwiftDB_propertyDescriptions
-        }
-        
-        return parent._SwiftDB_allPropertyDescriptions.merging(_SwiftDB_propertyDescriptions, uniquingKeysWith: { x, _ in x })
-    }
-    
-    public convenience init(_ description: EntityDescription) {
-        self.init()
-        
-        name = description.name
-        managedObjectClassName = description.managedObjectClassName
-        properties = description.properties.map({ $0.toNSPropertyDescription() })
-        
-        for property in description.properties {
-            _SwiftDB_propertyDescriptions[property.name] = property
-        }
-        
-        subentities = description.subentities.knownValue?.map({ _NSEntityDescription($0) }) ?? []
-    }
-}

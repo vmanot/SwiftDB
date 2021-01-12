@@ -42,11 +42,27 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord {
     }
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
-        fatalError()
+        if let value = value as? NSAttributeCoder {
+            try value.encode(to: base, forKey: AnyCodingKey(key))
+        } else if let value = value as? Codable {
+            try value.encode(to: self, forKey: AnyCodingKey(key))
+        }
     }
     
-    public func decode<Value>(_: Value.Type, forKey key: CodingKey) throws -> Value {
-        fatalError()
+    fileprivate enum DecodingError: Error {
+        case some
+    }
+    
+    public func decode<Value>(_ valueType: Value.Type, forKey key: CodingKey) throws -> Value {
+        if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
+            return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value
+        } else if let valueType = valueType as? NSAttributeCoder.Type {
+            return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value
+        } else if let valueType = valueType as? Codable.Type {
+            return try valueType.decode(from: self, forKey: key) as! Value
+        } else {
+            throw DecodingError.some
+        }
     }
 }
 

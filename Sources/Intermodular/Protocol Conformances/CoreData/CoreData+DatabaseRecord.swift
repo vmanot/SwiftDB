@@ -47,7 +47,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord {
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         if let value = value as? NSAttributeCoder {
-            try value.encodePrimitive(to: base, forKey: AnyCodingKey(key))
+            try value.encode(to: base, forKey: AnyCodingKey(key))
         } else if let value = value as? Codable {
             try value.encode(to: self, forKey: AnyCodingKey(key))
         }

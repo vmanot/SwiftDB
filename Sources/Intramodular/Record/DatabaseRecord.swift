@@ -10,6 +10,8 @@ public protocol _opaque_DatabaseRecord {
 
 public protocol DatabaseRecord: _opaque_DatabaseRecord {
     var isInitialized: Bool { get }
+    
+    var allReservedKeys: [CodingKey] { get }
     var allKeys: [CodingKey] { get }
     
     func contains(_ key: CodingKey) -> Bool

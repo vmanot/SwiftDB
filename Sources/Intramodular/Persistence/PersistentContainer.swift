@@ -15,7 +15,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
     public let cancellables = Cancellables()
     
     fileprivate let fileManager = FileManager.default
-    fileprivate let schema: SchemaDescription
+    fileprivate let schema: DatabaseSchema
     fileprivate let applicationGroupID: String?
     fileprivate let cloudKitContainerIdentifier: String?
     
@@ -40,7 +40,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
             state: nil
         )
         
-        self.schema = SchemaDescription(schema)
+        self.schema = DatabaseSchema(schema)
         self.applicationGroupID = applicationGroupID
         self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
         
@@ -121,7 +121,7 @@ extension PersistentContainer {
         
         base.loadPersistentStores()
             .map({
-                self.base.persistentStoreCoordinator._SwiftDB_schemaDescription = self.schema
+                self.base.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
                 
                 self.base
                     .viewContext
@@ -240,7 +240,6 @@ extension View {
         _ container: PersistentContainer<Schema>
     ) -> some View {
         self.environment(\.managedObjectContext, container.base.viewContext)
-            .environment(\.schemaDescription, container.schema)
             .environmentObject(container)
     }
 }
