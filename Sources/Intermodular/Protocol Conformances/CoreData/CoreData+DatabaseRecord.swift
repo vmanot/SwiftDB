@@ -29,6 +29,10 @@ extension _CoreData.DatabaseRecord: DatabaseRecord {
         base.managedObjectContext != nil
     }
     
+    public var allReservedKeys: [CodingKey] {
+        []
+    }
+    
     public var allKeys: [CodingKey] {
         base.entity.attributesByName.map({ AnyStringKey(stringValue: $0.key) })
     }

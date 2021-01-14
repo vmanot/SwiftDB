@@ -15,6 +15,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/vmanot/API.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/Compute.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/FoundationX.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Runtime.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
@@ -26,6 +28,8 @@ let package = Package(
             name: "SwiftDB",
             dependencies: [
                 "API",
+                "Compute",
+                "FoundationX",
                 "Merge",
                 "Runtime",
                 "Swallow",

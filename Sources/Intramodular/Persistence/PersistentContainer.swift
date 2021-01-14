@@ -196,9 +196,9 @@ extension PersistentContainer {
     public func _opaque_create(_ type: _opaque_Entity.Type) -> _opaque_Entity {
         let type = type as _opaque_Entity.Type
         
-        let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
+        let entity = base.managedObjectModel.entitiesByName[type.name]!
         let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
-        let managedObject = managedObjectClass.init(entity: entityDescription, insertInto: viewContext)
+        let managedObject = managedObjectClass.init(entity: entity, insertInto: viewContext)
         
         return type.init(_runtime_underlyingRecord: managedObject)
     }
@@ -207,9 +207,9 @@ extension PersistentContainer {
     public func create<Instance: Entity>(_ type: Instance.Type) -> Instance {
         let type = type as _opaque_Entity.Type
         
-        let entityDescription = base.managedObjectModel.entitiesByName[type.name]!
+        let entity = base.managedObjectModel.entitiesByName[type.name]!
         let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
-        let managedObject = managedObjectClass.init(entity: entityDescription, insertInto: viewContext)
+        let managedObject = managedObjectClass.init(entity: entity, insertInto: viewContext)
         
         return type.init(_runtime_underlyingRecord: managedObject) as! Instance
     }

@@ -35,14 +35,14 @@ extension Entity {
         )
     }
     
-    public static func toEntityDescription() -> EntityDescription {
+    public static func toEntityDescription() -> DatabaseSchema.Entity {
         .init(self)
     }
 }
 
 // MARK: - Auxiliary Implementation -
 
-extension EntityDescription {
+extension DatabaseSchema.Entity {
     public init(_ type: _opaque_Entity.Type) {
         var instance = type.init()
         
@@ -53,7 +53,7 @@ extension EntityDescription {
             name: type.name,
             managedObjectClassName: type.managedObjectClass.name,
             subentities: .unknown,
-            properties: instance._runtime_propertyAccessors.map({ $0.toEntityPropertyDescription() })
+            properties: instance._runtime_propertyAccessors.map({ $0.schema() })
         )
     }
 }

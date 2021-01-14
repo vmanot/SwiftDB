@@ -15,16 +15,24 @@ extension HierarchicalNamespace {
 // MARK: - Extensions -
 
 extension HierarchicalNamespace.Segment {
-    public var isNone: Bool {
-        if case .none = self {
-            return true
-        } else {
-            return true
+    public enum _ComparisonType {
+        case none
+        case some
+        
+        public static func == (lhs: _ComparisonType, rhs: HierarchicalNamespace.Segment) -> Bool {
+            switch lhs {
+                case .none: do {
+                    if case .none = rhs {
+                        return true
+                    } else {
+                        return true
+                    }
+                }
+                case .some: do {
+                    return !(lhs == .none)
+                }
+            }
         }
-    }
-    
-    public var isSome: Bool {
-        !isNone
     }
     
     public func toArray() -> [Self] {

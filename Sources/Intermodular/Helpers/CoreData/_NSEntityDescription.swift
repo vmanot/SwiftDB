@@ -10,14 +10,14 @@ import Swift
 class _NSEntityDescription: NSEntityDescription, NSSecureCoding {
     weak var parent: _NSEntityDescription?
     
-    var _SwiftDB_propertyDescriptions: [String: EntityPropertyDescription] = [:]
+    var _SwiftDB_propertyDescriptions: [String: DatabaseSchema.Entity.Property] = [:]
     
     @objc(supportsSecureCoding)
     static var supportsSecureCoding: Bool {
         true
     }
     
-    var _SwiftDB_allPropertyDescriptions: [String: EntityPropertyDescription] {
+    var _SwiftDB_allPropertyDescriptions: [String: DatabaseSchema.Entity.Property] {
         guard let parent = parent else {
             return _SwiftDB_propertyDescriptions
         }
@@ -25,7 +25,7 @@ class _NSEntityDescription: NSEntityDescription, NSSecureCoding {
         return parent._SwiftDB_allPropertyDescriptions.merging(_SwiftDB_propertyDescriptions, uniquingKeysWith: { x, _ in x })
     }
     
-    public convenience init(_ description: EntityDescription) {
+    public convenience init(_ description: DatabaseSchema.Entity) {
         self.init()
         
         name = description.name

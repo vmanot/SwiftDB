@@ -25,6 +25,10 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord {
         true
     }
     
+    public var allReservedKeys: [CodingKey] {
+        [AnyCodingKey(stringValue: "systemFields")]
+    }
+    
     public var allKeys: [CodingKey] {
         base.allKeys().map({ AnyStringKey(stringValue: $0) })
     }

@@ -28,7 +28,7 @@ public struct HierarchicalNamespace: Codable, Hashable {
 // MARK: - Extensions -
 
 extension HierarchicalNamespace {
-    public var singleSegment: Segment? {
+    public var single: Segment? {
         guard count == 1 else {
             return nil
         }
@@ -36,28 +36,12 @@ extension HierarchicalNamespace {
         return self[0]
     }
     
-    public var twoSegments: (Segment, Segment)? {
+    public var double: (Segment, Segment)? {
         guard count == 2 else {
             return nil
         }
         
         return (self[0], self[1])
-    }
-    
-    public var isSingleNone: Bool {
-        guard segments.count == 1 else {
-            return false
-        }
-        
-        return segments[0].isNone
-    }
-    
-    public var isSingleSome: Bool {
-        guard segments.count == 1 else {
-            return false
-        }
-        
-        return !segments[0].isNone
     }
 }
 

@@ -6,45 +6,47 @@ import CoreData
 import Foundation
 import Swift
 
-public enum EntityAttributeTypeDescription: Codable, Hashable {
-    case undefined
-    case integer16
-    case integer32
-    case integer64
-    case decimal
-    case double
-    case float
-    case string
-    case boolean
-    case date
-    case binaryData
-    case UUID
-    case URI
-    case transformable(className: String, transformerName: String? = nil)
-    case objectID
-    
-    public var className: String? {
-        if case let .transformable(className, _) = self {
-            return className
-        } else {
-            return nil
+extension DatabaseSchema.Entity {
+    public enum AttributeType: Codable, Hashable {
+        case undefined
+        case integer16
+        case integer32
+        case integer64
+        case decimal
+        case double
+        case float
+        case string
+        case boolean
+        case date
+        case binaryData
+        case UUID
+        case URI
+        case transformable(className: String, transformerName: String? = nil)
+        case objectID
+        
+        public var className: String? {
+            if case let .transformable(className, _) = self {
+                return className
+            } else {
+                return nil
+            }
         }
-    }
-    
-    public var transformerName: String? {
-        if case let .transformable(_, transformerName) = self {
-            return transformerName
-        } else {
-            return nil
+        
+        public var transformerName: String? {
+            if case let .transformable(_, transformerName) = self {
+                return transformerName
+            } else {
+                return nil
+            }
         }
-    }
-    
-    public static func transformable(class: AnyClass, transformerName: String? = nil) -> Self {
-        .transformable(className: NSStringFromClass(`class`), transformerName: transformerName)
+        
+        public static func transformable(class: AnyClass, transformerName: String? = nil) -> Self {
+            .transformable(className: NSStringFromClass(`class`), transformerName: transformerName)
+        }
     }
 }
 
-extension EntityAttributeTypeDescription {
+extension DatabaseSchema.Entity.AttributeType {
     public enum CodingKeys: String, CodingKey {
         case rawValue
         case className
@@ -81,7 +83,7 @@ extension EntityAttributeTypeDescription {
     }
 }
 
-extension EntityAttributeTypeDescription {
+extension DatabaseSchema.Entity.AttributeType {
     public init?(_ type: NSAttributeType) {
         switch type {
             case .undefinedAttributeType:
@@ -121,7 +123,7 @@ extension EntityAttributeTypeDescription {
 }
 
 extension NSAttributeType {
-    public init(_ description: EntityAttributeTypeDescription) {
+    public init(_ description: DatabaseSchema.Entity.AttributeType) {
         switch description {
             case .undefined:
                 self = .undefinedAttributeType

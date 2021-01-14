@@ -135,7 +135,7 @@ extension EntityRelationship {
         return nil
     }
     
-    public func toEntityPropertyDescription() -> EntityPropertyDescription {
+    public func schema() -> DatabaseSchema.Entity.Property {
         return EntityRelationshipDescription(
             name: name!,
             isOptional: isOptional,

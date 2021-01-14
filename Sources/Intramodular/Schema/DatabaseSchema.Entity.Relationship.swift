@@ -7,7 +7,7 @@ import Foundation
 import Runtime
 import Swift
 
-public final class EntityRelationshipDescription: EntityPropertyDescription {
+public final class EntityRelationshipDescription: DatabaseSchema.Entity.Property {
     public enum CodingKeys: String, CodingKey {
         case destinationEntityName
         case inverseRelationshipName

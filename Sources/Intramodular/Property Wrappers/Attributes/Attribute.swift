@@ -29,7 +29,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
     public var name: String?
     public var isTransient: Bool = false
     public var renamingIdentifier: String?
-    public var typeDescriptionHint: EntityAttributeTypeDescription?
+    public var typeDescriptionHint: DatabaseSchema.Entity.AttributeType?
     public var allowsExternalBinaryDataStorage: Bool = false
     public var preservesValueInHistoryOnDeletion: Bool = false
     
@@ -77,10 +77,10 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
         (Value.self as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? Value.self
     }
     
-    public var typeDescription: EntityAttributeTypeDescription {
-        if let type = _runtime_wrappedValueType as? NSPrimitiveAttributeCoder.Type, let result = EntityAttributeTypeDescription(type.toNSAttributeType()) {
+    public var typeDescription: DatabaseSchema.Entity.AttributeType {
+        if let type = _runtime_wrappedValueType as? NSPrimitiveAttributeCoder.Type, let result = DatabaseSchema.Entity.AttributeType(type.toNSAttributeType()) {
             return result
-        } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = EntityAttributeTypeDescription(wrappedValue.getNSAttributeType()) {
+        } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = DatabaseSchema.Entity.AttributeType(wrappedValue.getNSAttributeType()) {
             return result
         } else if let typeDescriptionHint = typeDescriptionHint {
             return typeDescriptionHint
@@ -99,7 +99,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
         encodeImpl: @escaping (Attribute, Value) throws -> Void,
         name: String?,
         isTransient: Bool,
-        typeDescriptionHint: EntityAttributeTypeDescription?,
+        typeDescriptionHint: DatabaseSchema.Entity.AttributeType?,
         allowsExternalBinaryDataStorage: Bool,
         preservesValueInHistoryOnDeletion: Bool
     ) {
@@ -322,8 +322,8 @@ extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSP
 // MARK: - Auxiliary Implementation -
 
 extension Attribute {
-    public func toEntityPropertyDescription() -> EntityPropertyDescription {
-        EntityAttributeDescription(
+    public func schema() -> DatabaseSchema.Entity.Property {
+        DatabaseSchema.Entity.Attribute(
             name: name!.stringValue,
             isOptional: isOptional,
             isTransient: isTransient,
@@ -338,6 +338,6 @@ extension Attribute {
 
 extension NSAttributeDescription {
     convenience init(_ attribute: _opaque_PropertyAccessor) {
-        self.init(attribute.toEntityPropertyDescription() as! EntityAttributeDescription)
+        self.init(attribute.schema() as! DatabaseSchema.Entity.Attribute)
     }
 }

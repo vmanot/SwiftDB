@@ -27,7 +27,7 @@ protocol _opaque_PropertyAccessor: _opaque_PropertyWrapper {
     func decode(from _: Decoder) throws
     func encode(to _: Encoder) throws
     
-    func toEntityPropertyDescription() -> EntityPropertyDescription
+    func schema() -> DatabaseSchema.Entity.Property
 }
 
 // MARK: - Implementation -

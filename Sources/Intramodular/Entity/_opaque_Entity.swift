@@ -20,7 +20,7 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable {
     static var managedObjectClassName: String { get }
     static var managedObjectClass: ObjCClass { get }
     
-    static func toEntityDescription() -> EntityDescription
+    static func toEntityDescription() -> DatabaseSchema.Entity
 }
 
 extension _opaque_Entity where Self: Entity {

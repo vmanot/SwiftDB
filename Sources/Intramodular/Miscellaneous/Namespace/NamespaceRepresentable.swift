@@ -27,7 +27,7 @@ extension HierarchicalNamespaceRepresentable {
 
 extension NamespaceSegmentRepresentable {
     public init?(namespace: HierarchicalNamespace) {
-        guard let segment = namespace.singleSegment else {
+        guard let segment = namespace.single else {
             return nil
         }
         

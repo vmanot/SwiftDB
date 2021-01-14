@@ -16,24 +16,24 @@ public struct DatabaseSchema: Codable, Hashable, Named {
     }
     
     public let name: String
-    public let entities: [EntityDescription]
+    public let entities: [Entity]
     
     @usableFromInline
     @TransientProperty
     var entityNameToTypeMap = BidirectionalMap<String,  Metatype<_opaque_Entity.Type>>()
     @usableFromInline
     @TransientProperty
-    var entityDescriptionToTypeMap = BidirectionalMap<EntityDescription,  Metatype<_opaque_Entity.Type>>()
+    var entityToTypeMap = BidirectionalMap<Entity,  Metatype<_opaque_Entity.Type>>()
     
     @inlinable
     public init(_ schema: Schema) {
         self.name = schema.name
-        self.entities = schema.entities.map({ $0.toEntityDescription() })
+        self.entities = schema.body.map({ $0.toEntityDescription() })
         
-        for (entity, entityType) in entities.zip(schema.entities) {
+        for (entity, entityType) in entities.zip(schema.body) {
             _runtime.typeCache.entity[entity.name] = .init(entityType)
             entityNameToTypeMap[entity.name] = .init(entityType)
-            entityDescriptionToTypeMap[entity] = .init(entityType)
+            entityToTypeMap[entity] = .init(entityType)
         }
     }
 }
