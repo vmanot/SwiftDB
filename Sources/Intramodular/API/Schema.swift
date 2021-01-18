@@ -13,7 +13,8 @@ public protocol Schema: Named {
     /// The name of this schema.
     var name: String { get }
     
-    /// The entities declared by this schema.
+    /// The body of this schema.
+    /// Use this to compose and declare the entities & models encapsulated by this schema.
     @SchemaBuilder
     var body: Body { get }
 }

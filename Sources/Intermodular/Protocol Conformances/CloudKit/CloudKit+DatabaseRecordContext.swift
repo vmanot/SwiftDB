@@ -29,30 +29,28 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = _CloudKit.DatabaseZone
     
     public func createRecord(
-        ofType type: RecordType,
-        id: RecordID?,
-        in zone: Zone?
+        withConfiguration configuration: RecordConfiguration
     ) throws -> Record {
         let record: CKRecord
         
-        if let zone = zone {
+        if let zone = configuration.zone {
             record = CKRecord(
-                recordType: type,
+                recordType: configuration.recordType,
                 recordID: .init(
-                    recordName: id?.rawValue ?? UUID().uuidString,
+                    recordName: configuration.recordID?.rawValue ?? UUID().uuidString,
                     zoneID: .init(zoneName: zone.name, ownerName: zone.ownerName)
                 )
             )
         } else {
             record = CKRecord(
-                recordType: type,
-                recordID: .init(recordName: id?.rawValue ?? UUID().uuidString)
+                recordType: configuration.recordType,
+                recordID: .init(recordName: configuration.recordID?.rawValue ?? UUID().uuidString)
             )
         }
         
         records[record.recordID] = record
         
-        return .init(base: record)
+        return .init(ckRecord: record)
     }
     
     public func recordID(from record: Record) throws -> Record.ID {
@@ -122,6 +120,6 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
 
 extension DatabaseRecordMergeConflict where Context == _CloudKit.DatabaseRecordContext {
     init(record: CKRecord, error: CKError) {
-        self.source = .init(base: record)
+        self.source = .init(ckRecord: record)
     }
 }

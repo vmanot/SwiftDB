@@ -29,13 +29,16 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public typealias RecordID = _CoreData.DatabaseRecord.ID
     
     public func createRecord(
-        ofType type: RecordType,
-        id: RecordID?,
-        in zone: Zone?
+        withConfiguration configuration: RecordConfiguration
     ) throws -> Record {
-        let object = Record(base: NSEntityDescription.insertNewObject(forEntityName: type, into: managedObjectContext))
+        let object = Record(
+            base: NSEntityDescription.insertNewObject(
+                forEntityName: configuration.recordType,
+                into: managedObjectContext
+            )
+        )
         
-        if let zone = zone {
+        if let zone = configuration.zone {
             managedObjectContext.assign(object.base, to: zone.persistentStore)
         }
         
@@ -43,7 +46,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func recordID(from record: Record) throws -> RecordID {
-        .init(base: record.base.objectID)
+        .init(managedObject: record.base.objectID)
     }
     
     public func zone(for object: Record) throws -> Zone? {

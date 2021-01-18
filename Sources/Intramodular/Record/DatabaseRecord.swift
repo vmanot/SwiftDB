@@ -4,7 +4,7 @@
 
 import Swallow
 
-public protocol _opaque_DatabaseRecord {
+public protocol _opaque_DatabaseRecord: _opaque_ObservableObject {
     
 }
 

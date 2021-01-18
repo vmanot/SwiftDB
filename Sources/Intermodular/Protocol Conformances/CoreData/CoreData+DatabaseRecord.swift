@@ -7,12 +7,12 @@ import Merge
 import Swallow
 
 extension _CoreData {
-    public struct DatabaseRecord {
+    public final class DatabaseRecord {
         public struct ID: Hashable {
             let base: NSManagedObjectID
             
-            init(base: NSManagedObjectID) {
-                self.base = base
+            init(managedObject: NSManagedObjectID) {
+                self.base = managedObject
             }
         }
         
@@ -24,7 +24,11 @@ extension _CoreData {
     }
 }
 
-extension _CoreData.DatabaseRecord: DatabaseRecord {
+extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
+    public var objectWillChange: ObservableObjectPublisher {
+        base.objectWillChange
+    }
+    
     public var isInitialized: Bool {
         base.managedObjectContext != nil
     }

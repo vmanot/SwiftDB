@@ -2,7 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
+import CloudKit
 import Merge
 import Swallow
 
@@ -14,17 +14,21 @@ extension _CloudKit {
         
         let base: CKRecord
         
-        init(base: CKRecord) {
-            self.base = base
+        init(ckRecord: CKRecord) {
+            self.base = ckRecord
         }
     }
 }
 
-extension _CloudKit.DatabaseRecord: DatabaseRecord {
+extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
+    public var objectWillChange: ObjectWillChangePublisher {
+        .init()
+    }
+    
     public var isInitialized: Bool {
         true
     }
-    
+        
     public var allReservedKeys: [CodingKey] {
         [AnyCodingKey(stringValue: "systemFields")]
     }

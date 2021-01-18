@@ -17,20 +17,24 @@ public struct DatabaseRecordContextSaveError<Context: DatabaseRecordContext>: Er
     }
 }
 
+public struct DatabaseRecordConfiguration<Context: DatabaseRecordContext> {
+    public let recordType: Context.RecordType
+    public let recordID: Context.RecordID?
+    public let zone: Context.Zone?
+    public let entity: DatabaseSchema.Entity?
+}
+
 public protocol DatabaseRecordContext {
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord
     associatedtype RecordType: Codable & Hashable & LosslessStringConvertible
     associatedtype RecordID: Hashable
+    associatedtype RecordConfiguration = DatabaseRecordConfiguration<Self>
     
     typealias FetchRequest = DatabaseFetchRequest<Self>
     typealias SaveError = DatabaseRecordContextSaveError<Self>
     
-    func createRecord(
-        ofType type: RecordType,
-        id: RecordID?,
-        in zone: Zone?
-    ) throws -> Record
+    func createRecord(withConfiguration _: DatabaseRecordConfiguration<Self>) throws -> Record
     
     func recordID(from record: Record) throws -> RecordID
     

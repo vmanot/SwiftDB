@@ -3,6 +3,7 @@
 //
 
 import Swallow
+import SwiftUI
 
 @usableFromInline
 final class _Runtime: Hashable {
