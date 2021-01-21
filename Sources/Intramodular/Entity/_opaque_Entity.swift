@@ -39,14 +39,14 @@ extension _opaque_Entity {
     }
     
     @usableFromInline
-    mutating func _runtime_configurePropertyAccessors(underlyingRecord: NSManagedObject? = nil) {
+    mutating func _runtime_configurePropertyAccessors(underlyingRecord: DatabaseRecord?) {
         var instance = AnyNominalOrTupleMirror(self)!
         
         var isParentSet: Bool = false
         
         for (key, value) in instance.allChildren {
             if var property = value as? _opaque_PropertyAccessor {
-                property.underlyingRecord = underlyingRecord.map(_CoreData.DatabaseRecord.init)
+                property.underlyingRecord = underlyingRecord
                 
                 if property.name == nil {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
@@ -70,9 +70,9 @@ extension _opaque_Entity {
     }
     
     @usableFromInline
-    init(_runtime_underlyingRecord object: NSManagedObject?) {
-        if let object = object, let schema = object._SwiftDB_databaseSchema {
-            if let entityType = schema.entityNameToTypeMap[object.entity.name]?.value {
+    init(_runtime_underlyingRecord record: DatabaseRecord?) {
+        if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {
+            if let entityType = schema.entityNameToTypeMap[(record as! _CoreData.DatabaseRecord).base.entity.name]?.value {
                 self = entityType.init() as! Self
             } else {
                 assertionFailure()
@@ -83,13 +83,13 @@ extension _opaque_Entity {
             self.init()
         }
         
-        _runtime_configurePropertyAccessors(underlyingRecord: object)
+        _runtime_configurePropertyAccessors(underlyingRecord: record)
         
-        if let objectWillChange = _opaque_objectWillChange, let object = object as? NSXManagedObject {
-            object
-                .objectWillChange
+        if let objectWillChange = _opaque_objectWillChange, let record = record {
+            record
+                ._opaque_objectWillChange
                 .publish(to: objectWillChange)
-                .store(in: object.cancellables)
+                .store(in: record.cancellables)
         }
     }
 }

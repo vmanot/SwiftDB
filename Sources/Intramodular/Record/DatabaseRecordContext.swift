@@ -7,23 +7,6 @@ import FoundationX
 import Merge
 import Swallow
 
-public struct DatabaseRecordContextSaveError<Context: DatabaseRecordContext>: Error {
-    let mergeConflicts: [DatabaseRecordMergeConflict<Context>]?
-    
-    public init(
-        mergeConflicts: [DatabaseRecordMergeConflict<Context>]?
-    ) {
-        self.mergeConflicts = mergeConflicts
-    }
-}
-
-public struct DatabaseRecordConfiguration<Context: DatabaseRecordContext> {
-    public let recordType: Context.RecordType
-    public let recordID: Context.RecordID?
-    public let zone: Context.Zone?
-    public let entity: DatabaseSchema.Entity?
-}
-
 public protocol DatabaseRecordContext {
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord
@@ -31,10 +14,14 @@ public protocol DatabaseRecordContext {
     associatedtype RecordID: Hashable
     associatedtype RecordConfiguration = DatabaseRecordConfiguration<Self>
     
+    typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
     typealias FetchRequest = DatabaseFetchRequest<Self>
     typealias SaveError = DatabaseRecordContextSaveError<Self>
     
-    func createRecord(withConfiguration _: DatabaseRecordConfiguration<Self>) throws -> Record
+    func createRecord(
+        withConfiguration _: DatabaseRecordConfiguration<Self>,
+        context: RecordCreateContext
+    ) throws -> Record
     
     func recordID(from record: Record) throws -> RecordID
     

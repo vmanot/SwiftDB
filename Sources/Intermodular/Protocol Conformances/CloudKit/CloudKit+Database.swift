@@ -99,8 +99,12 @@ extension _CloudKit.Database: Database {
         fatalError()
     }
     
-    public func recordContext(forZones zones: [Zone]) -> RecordContext {
-        .init(container: base, database: ckDatabase, zones: zones)
+    public func recordContext(forZones zones: [Zone]?) throws -> RecordContext {
+        .init(container: base, database: ckDatabase, zones: try zones.unwrap())
+    }
+    
+    public func delete() -> AnyTask<Void, Error> {
+        fatalError(reason: .unimplemented)
     }
 }
 

@@ -29,7 +29,8 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public typealias RecordID = _CoreData.DatabaseRecord.ID
     
     public func createRecord(
-        withConfiguration configuration: RecordConfiguration
+        withConfiguration configuration: RecordConfiguration,
+        context: RecordCreateContext
     ) throws -> Record {
         let object = Record(
             base: NSEntityDescription.insertNewObject(
@@ -140,10 +141,12 @@ fileprivate extension DatabaseFetchRequest where Context == _CoreData.DatabaseRe
         
         if let limit = limit {
             switch limit {
-                case .offset(let offset):
+                case .cursor(.offset(let offset)):
                     result.fetchLimit = offset
                 case .none:
                     result.fetchLimit = 0
+                default:
+                    fatalError(reason: .unimplemented)
             }
         } else {
             result.fetchLimit = 0 // FIXME?

@@ -21,18 +21,3 @@ public struct ModelFetchRequest<Result: Entity> {
         self.fetchLimit = fetchLimit
     }
 }
-
-extension ModelFetchRequest {
-    public func toNSFetchRequest() -> NSFetchRequest<NSManagedObject> {
-        let request = NSFetchRequest<NSManagedObject>(entityName: Result.name)
-        
-        request.predicate = predicate
-        request.sortDescriptors = sortDescriptors
-        
-        if let fetchLimit = fetchLimit {
-            request.fetchLimit = fetchLimit
-        }
-        
-        return request
-    }
-}

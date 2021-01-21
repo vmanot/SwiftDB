@@ -16,19 +16,16 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     @usableFromInline
     var base: Set<NSManagedObject>
     
-    @inlinable
     public init(base: Set<NSManagedObject>) {
         self.base = base
     }
     
-    @inlinable
     public init(noRelatedModels: Void) {
         self.base = .init()
     }
     
-    @inlinable
     public func makeIterator() -> AnyIterator<Model> {
-        .init(base.lazy.map({ Model(_runtime_underlyingRecord: $0) }).makeIterator())
+        .init(base.lazy.map({ Model(_runtime_underlyingRecord: _CoreData.DatabaseRecord(base: $0)) }).makeIterator())
     }
 }
 

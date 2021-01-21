@@ -8,7 +8,7 @@ import Swallow
 import SwiftUIX
 
 public protocol _opaque_PersistentContainer: AnyProtocol {
-    func _opaque_create(_: _opaque_Entity.Type) -> _opaque_Entity
+    func _opaque_create(_: _opaque_Entity.Type) throws -> _opaque_Entity
 }
 
 public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_PersistentContainer, CancellablesHolder, Identifiable, ObservableObject {
@@ -29,8 +29,8 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
         _ schema: Schema,
         applicationGroupID: String? = nil,
         cloudKitContainerIdentifier: String? = nil
-    ) {
-        self.database = _CoreData.Database(
+    ) throws {
+        self.database = try _CoreData.Database(
             schema: .init(schema),
             configuration: _CoreData.Database.Configuration(
                 name: schema.name,
@@ -55,16 +55,10 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
                 managedObjectModel: NSManagedObjectModel(self.schema)
             )
         }
-        
-        do {
-            try loadPersistentStores()
-        } catch {
-            
-        }
     }
     
-    public convenience init(_ schema: Schema) {
-        self.init(
+    public convenience init(_ schema: Schema) throws {
+        try self.init(
             schema,
             applicationGroupID: nil,
             cloudKitContainerIdentifier: nil
@@ -73,98 +67,38 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
 }
 
 extension PersistentContainer {
-    public var sqliteStoreURL: URL? {
-        guard let applicationGroupID = applicationGroupID else {
-            return base.persistentStoreDescriptions.first?.url
-        }
-        
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(schema.name + ".sqlite")
-    }
-    
-    public var allStoreFiles: [URL] {
-        var result: [URL] = []
-        
-        if let sqliteStoreURL = sqliteStoreURL {
-            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".com.apple.mobile_container_manager.metadata.plist"))
-            result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-wal"))
-            result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-shm"))
-            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".\(schema.name)_SUPPORT/"))
-            result.append(sqliteStoreURL)
-        }
-        
-        return result
-    }
-}
-
-extension PersistentContainer {
     public var arePersistentStoresLoaded: Bool {
         !base.persistentStoreCoordinator.persistentStores.isEmpty
     }
     
-    func setupPersistentStoreDescription() throws {
-        if let sqliteStoreURL = sqliteStoreURL {
-            base.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
-        }
-        
-        let description = try base.persistentStoreDescriptions.first.unwrap()
-        
-        if let cloudKitContainerIdentifier = cloudKitContainerIdentifier {
-            description.cloudKitContainerOptions = .init(containerIdentifier: cloudKitContainerIdentifier)
-            
-            description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-            description.setOption(true as NSObject, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
-        }
-    }
     
-    private func loadPersistentStores() throws {
-        try setupPersistentStoreDescription()
-        
-        base.loadPersistentStores()
-            .map({
-                self.base.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
-                
-                self.base
-                    .viewContext
-                    .automaticallyMergesChangesFromParent = true
-                
-                self.viewContext = self.base.viewContext
-            })
+    public func save() throws {
+        try database
+            .recordContext(forZones: nil)
+            .save()
+            .onStatus(.success) { status in
+                self.objectWillChange.send()
+            }
             .subscribe(in: cancellables)
     }
     
-    public func save() {
-        guard base.viewContext.hasChanges else {
-            return
-        }
-        
-        try! base.viewContext.save()
-        
-        objectWillChange.send()
-    }
-    
-    public func deleteAllFiles() throws {
-        allStoreFiles.forEach {
-            try? FileManager.default.removeItem(at: $0)
-        }
-    }
-    
-    public func destroyAndRebuild() throws {
-        try deleteAllFiles()
-        
-        viewContext = nil
-        
-        base.viewContext.rollback()
-        base.viewContext.reset()
-        
-        try base.persistentStoreCoordinator.destroyAll()
-        
-        base = NSPersistentContainer(
-            name: schema.name,
-            managedObjectModel: NSManagedObjectModel(self.schema)
-        )
-        
-        try loadPersistentStores()
-    }
+    /*    public func destroyAndRebuild() throws {
+     try deleteAllFiles()
+     
+     viewContext = nil
+     
+     base.viewContext.rollback()
+     base.viewContext.reset()
+     
+     try base.persistentStoreCoordinator.destroyAll()
+     
+     base = NSPersistentContainer(
+     name: schema.name,
+     managedObjectModel: NSManagedObjectModel(self.schema)
+     )
+     
+     try loadPersistentStores()
+     }*/
     
     public func deleteAll() throws {
         try fetchAllInstances().forEach({ try self.delete($0) })
@@ -180,7 +114,7 @@ extension PersistentContainer {
         for (name, type) in schema.entityNameToTypeMap {
             let instances = try! base.viewContext
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
-                .map({ type.value.init(_runtime_underlyingRecord: $0) })
+                .map({ type.value.init(_runtime_underlyingRecord: _CoreData.DatabaseRecord(base: $0)) })
             
             result.append(contentsOf: instances)
         }
@@ -193,37 +127,36 @@ extension PersistentContainer {
 
 extension PersistentContainer {
     @discardableResult
-    public func _opaque_create(_ type: _opaque_Entity.Type) -> _opaque_Entity {
-        let type = type as _opaque_Entity.Type
-        
-        let entity = base.managedObjectModel.entitiesByName[type.name]!
-        let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
-        let managedObject = managedObjectClass.init(entity: entity, insertInto: viewContext)
-        
-        return type.init(_runtime_underlyingRecord: managedObject)
+    public func _opaque_create(_ type: _opaque_Entity.Type) throws -> _opaque_Entity {
+        type.init(
+            _runtime_underlyingRecord: try database.recordContext(forZones: nil).createRecord(
+                withConfiguration: .init(
+                    recordType: type.name,
+                    recordID: nil,
+                    zone: nil
+                ),
+                context: .init()
+            )
+        )
     }
     
     @discardableResult
-    public func create<Instance: Entity>(_ type: Instance.Type) -> Instance {
-        let type = type as _opaque_Entity.Type
-        
-        let entity = base.managedObjectModel.entitiesByName[type.name]!
-        let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
-        let managedObject = managedObjectClass.init(entity: entity, insertInto: viewContext)
-        
-        return type.init(_runtime_underlyingRecord: managedObject) as! Instance
+    public func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance {
+        try _opaque_create(type as _opaque_Entity.Type) as! Instance
     }
     
-    public func fetchFirst<Instance: Entity>(_ type: Instance.Type) throws -> Instance? {
-        let type = type as _opaque_Entity.Type
-        
-        let managedObjectClass = type.managedObjectClass.value as! NSManagedObject.Type
-        
-        guard let managedObject = try viewContext?.fetchFirst(managedObjectClass) else {
-            return nil
-        }
-        
-        return .some(type.init(_runtime_underlyingRecord: managedObject) as! Instance)
+    public func fetchFirst<Instance: Entity>(
+        _ type: Instance.Type
+    ) throws -> AnyTask<Instance?, Error> {
+        try database
+            .recordContext(forZones: nil)
+            .execute(.init(recordType: type.name, predicate: nil, sortDescriptors: nil, zones: nil, includesSubentities: true, cursor: nil, limit: .cursor(.offset(1))))
+            .successPublisher
+            .map({ $0.records?.first })
+            .map({ $0.map(Instance.init(_runtime_underlyingRecord:)) })
+            .eraseError()
+            .eraseToAnyPublisher()
+            .convertToTask()
     }
     
     public func delete(_ instance: _opaque_Entity) throws {

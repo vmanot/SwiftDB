@@ -22,7 +22,7 @@ extension Entity where Self: Codable {
         
         let type = runtime.typeCache.entity[_runtime_metadata.name]!.value
         
-        self = decoder.userInfo._SwiftDB_PersistentContainer._opaque_create(type) as! Self
+        self = try decoder.userInfo._SwiftDB_PersistentContainer._opaque_create(type) as! Self
         
         for property in _runtime_propertyAccessors {
             let decoder = try container.decode(DecoderUnwrapper.self, forKey: property.key.unwrap()).value

@@ -29,7 +29,8 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = _CloudKit.DatabaseZone
     
     public func createRecord(
-        withConfiguration configuration: RecordConfiguration
+        withConfiguration configuration: RecordConfiguration,
+        context: RecordCreateContext
     ) throws -> Record {
         let record: CKRecord
         

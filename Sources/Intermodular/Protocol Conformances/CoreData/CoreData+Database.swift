@@ -7,7 +7,7 @@ import Merge
 import Swallow
 
 extension _CoreData {
-    public final class Database {
+    public final class Database: CancellablesHolder {
         public struct Configuration: Codable {
             public let name: String
             public let applicationGroupID: String?
@@ -33,6 +33,7 @@ extension _CoreData {
         public let schema: DatabaseSchema?
         public let configuration: Configuration
         public let state: State
+        public var viewContext: DatabaseRecordContext?
         
         fileprivate let base: NSPersistentContainer
         
@@ -40,7 +41,7 @@ extension _CoreData {
             schema: DatabaseSchema?,
             configuration: Configuration,
             state: State
-        ) {
+        ) throws {
             self.schema = schema
             self.configuration = configuration
             self.state = state
@@ -50,9 +51,11 @@ extension _CoreData {
             } else {
                 self.base = .init(name: configuration.name)
             }
+            
+            try loadPersistentStores()
         }
         
-        public init(container: NSPersistentContainer) {
+        public init(container: NSPersistentContainer) throws {
             self.schema = nil // FIXME!!!
             self.configuration = .init(
                 name: container.name,
@@ -61,9 +64,47 @@ extension _CoreData {
             )
             self.state = nil
             self.base = container
+            
+            try loadPersistentStores()
+        }
+        
+        private func setupPersistentStoreDescription() throws {
+            if let sqliteStoreURL = sqliteStoreURL {
+                base.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
+            }
+            
+            let description = try base.persistentStoreDescriptions.first.unwrap()
+            
+            if let cloudKitContainerIdentifier = configuration.cloudKitContainerIdentifier {
+                description.cloudKitContainerOptions = .init(containerIdentifier: cloudKitContainerIdentifier)
+                
+                description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+                description.setOption(true as NSObject, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+            }
+        }
+        
+        private func loadPersistentStores() throws {
+            try setupPersistentStoreDescription()
+            
+            base.loadPersistentStores()
+                .map({
+                    self.base.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
+                    
+                    self.base
+                        .viewContext
+                        .automaticallyMergesChangesFromParent = true
+                    
+                    self.viewContext = DatabaseRecordContext(
+                        managedObjectContext: self.base.viewContext,
+                        affectedStores: nil
+                    )
+                })
+                .subscribe(in: cancellables)
         }
     }
 }
+
+// MARK: - Protocol Conformances -
 
 extension _CoreData.Database: Database {
     public typealias RecordContext = _CoreData.DatabaseRecordContext
@@ -94,8 +135,16 @@ extension _CoreData.Database: Database {
             .convertToTask()
     }
     
-    public func recordContext(forZones zones: [Zone]) -> RecordContext {
-        .init(managedObjectContext: base.viewContext, affectedStores: zones.map({ $0.persistentStore }))
+    public func recordContext(forZones zones: [Zone]?) throws -> RecordContext {
+        .init(managedObjectContext: base.viewContext, affectedStores: zones?.map({ $0.persistentStore }))
+    }
+    
+    public func delete() -> AnyTask<Void, Error> {
+        allStoreFiles.forEach {
+            try? FileManager.default.removeItem(at: $0)
+        }
+        
+        return .just(.success(()))
     }
 }
 
@@ -108,5 +157,31 @@ extension _CoreData.Database: Identifiable {
 extension _CoreData.Database: Named {
     public var name: String {
         base.name
+    }
+}
+
+// MARK: - Auxiliary Implementation -
+
+extension _CoreData.Database {
+    public var sqliteStoreURL: URL? {
+        guard let applicationGroupID = configuration.applicationGroupID else {
+            return base.persistentStoreDescriptions.first?.url
+        }
+        
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(base.name + ".sqlite")
+    }
+    
+    public var allStoreFiles: [URL] {
+        var result: [URL] = []
+        
+        if let sqliteStoreURL = sqliteStoreURL {
+            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".com.apple.mobile_container_manager.metadata.plist"))
+            result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-wal"))
+            result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-shm"))
+            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".\(base.name)_SUPPORT/"))
+            result.append(sqliteStoreURL)
+        }
+        
+        return result
     }
 }

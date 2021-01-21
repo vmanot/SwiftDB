@@ -40,27 +40,22 @@ public protocol EntityRelatable: _opaque_EntityRelatable {
 // MARK: - Implementation -
 
 extension EntityRelatable where Self: Entity {
-    @inlinable
     public static var entityCardinality: EntityCardinality {
         .one
     }
     
-    @inlinable
     public init(noRelatedModels: Void) {
         self.init(_runtime_underlyingRecord: nil)
     }
     
-    @inlinable
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        Self(_runtime_underlyingRecord: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap())
+        Self(_runtime_underlyingRecord: _CoreData.DatabaseRecord(base: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()))
     }
     
-    @inlinable
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
         base.setValue(self._runtime_underlyingRecord, forKey: key.stringValue)
     }
     
-    @inlinable
     public func exportRelatableModels() throws -> [Self.RelatableEntityType] {
         return [try cast(self)]
     }

@@ -21,5 +21,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     func fetchAllZones() -> AnyTask<[Zone], Error>
     func fetchZone(named _: String) -> AnyTask<Zone, Error>
     
-    func recordContext(forZones _: [Zone]) -> RecordContext
+    func recordContext(forZones _: [Zone]?) throws -> RecordContext
+    
+    func delete() -> AnyTask<Void, Error>
 }

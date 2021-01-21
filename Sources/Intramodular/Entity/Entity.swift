@@ -46,7 +46,7 @@ extension DatabaseSchema.Entity {
     public init(_ type: _opaque_Entity.Type) {
         var instance = type.init()
         
-        instance._runtime_configurePropertyAccessors()
+        instance._runtime_configurePropertyAccessors(underlyingRecord: nil)
         
         self.init(
             parent: type._opaque_Parent?.toEntityDescription(),

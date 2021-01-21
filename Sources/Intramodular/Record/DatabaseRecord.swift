@@ -2,9 +2,10 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Merge
 import Swallow
 
-public protocol _opaque_DatabaseRecord: _opaque_ObservableObject {
+public protocol _opaque_DatabaseRecord: _opaque_ObservableObject, CancellablesHolder {
     
 }
 

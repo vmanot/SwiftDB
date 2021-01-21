@@ -27,7 +27,7 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
         }).map({ object -> Result in
             hasher.combine(object)
             
-            return Result(_runtime_underlyingRecord: object)
+            return Result(_runtime_underlyingRecord: _CoreData.DatabaseRecord(base: object))
         })
         
         wrappedValueHash = hasher.finalize()
@@ -82,5 +82,22 @@ extension FetchModels {
     
     public init() {
         self.init(sortDescriptors: [])
+    }
+}
+
+// MARK: - Auxiliary Implementation -
+
+fileprivate extension ModelFetchRequest {
+    func toNSFetchRequest() -> NSFetchRequest<NSManagedObject> {
+        let request = NSFetchRequest<NSManagedObject>(entityName: Result.name)
+        
+        request.predicate = predicate
+        request.sortDescriptors = sortDescriptors
+        
+        if let fetchLimit = fetchLimit {
+            request.fetchLimit = fetchLimit
+        }
+        
+        return request
     }
 }
