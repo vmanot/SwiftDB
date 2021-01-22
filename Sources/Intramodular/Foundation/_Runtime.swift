@@ -28,11 +28,11 @@ final class _Runtime: Hashable {
 // MARK: - Helpers -
 
 extension CodingUserInfoKey {
-    public static let _SwiftDB_runtime = CodingUserInfoKey(rawValue: "_SwiftDB_runtime")!
+    public static let _SwiftDB_databaseRuntime = CodingUserInfoKey(rawValue: "_SwiftDB_runtime")!
 }
 
 extension Dictionary where Key == CodingUserInfoKey, Value == Any {
-    var _SwiftDB_runtime: _Runtime {
-        self[._SwiftDB_runtime] as? _Runtime ?? .default
+    var _SwiftDB_databaseRuntime: DatabaseRuntime? {
+        self[._SwiftDB_databaseRuntime].flatMap({ $0 as? DatabaseRuntime })
     }
 }

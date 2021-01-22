@@ -29,7 +29,7 @@ class _NSEntityDescription: NSEntityDescription, NSSecureCoding {
         self.init()
         
         name = description.name
-        managedObjectClassName = description.managedObjectClassName
+        managedObjectClassName = description.underlyingDatabaseRecordClassName
         properties = description.properties.map({ $0.toNSPropertyDescription() })
         
         for property in description.properties {

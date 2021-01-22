@@ -21,20 +21,7 @@ extension Entity {
     public static var name: String {
         String(describing: Self.self)
     }
-    
-    public static var managedObjectClassName: String {
-        "_SwiftDB_NSManagedObject_" + name
-    }
-    
-    public static var managedObjectClass: ObjCClass {
-        ObjCClass(
-            name: managedObjectClassName,
-            superclass: nil
-                ?? _opaque_Parent?.managedObjectClass
-                ?? ObjCClass(NSXManagedObject.self)
-        )
-    }
-    
+        
     public static func toEntityDescription() -> DatabaseSchema.Entity {
         .init(self)
     }
@@ -51,7 +38,7 @@ extension DatabaseSchema.Entity {
         self.init(
             parent: type._opaque_Parent?.toEntityDescription(),
             name: type.name,
-            managedObjectClassName: type.managedObjectClass.name,
+            underlyingDatabaseRecordClassName: type.underlyingDatabaseRecordClass.name,
             subentities: .unknown,
             properties: instance._runtime_propertyAccessors.map({ $0.schema() })
         )

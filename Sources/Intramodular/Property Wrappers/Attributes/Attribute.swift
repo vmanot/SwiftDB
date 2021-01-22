@@ -121,9 +121,9 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
         get {
             let _self = instance[keyPath: storageKeyPath]
             
-            if let objectWillChange = instance._opaque_objectWillChange, _self.objectWillChangeConduit == nil {
+            if _self.objectWillChangeConduit == nil {
                 _self.objectWillChangeConduit = _self.objectWillChange
-                    .publish(to: objectWillChange)
+                    .publish(to: instance)
             }
             
             return instance[keyPath: storageKeyPath].wrappedValue

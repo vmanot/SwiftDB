@@ -6,6 +6,9 @@ import Merge
 import Swallow
 
 public protocol Database: Named, Identifiable where ID: Codable {
+    typealias Runtime = DatabaseRuntime
+    typealias Schema = DatabaseSchema
+    
     associatedtype Configuration: Codable
     associatedtype State: Codable & ExpressibleByNilLiteral
     associatedtype RecordContext: DatabaseRecordContext
@@ -16,7 +19,12 @@ public protocol Database: Named, Identifiable where ID: Codable {
     var state: State { get }
     var capabilities: [DatabaseCapability] { get }
     
-    init(schema: DatabaseSchema?, configuration: Configuration, state: State) throws
+    init(
+        runtime: Runtime,
+        schema: Schema?,
+        configuration: Configuration,
+        state: State
+    ) throws
     
     func fetchAllZones() -> AnyTask<[Zone], Error>
     func fetchZone(named _: String) -> AnyTask<Zone, Error>
@@ -24,4 +32,21 @@ public protocol Database: Named, Identifiable where ID: Codable {
     func recordContext(forZones _: [Zone]?) throws -> RecordContext
     
     func delete() -> AnyTask<Void, Error>
+}
+
+// MARK: - Extensions -
+
+extension Database {
+    public init(
+        schema: Schema?,
+        configuration: Configuration,
+        state: State
+    ) throws {
+        try self.init(
+            runtime: _DefaultDatabaseRuntime(),
+            schema: schema,
+            configuration: configuration,
+            state: state
+        )
+    }
 }

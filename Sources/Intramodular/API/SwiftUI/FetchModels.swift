@@ -3,6 +3,8 @@
 //
 
 import CoreData
+import FoundationX
+import Swallow
 import SwiftUIX
 
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
@@ -27,7 +29,7 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
         }).map({ object -> Result in
             hasher.combine(object)
             
-            return Result(_runtime_underlyingRecord: _CoreData.DatabaseRecord(base: object))
+            return Result(_runtime_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: object))
         })
         
         wrappedValueHash = hasher.finalize()
@@ -66,7 +68,7 @@ extension FetchModels {
     }
     
     public init(
-        sortDescriptors: [NSSortDescriptor] = [],
+        sortDescriptors: [SortDescriptor] = [],
         predicate: NSPredicate? = nil,
         animation: Animation? = nil
     ) {
@@ -92,10 +94,14 @@ fileprivate extension ModelFetchRequest {
         let request = NSFetchRequest<NSManagedObject>(entityName: Result.name)
         
         request.predicate = predicate
-        request.sortDescriptors = sortDescriptors
+        request.sortDescriptors = sortDescriptors?.map({ $0 as NSSortDescriptor })
         
         if let fetchLimit = fetchLimit {
-            request.fetchLimit = fetchLimit
+            if case let .cursor(.offset(offset)) = fetchLimit {
+                request.fetchLimit = offset
+            } else {
+                fatalError(reason: .unimplemented)
+            }
         }
         
         return request

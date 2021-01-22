@@ -11,20 +11,20 @@ extension DatabaseSchema {
         @Indirect
         public var parent: DatabaseSchema.Entity?
         public let name: String
-        public let managedObjectClassName: String
+        public let underlyingDatabaseRecordClassName: String
         public let subentities: MaybeKnown<[Self]>
         public let properties: [DatabaseSchema.Entity.Property]
         
         public init(
             parent: DatabaseSchema.Entity?,
             name: String,
-            managedObjectClassName: String,
+            underlyingDatabaseRecordClassName: String,
             subentities: MaybeKnown<[Self]>,
             properties: [DatabaseSchema.Entity.Property]
         ) {
             self.parent = parent
             self.name = name
-            self.managedObjectClassName = managedObjectClassName
+            self.underlyingDatabaseRecordClassName = underlyingDatabaseRecordClassName
             self.subentities = subentities
             self.properties = properties
         }

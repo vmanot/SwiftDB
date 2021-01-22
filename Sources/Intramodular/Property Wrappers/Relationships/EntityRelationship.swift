@@ -19,7 +19,7 @@ public final class EntityRelationship<
     ValueEntity: Entity & Identifiable,
     InverseValue: EntityRelatable,
     InverseValueEntity: Entity & Identifiable
->: _opaque_EntityRelationshipAccessor, PropertyWrapper {
+>: _opaque_EntityRelationshipAccessor, ObservableObject, PropertyWrapper {
     @usableFromInline
     enum InverseKeyPath {
         case toOne(WritableKeyPath<ValueEntity, InverseValue>)

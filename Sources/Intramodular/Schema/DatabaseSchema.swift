@@ -10,11 +10,6 @@ import SwiftUI
 
 /// A type-erased description of a `Schema`.
 public struct DatabaseSchema: Codable, Hashable, Named {
-    @usableFromInline
-    var _runtime: _Runtime {
-        .default
-    }
-    
     public let name: String
     public let entities: [Entity]
     
@@ -31,7 +26,6 @@ public struct DatabaseSchema: Codable, Hashable, Named {
         self.entities = schema.body.map({ $0.toEntityDescription() })
         
         for (entity, entityType) in entities.zip(schema.body) {
-            _runtime.typeCache.entity[entity.name] = .init(entityType)
             entityNameToTypeMap[entity.name] = .init(entityType)
             entityToTypeMap[entity] = .init(entityType)
         }

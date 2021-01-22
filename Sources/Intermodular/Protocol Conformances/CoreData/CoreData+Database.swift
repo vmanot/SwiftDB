@@ -30,6 +30,7 @@ extension _CoreData {
             }
         }
         
+        public let runtime: DatabaseRuntime
         public let schema: DatabaseSchema?
         public let configuration: Configuration
         public let state: State
@@ -38,10 +39,12 @@ extension _CoreData {
         fileprivate let base: NSPersistentContainer
         
         public init(
+            runtime: DatabaseRuntime,
             schema: DatabaseSchema?,
             configuration: Configuration,
             state: State
         ) throws {
+            self.runtime = runtime
             self.schema = schema
             self.configuration = configuration
             self.state = state
@@ -56,6 +59,7 @@ extension _CoreData {
         }
         
         public init(container: NSPersistentContainer) throws {
+            self.runtime = _DefaultDatabaseRuntime()
             self.schema = nil // FIXME!!!
             self.configuration = .init(
                 name: container.name,

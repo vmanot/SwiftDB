@@ -3,12 +3,13 @@
 //
 
 import CoreData
+import Merge
 import Runtime
 import Swallow
 
 /// A prototype for `NSPropertyDescription`.
 @usableFromInline
-protocol _opaque_PropertyAccessor: _opaque_PropertyWrapper {
+protocol _opaque_PropertyAccessor: _opaque_ObservableObject, _opaque_PropertyWrapper {
     var _opaque_modelEnvironment: _opaque_ModelEnvironment { get set }
     
     mutating func _runtime_initialize()

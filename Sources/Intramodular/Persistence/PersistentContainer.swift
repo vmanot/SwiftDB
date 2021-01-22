@@ -9,6 +9,8 @@ import SwiftUIX
 
 public protocol _opaque_PersistentContainer: AnyProtocol {
     func _opaque_create(_: _opaque_Entity.Type) throws -> _opaque_Entity
+    
+    func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance
 }
 
 public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_PersistentContainer, CancellablesHolder, Identifiable, ObservableObject {
@@ -114,7 +116,7 @@ extension PersistentContainer {
         for (name, type) in schema.entityNameToTypeMap {
             let instances = try! base.viewContext
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
-                .map({ type.value.init(_runtime_underlyingRecord: _CoreData.DatabaseRecord(base: $0)) })
+                .map({ type.value.init(_runtime_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)) })
             
             result.append(contentsOf: instances)
         }
@@ -129,7 +131,7 @@ extension PersistentContainer {
     @discardableResult
     public func _opaque_create(_ type: _opaque_Entity.Type) throws -> _opaque_Entity {
         type.init(
-            _runtime_underlyingRecord: try database.recordContext(forZones: nil).createRecord(
+            _runtime_underlyingDatabaseRecord: try database.recordContext(forZones: nil).createRecord(
                 withConfiguration: .init(
                     recordType: type.name,
                     recordID: nil,
@@ -142,7 +144,7 @@ extension PersistentContainer {
     
     @discardableResult
     public func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance {
-        try _opaque_create(type as _opaque_Entity.Type) as! Instance
+        try cast(try _opaque_create(type as _opaque_Entity.Type), to: Instance.self)
     }
     
     public func fetchFirst<Instance: Entity>(
@@ -153,7 +155,7 @@ extension PersistentContainer {
             .execute(.init(recordType: type.name, predicate: nil, sortDescriptors: nil, zones: nil, includesSubentities: true, cursor: nil, limit: .cursor(.offset(1))))
             .successPublisher
             .map({ $0.records?.first })
-            .map({ $0.map(Instance.init(_runtime_underlyingRecord:)) })
+            .map({ $0.map(Instance.init(_runtime_underlyingDatabaseRecord:)) })
             .eraseError()
             .eraseToAnyPublisher()
             .convertToTask()
@@ -164,7 +166,7 @@ extension PersistentContainer {
             managedObjectContext: try viewContext.unwrap(),
             affectedStores: nil
         )
-        .delete(try instance._runtime_underlyingRecord.unwrap() as! _CoreData.DatabaseRecordContext.Record)
+        .delete(try instance._runtime_underlyingDatabaseRecord.unwrap() as! _CoreData.DatabaseRecordContext.Record)
     }
 }
 
