@@ -88,6 +88,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         }
     }
     
+    @discardableResult
     public func save() -> AnyTask<Void, SaveError> {
         guard managedObjectContext.hasChanges else {
             return .just(.success(()))
@@ -139,8 +140,8 @@ fileprivate extension DatabaseFetchRequest where Context == _CoreData.DatabaseRe
             }
         }
         
-        if let limit = limit {
-            switch limit {
+        if let fetchLimit = fetchLimit {
+            switch fetchLimit {
                 case .cursor(.offset(let offset)):
                     result.fetchLimit = offset
                 case .none:
@@ -148,8 +149,6 @@ fileprivate extension DatabaseFetchRequest where Context == _CoreData.DatabaseRe
                 default:
                     fatalError(reason: .unimplemented)
             }
-        } else {
-            result.fetchLimit = 0 // FIXME?
         }
         
         return result

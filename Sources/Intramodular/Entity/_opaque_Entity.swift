@@ -8,13 +8,13 @@ import Runtime
 import Swallow
 
 /// A shadow protocol for `Entity`.
-public protocol _opaque_Entity: _opaque_EntityRelatable, Initiable, _opaque_ObservableObject {
+public protocol _opaque_Entity: _opaque_EntityRelatable, _opaque_ObservableObject, Initiable {
     static var _opaque_Parent: _opaque_Entity.Type? { get }
     static var _opaque_ID: Any.Type? { get }
     
     var _opaque_id: AnyHashable? { get }
     
-    var _runtime_underlyingDatabaseRecord: DatabaseRecord? { get }
+    var _underlyingDatabaseRecord: _opaque_DatabaseRecord? { get }
     
     static var name: String { get }
     
@@ -64,7 +64,7 @@ extension _opaque_Entity {
                 
                 if self is _opaque_Subentity {
                     if let parentType = Self._opaque_Parent, !isParentSet {
-                        property._opaque_modelEnvironment.parent = parentType.init(_runtime_underlyingDatabaseRecord: underlyingRecord)
+                        property._opaque_modelEnvironment.parent = parentType.init(_underlyingDatabaseRecord: underlyingRecord)
                         
                         isParentSet = true
                     }
@@ -80,7 +80,7 @@ extension _opaque_Entity {
     }
     
     @usableFromInline
-    init(_runtime_underlyingDatabaseRecord record: DatabaseRecord?) {
+    init(_underlyingDatabaseRecord record: DatabaseRecord?) {
         if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {
             if let entityType = schema.entityNameToTypeMap[(record as! _CoreData.DatabaseRecord).base.entity.name]?.value {
                 self = entityType.init() as! Self
@@ -118,14 +118,14 @@ extension _opaque_Entity where Self: Entity {
     }
     
     public var _opaque_objectWillChange: AnyPublisher<Any, Never> {
-        _runtime_underlyingDatabaseRecord?._opaque_objectWillChange ?? Combine.Empty<Any, Never>().eraseToAnyPublisher()
+        _underlyingDatabaseRecord?._opaque_objectWillChange ?? Combine.Empty<Any, Never>().eraseToAnyPublisher()
     }
     
     public func _opaque_objectWillChange_send() throws {
-        try _runtime_underlyingDatabaseRecord.unwrap()._opaque_objectWillChange_send()
+        
     }
     
-    public var _runtime_underlyingDatabaseRecord: DatabaseRecord? {
+    public var _underlyingDatabaseRecord: _opaque_DatabaseRecord? {
         for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
             if let value = value as? _opaque_PropertyAccessor {
                 return value.underlyingRecord
@@ -139,6 +139,17 @@ extension _opaque_Entity where Self: Entity {
 extension _opaque_Entity where Self: Entity & AnyObject {
     public static var _opaque_Parent: _opaque_Entity.Type? {
         ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
+    }
+}
+
+
+extension _opaque_Entity where Self: Entity & ObservableObject {
+    public static var _opaque_Parent: _opaque_Entity.Type? {
+        ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
+    }
+    
+    public func _opaque_objectWillChange_send() throws {
+        try cast(objectWillChange, to: _opaque_VoidSender.self).send()
     }
 }
 

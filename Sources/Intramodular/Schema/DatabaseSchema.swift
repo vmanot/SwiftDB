@@ -9,8 +9,7 @@ import Swallow
 import SwiftUI
 
 /// A type-erased description of a `Schema`.
-public struct DatabaseSchema: Codable, Hashable, Named {
-    public let name: String
+public struct DatabaseSchema: Codable, Hashable {
     public let entities: [Entity]
     
     @usableFromInline
@@ -22,7 +21,6 @@ public struct DatabaseSchema: Codable, Hashable, Named {
     
     @inlinable
     public init(_ schema: Schema) {
-        self.name = schema.name
         self.entities = schema.body.map({ $0.toEntityDescription() })
         
         for (entity, entityType) in entities.zip(schema.body) {

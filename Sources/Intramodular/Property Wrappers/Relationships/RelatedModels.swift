@@ -25,7 +25,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     }
     
     public func makeIterator() -> AnyIterator<Model> {
-        .init(base.lazy.map({ Model(_runtime_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)) }).makeIterator())
+        .init(base.lazy.map({ Model(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)) }).makeIterator())
     }
 }
 
@@ -57,14 +57,14 @@ extension RelatedModels: EntityRelatable {
 
 extension RelatedModels {
     public mutating func insert(_ model: Model) {
-        base.insert((model._runtime_underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base)
+        base.insert((model._underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base)
     }
     
     public mutating func remove(_ model: Model) {
-        base.remove((model._runtime_underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base)
+        base.remove((model._underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base)
     }
     
     public mutating func set<S: Sequence>(_ models: S) where S.Element == Model {
-        base = Set(models.lazy.map({ $0._runtime_underlyingDatabaseRecord as! _CoreData.DatabaseRecord }).map({ $0.base }))
+        base = Set(models.lazy.map({ $0._underlyingDatabaseRecord as! _CoreData.DatabaseRecord }).map({ $0.base }))
     }
 }

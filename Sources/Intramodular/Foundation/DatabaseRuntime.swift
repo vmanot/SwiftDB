@@ -25,3 +25,15 @@ final class _DefaultDatabaseRuntime: DatabaseRuntime {
         typeCache.entity[name]
     }
 }
+
+// MARK: - Auxiliary Implementation -
+
+extension CodingUserInfoKey {
+    public static let _SwiftDB_databaseRuntime = CodingUserInfoKey(rawValue: "_SwiftDB_runtime")!
+}
+
+extension Dictionary where Key == CodingUserInfoKey, Value == Any {
+    var _SwiftDB_databaseRuntime: DatabaseRuntime? {
+        self[._SwiftDB_databaseRuntime].flatMap({ $0 as? DatabaseRuntime })
+    }
+}

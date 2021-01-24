@@ -18,7 +18,7 @@ protocol _opaque_PropertyAccessor: _opaque_ObservableObject, _opaque_PropertyWra
     /// Needed for required attributes, otherwise the underlying object crashes on save.
     mutating func _runtime_encodeDefaultValueIfNecessary()
     
-    var underlyingRecord: DatabaseRecord? { get set }
+    var underlyingRecord: _opaque_DatabaseRecord? { get set }
     
     var name: String? { get set }
     var key: AnyStringKey? { get }

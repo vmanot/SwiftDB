@@ -22,20 +22,19 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
     fileprivate let cloudKitContainerIdentifier: String?
     
     @Published public private(set) var id = UUID()
-    @Published public private(set) var base: NSPersistentContainer
-    @Published public private(set) var viewContext: NSManagedObjectContext?
     
     let database: _CoreData.Database
     
     public init(
-        _ schema: Schema,
+        name: String,
+        schema: Schema,
         applicationGroupID: String? = nil,
         cloudKitContainerIdentifier: String? = nil
     ) throws {
         self.database = try _CoreData.Database(
             schema: .init(schema),
             configuration: _CoreData.Database.Configuration(
-                name: schema.name,
+                name: name,
                 applicationGroupID: applicationGroupID,
                 cloudKitContainerIdentifier: cloudKitContainerIdentifier
             ),
@@ -45,23 +44,12 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
         self.schema = DatabaseSchema(schema)
         self.applicationGroupID = applicationGroupID
         self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
-        
-        if cloudKitContainerIdentifier == nil {
-            self.base = NSPersistentContainer(
-                name: schema.name,
-                managedObjectModel: NSManagedObjectModel(self.schema)
-            )
-        } else {
-            self.base = NSPersistentCloudKitContainer(
-                name: schema.name,
-                managedObjectModel: NSManagedObjectModel(self.schema)
-            )
-        }
     }
     
-    public convenience init(_ schema: Schema) throws {
+    public convenience init(name: String, schema: Schema) throws {
         try self.init(
-            schema,
+            name: name,
+            schema: schema,
             applicationGroupID: nil,
             cloudKitContainerIdentifier: nil
         )
@@ -70,7 +58,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
 
 extension PersistentContainer {
     public var arePersistentStoresLoaded: Bool {
-        !base.persistentStoreCoordinator.persistentStores.isEmpty
+        !database.nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
     }
     
     
@@ -109,14 +97,14 @@ extension PersistentContainer {
 
 extension PersistentContainer {
     public func fetchAllInstances() throws -> [_opaque_Entity] {
-        try base.viewContext.save()
+        try database.nsPersistentContainer.viewContext.save()
         
         var result: [_opaque_Entity] = []
         
         for (name, type) in schema.entityNameToTypeMap {
-            let instances = try! base.viewContext
+            let instances = try! database.nsPersistentContainer.viewContext
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
-                .map({ type.value.init(_runtime_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)) })
+                .map({ type.value.init(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)) })
             
             result.append(contentsOf: instances)
         }
@@ -131,7 +119,7 @@ extension PersistentContainer {
     @discardableResult
     public func _opaque_create(_ type: _opaque_Entity.Type) throws -> _opaque_Entity {
         type.init(
-            _runtime_underlyingDatabaseRecord: try database.recordContext(forZones: nil).createRecord(
+            _underlyingDatabaseRecord: try database.recordContext(forZones: nil).createRecord(
                 withConfiguration: .init(
                     recordType: type.name,
                     recordID: nil,
@@ -155,18 +143,18 @@ extension PersistentContainer {
             .execute(.init(recordType: type.name, predicate: nil, sortDescriptors: nil, zones: nil, includesSubentities: true, cursor: nil, limit: .cursor(.offset(1))))
             .successPublisher
             .map({ $0.records?.first })
-            .map({ $0.map(Instance.init(_runtime_underlyingDatabaseRecord:)) })
+            .map({ $0.map(Instance.init(_underlyingDatabaseRecord:)) })
             .eraseError()
             .eraseToAnyPublisher()
             .convertToTask()
     }
     
     public func delete(_ instance: _opaque_Entity) throws {
-        try _CoreData.DatabaseRecordContext(
-            managedObjectContext: try viewContext.unwrap(),
-            affectedStores: nil
-        )
-        .delete(try instance._runtime_underlyingDatabaseRecord.unwrap() as! _CoreData.DatabaseRecordContext.Record)
+        let context = try database.recordContext(forZones: nil)
+        
+        try context.delete(try instance._underlyingDatabaseRecord.unwrap() as! _CoreData.DatabaseRecordContext.Record)
+        
+        context.save()
     }
 }
 
@@ -174,7 +162,7 @@ extension View {
     public func persistentContainer<Schema>(
         _ container: PersistentContainer<Schema>
     ) -> some View {
-        self.environment(\.managedObjectContext, container.base.viewContext)
+        self.environment(\.managedObjectContext, container.database.nsPersistentContainer.viewContext)
             .environmentObject(container)
     }
 }

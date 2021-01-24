@@ -30,7 +30,7 @@ public final class EntityRelationship<
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     @usableFromInline
-    var underlyingRecord: DatabaseRecord?
+    var underlyingRecord: _opaque_DatabaseRecord?
     
     @usableFromInline
     var name: String?

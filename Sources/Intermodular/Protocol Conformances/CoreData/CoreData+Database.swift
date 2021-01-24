@@ -36,7 +36,7 @@ extension _CoreData {
         public let state: State
         public var viewContext: DatabaseRecordContext?
         
-        fileprivate let base: NSPersistentContainer
+        public let nsPersistentContainer: NSPersistentContainer
         
         public init(
             runtime: DatabaseRuntime,
@@ -50,9 +50,9 @@ extension _CoreData {
             self.state = state
             
             if let schema = schema {
-                self.base = .init(name: configuration.name, managedObjectModel: .init(schema))
+                self.nsPersistentContainer = .init(name: configuration.name, managedObjectModel: .init(schema))
             } else {
-                self.base = .init(name: configuration.name)
+                self.nsPersistentContainer = .init(name: configuration.name)
             }
             
             try loadPersistentStores()
@@ -67,17 +67,17 @@ extension _CoreData {
                 cloudKitContainerIdentifier: nil
             )
             self.state = nil
-            self.base = container
+            self.nsPersistentContainer = container
             
             try loadPersistentStores()
         }
         
         private func setupPersistentStoreDescription() throws {
             if let sqliteStoreURL = sqliteStoreURL {
-                base.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
+                nsPersistentContainer.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
             }
             
-            let description = try base.persistentStoreDescriptions.first.unwrap()
+            let description = try nsPersistentContainer.persistentStoreDescriptions.first.unwrap()
             
             if let cloudKitContainerIdentifier = configuration.cloudKitContainerIdentifier {
                 description.cloudKitContainerOptions = .init(containerIdentifier: cloudKitContainerIdentifier)
@@ -90,16 +90,16 @@ extension _CoreData {
         private func loadPersistentStores() throws {
             try setupPersistentStoreDescription()
             
-            base.loadPersistentStores()
+            nsPersistentContainer.loadPersistentStores()
                 .map({
-                    self.base.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
+                    self.nsPersistentContainer.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
                     
-                    self.base
+                    self.nsPersistentContainer
                         .viewContext
                         .automaticallyMergesChangesFromParent = true
                     
                     self.viewContext = DatabaseRecordContext(
-                        managedObjectContext: self.base.viewContext,
+                        managedObjectContext: self.nsPersistentContainer.viewContext,
                         affectedStores: nil
                     )
                 })
@@ -118,16 +118,16 @@ extension _CoreData.Database: Database {
     }
     
     public func fetchAllZones() -> AnyTask<[Zone], Error> {
-        if base.persistentStoreCoordinator.persistentStores.isEmpty {
-            return base.loadPersistentStores().map {
-                self.base
+        if nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty {
+            return nsPersistentContainer.loadPersistentStores().map {
+                self.nsPersistentContainer
                     .persistentStoreCoordinator
                     .persistentStores
                     .map({ _CoreData.Database.Zone(persistentStore: $0) })
             }
             .convertToTask()
         } else {
-            return .just(.success(base.persistentStoreCoordinator.persistentStores.map({ Zone(persistentStore: $0) })))
+            return .just(.success(nsPersistentContainer.persistentStoreCoordinator.persistentStores.map({ Zone(persistentStore: $0) })))
         }
     }
     
@@ -140,7 +140,7 @@ extension _CoreData.Database: Database {
     }
     
     public func recordContext(forZones zones: [Zone]?) throws -> RecordContext {
-        .init(managedObjectContext: base.viewContext, affectedStores: zones?.map({ $0.persistentStore }))
+        .init(managedObjectContext: nsPersistentContainer.viewContext, affectedStores: zones?.map({ $0.persistentStore }))
     }
     
     public func delete() -> AnyTask<Void, Error> {
@@ -160,7 +160,7 @@ extension _CoreData.Database: Identifiable {
 
 extension _CoreData.Database: Named {
     public var name: String {
-        base.name
+        nsPersistentContainer.name
     }
 }
 
@@ -169,10 +169,10 @@ extension _CoreData.Database: Named {
 extension _CoreData.Database {
     public var sqliteStoreURL: URL? {
         guard let applicationGroupID = configuration.applicationGroupID else {
-            return base.persistentStoreDescriptions.first?.url
+            return nsPersistentContainer.persistentStoreDescriptions.first?.url
         }
         
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(base.name + ".sqlite")
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(nsPersistentContainer.name + ".sqlite")
     }
     
     public var allStoreFiles: [URL] {
@@ -182,7 +182,7 @@ extension _CoreData.Database {
             result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".com.apple.mobile_container_manager.metadata.plist"))
             result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-wal"))
             result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-shm"))
-            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".\(base.name)_SUPPORT/"))
+            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".\(nsPersistentContainer.name)_SUPPORT/"))
             result.append(sqliteStoreURL)
         }
         

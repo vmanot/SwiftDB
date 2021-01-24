@@ -10,7 +10,7 @@ import Swallow
 public struct ModelFetchRequest<Result: Entity> {
     public var predicate: NSPredicate?
     public var sortDescriptors: [SortDescriptor]?
-    public var fetchLimit: PaginationLimit?
+    public var fetchLimit: FetchLimit?
     
     public init(
         predicate: NSPredicate?,
@@ -19,6 +19,6 @@ public struct ModelFetchRequest<Result: Entity> {
     ) {
         self.predicate = predicate
         self.sortDescriptors = sortDescriptors
-        self.fetchLimit = fetchLimit.map(PaginationCursor.offset).map(PaginationLimit.cursor)
+        self.fetchLimit = fetchLimit.map(PaginationCursor.offset).map(FetchLimit.cursor)
     }
 }

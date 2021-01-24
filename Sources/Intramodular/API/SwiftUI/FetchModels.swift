@@ -29,7 +29,7 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
         }).map({ object -> Result in
             hasher.combine(object)
             
-            return Result(_runtime_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: object))
+            return Result(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: object))
         })
         
         wrappedValueHash = hasher.finalize()

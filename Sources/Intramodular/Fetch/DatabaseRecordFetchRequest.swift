@@ -14,7 +14,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Hashable {
     public let includesSubentities: Bool
     
     public let cursor: PaginationCursor?
-    public let limit: PaginationLimit?
+    public let fetchLimit: FetchLimit?
     
     public init(
         recordType: Context.RecordType?,
@@ -23,7 +23,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Hashable {
         zones: [Context.Zone.ID]?,
         includesSubentities: Bool,
         cursor: PaginationCursor?,
-        limit: PaginationLimit?
+        limit: FetchLimit?
     ) {
         self.recordType = recordType
         self.predicate = predicate
@@ -31,7 +31,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Hashable {
         self.zones = zones
         self.includesSubentities = includesSubentities
         self.cursor = cursor
-        self.limit = limit
+        self.fetchLimit = limit
     }
 }
 

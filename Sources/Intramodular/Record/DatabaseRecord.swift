@@ -6,10 +6,6 @@ import Merge
 import Swallow
 
 public protocol _opaque_DatabaseRecord: _opaque_ObservableObject, CancellablesHolder {
-    
-}
-
-public protocol DatabaseRecord: _opaque_DatabaseRecord {
     var isInitialized: Bool { get }
     
     var allReservedKeys: [CodingKey] { get }
@@ -24,9 +20,13 @@ public protocol DatabaseRecord: _opaque_DatabaseRecord {
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
 }
 
+public protocol DatabaseRecord: _opaque_DatabaseRecord {
+    
+}
+
 // MARK: - Implementation -
 
-extension DatabaseRecord {
+extension _opaque_DatabaseRecord {
     func decode<Value>(
         _ type: Value.Type,
         forKey key: CodingKey,

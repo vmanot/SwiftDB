@@ -14,7 +14,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
     @usableFromInline
     var _opaque_modelEnvironment: _opaque_ModelEnvironment = .init()
     @usableFromInline
-    var underlyingRecord: DatabaseRecord?
+    var underlyingRecord: _opaque_DatabaseRecord?
     @usableFromInline
     var initialValue: Value?
     
@@ -144,7 +144,7 @@ extension Attribute where Value: NSAttributeCoder {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
-                try attribute.underlyingRecord.unwrap().decode(Value.self, forKey: attribute.key.unwrap())
+                try attribute.underlyingRecord.unwrap().decode(Value.self, forKey: attribute.key.unwrap(), initialValue: wrappedValue)
             },
             encodeImpl: { attribute, newValue in
                 try attribute.underlyingRecord.unwrap().encode(newValue, forKey: attribute.key.unwrap())
@@ -158,71 +158,7 @@ extension Attribute where Value: NSAttributeCoder {
     }
 }
 
-extension Attribute where Value: Codable {
-    public convenience init(
-        wrappedValue: Value,
-        name: String? = nil,
-        isTransient: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false,
-        preservesValueInHistoryOnDeletion: Bool = false
-    ) {
-        self.init(
-            initialValue: wrappedValue,
-            decodeImpl: { attribute in
-                try attribute.underlyingRecord.unwrap().decode(
-                    Value.self,
-                    forKey: attribute.key.unwrap(),
-                    initialValue: attribute.initialValue
-                )
-            },
-            encodeImpl: { attribute, newValue in
-                try attribute.underlyingRecord.unwrap().encode(
-                    newValue,
-                    forKey: attribute.key.unwrap()
-                )
-            },
-            name: name,
-            isTransient: isTransient,
-            typeDescriptionHint: nil,
-            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
-        )
-    }
-}
-
-extension Attribute where Value: Codable & NSAttributeCoder {
-    public convenience init(
-        wrappedValue: Value,
-        name: String? = nil,
-        isTransient: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false,
-        preservesValueInHistoryOnDeletion: Bool = false
-    ) {
-        self.init(
-            initialValue: wrappedValue,
-            decodeImpl: { attribute in
-                try attribute.underlyingRecord.unwrap().decode(
-                    Value.self,
-                    forKey: attribute.key.unwrap(),
-                    initialValue: attribute.initialValue
-                )
-            },
-            encodeImpl: { attribute, newValue in
-                try attribute.underlyingRecord.unwrap().encode(
-                    newValue,
-                    forKey: attribute.key.unwrap()
-                )
-            },
-            name: name,
-            isTransient: isTransient,
-            typeDescriptionHint: nil,
-            allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
-            preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
-        )
-    }
-}
-
-extension Attribute where Value: Codable & NSPrimitiveAttributeCoder {
+extension Attribute  {
     public convenience init(
         wrappedValue: Value,
         name: String? = nil,
