@@ -11,22 +11,38 @@ extension DatabaseSchema {
         @Indirect
         public var parent: DatabaseSchema.Entity?
         public let name: String
-        public let underlyingDatabaseRecordClassName: String
+        public let className: String?
         public let subentities: MaybeKnown<[Self]>
         public let properties: [DatabaseSchema.Entity.Property]
         
         public init(
             parent: DatabaseSchema.Entity?,
             name: String,
-            underlyingDatabaseRecordClassName: String,
+            className: String?,
             subentities: MaybeKnown<[Self]>,
             properties: [DatabaseSchema.Entity.Property]
         ) {
             self.parent = parent
             self.name = name
-            self.underlyingDatabaseRecordClassName = underlyingDatabaseRecordClassName
+            self.className = className
             self.subentities = subentities
             self.properties = properties
         }
+    }
+}
+
+// MARK: - Auxiliary Implementation -
+
+extension DatabaseSchema.Entity {
+    public init(_ type: _opaque_Entity.Type) {
+        let instance = type.init(_underlyingDatabaseRecord: nil, context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
+        
+        self.init(
+            parent: type._opaque_ParentEntity.map(DatabaseSchema.Entity.init),
+            name: type.name,
+            className: type.underlyingDatabaseRecordClass.name,
+            subentities: .unknown,
+            properties: instance._runtime_propertyAccessors.map({ $0.schema() })
+        )
     }
 }

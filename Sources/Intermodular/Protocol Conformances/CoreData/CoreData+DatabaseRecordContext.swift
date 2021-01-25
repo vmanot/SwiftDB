@@ -53,13 +53,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public func zone(for object: Record) throws -> Zone? {
         object.base.objectID.persistentStore.map({ Zone(persistentStore: $0) })
     }
-    
-    public func update(_ object: Record) throws {
-        guard managedObjectContext.updatedObjects.contains(object.base) else {
-            throw Never.Reason.illegal
-        }
-    }
-    
+        
     public func delete(_ object: Record) throws {
         managedObjectContext.delete(object.base)
     }

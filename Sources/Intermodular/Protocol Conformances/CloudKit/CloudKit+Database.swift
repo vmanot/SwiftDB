@@ -90,7 +90,7 @@ extension _CloudKit.Database: Database {
             if let operationError = operationError {
                 result.send(.error(operationError))
             } else {
-                let zones = Array((recordZonesByZoneID ?? [:]).values).map({ Zone(base: $0) })
+                let zones = Array((recordZonesByZoneID ?? [:]).values).map({ Zone(recordZone: $0) })
                 
                 result.send(.success(zones))
             }

@@ -21,7 +21,7 @@ public struct DatabaseSchema: Codable, Hashable {
     
     @inlinable
     public init(_ schema: Schema) {
-        self.entities = schema.body.map({ $0.toEntityDescription() })
+        self.entities = schema.body.map({ .init($0) })
         
         for (entity, entityType) in entities.zip(schema.body) {
             entityNameToTypeMap[entity.name] = .init(entityType)

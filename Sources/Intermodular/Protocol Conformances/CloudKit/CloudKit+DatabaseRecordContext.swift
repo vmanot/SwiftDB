@@ -60,13 +60,9 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
     
     public func zone(for object: Record) throws -> Zone? {
         zones.lazy
-            .map({ $0.base })
+            .map({ $0.ckRecordZone })
             .first(where: { $0.zoneID == object.base.recordID.zoneID })
-            .map({ Zone(base: $0) })
-    }
-    
-    public func update(_ object: Record) throws {
-        
+            .map({ Zone(recordZone: $0) })
     }
     
     public func delete(_ object: Record) throws {

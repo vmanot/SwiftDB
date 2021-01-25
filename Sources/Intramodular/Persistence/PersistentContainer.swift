@@ -104,7 +104,12 @@ extension PersistentContainer {
         for (name, type) in schema.entityNameToTypeMap {
             let instances = try! database.nsPersistentContainer.viewContext
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
-                .map({ type.value.init(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)) })
+                .map {
+                    type.value.init(
+                        _underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0),
+                        context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+                    )
+                }
             
             result.append(contentsOf: instances)
         }
@@ -126,7 +131,8 @@ extension PersistentContainer {
                     zone: nil
                 ),
                 context: .init()
-            )
+            ),
+            context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
         )
     }
     
@@ -143,7 +149,14 @@ extension PersistentContainer {
             .execute(.init(recordType: type.name, predicate: nil, sortDescriptors: nil, zones: nil, includesSubentities: true, cursor: nil, limit: .cursor(.offset(1))))
             .successPublisher
             .map({ $0.records?.first })
-            .map({ $0.map(Instance.init(_underlyingDatabaseRecord:)) })
+            .map {
+                $0.map {
+                    Instance(
+                        _underlyingDatabaseRecord: $0,
+                        context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+                    )
+                }
+            }
             .eraseError()
             .eraseToAnyPublisher()
             .convertToTask()

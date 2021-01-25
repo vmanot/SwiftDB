@@ -28,7 +28,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     public var isInitialized: Bool {
         true
     }
-        
+    
     public var allReservedKeys: [CodingKey] {
         [AnyCodingKey(stringValue: "systemFields")]
     }

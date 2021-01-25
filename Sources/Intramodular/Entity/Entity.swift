@@ -21,34 +21,9 @@ extension Entity {
     public static var name: String {
         String(describing: Self.self)
     }
-        
-    public static func toEntityDescription() -> DatabaseSchema.Entity {
-        .init(self)
-    }
 }
 
 // MARK: - Auxiliary Implementation -
-
-extension DatabaseSchema.Entity {
-    public init(_ type: _opaque_Entity.Type) {
-        var instance = type.init()
-        
-        instance._runtime_configurePropertyAccessors(underlyingRecord: nil)
-        
-        self.init(
-            parent: type._opaque_Parent?.toEntityDescription(),
-            name: type.name,
-            underlyingDatabaseRecordClassName: type.underlyingDatabaseRecordClass.name,
-            subentities: .unknown,
-            properties: instance._runtime_propertyAccessors.map({ $0.schema() })
-        )
-    }
-}
-
-@usableFromInline
-class _EntityToNSManagedObjectAdaptor<T: Entity>: NSXManagedObject {
-    
-}
 
 public struct _DefaultParentEntity: Entity {
     public static var name: String {

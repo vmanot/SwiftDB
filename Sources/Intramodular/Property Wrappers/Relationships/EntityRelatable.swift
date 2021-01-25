@@ -45,11 +45,11 @@ extension EntityRelatable where Self: Entity {
     }
     
     public init(noRelatedModels: Void) {
-        self.init(_underlyingDatabaseRecord: nil)
+        self.init(_underlyingDatabaseRecord: nil, context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
     }
     
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        Self(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()))
+        Self(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
     }
     
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {

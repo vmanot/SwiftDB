@@ -9,7 +9,7 @@ import Swallow
 
 /// A shadow protocol for `Entity`.
 public protocol _opaque_Entity: _opaque_EntityRelatable, _opaque_ObservableObject, Initiable {
-    static var _opaque_Parent: _opaque_Entity.Type? { get }
+    static var _opaque_ParentEntity: _opaque_Entity.Type? { get }
     static var _opaque_ID: Any.Type? { get }
     
     var _opaque_id: AnyHashable? { get }
@@ -17,8 +17,6 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, _opaque_ObservableObjec
     var _underlyingDatabaseRecord: _opaque_DatabaseRecord? { get }
     
     static var name: String { get }
-    
-    static func toEntityDescription() -> DatabaseSchema.Entity
 }
 
 extension _opaque_Entity where Self: Entity {
@@ -28,15 +26,11 @@ extension _opaque_Entity where Self: Entity {
 // MARK: - Implementation -
 
 extension _opaque_Entity {
-    public static var underlyingDatabaseRecordClassName: String {
-        "_SwiftDB_NSManagedObject_" + name
-    }
-    
-    public static var underlyingDatabaseRecordClass: ObjCClass {
+    static var underlyingDatabaseRecordClass: ObjCClass {
         ObjCClass(
-            name: underlyingDatabaseRecordClassName,
+            name: "_SwiftDB_NSManagedObject_" + name,
             superclass: nil
-                ?? _opaque_Parent?.underlyingDatabaseRecordClass
+                ?? _opaque_ParentEntity?.underlyingDatabaseRecordClass
                 ?? ObjCClass(NSXManagedObject.self)
         )
     }
@@ -49,7 +43,10 @@ extension _opaque_Entity {
     }
     
     @usableFromInline
-    mutating func _runtime_configurePropertyAccessors(underlyingRecord: DatabaseRecord?) {
+    mutating func _runtime_configurePropertyAccessors<Context: DatabaseRecordContext>(
+        underlyingRecord: DatabaseRecord?,
+        context: Context.RecordCreateContext
+    ) {
         var instance = AnyNominalOrTupleMirror(self)!
         
         var isParentSet: Bool = false
@@ -63,8 +60,8 @@ extension _opaque_Entity {
                 }
                 
                 if self is _opaque_Subentity {
-                    if let parentType = Self._opaque_Parent, !isParentSet {
-                        property._opaque_modelEnvironment.parent = parentType.init(_underlyingDatabaseRecord: underlyingRecord)
+                    if let parentType = Self._opaque_ParentEntity, !isParentSet {
+                        property._opaque_modelEnvironment.parent = parentType.init(_underlyingDatabaseRecord: underlyingRecord, context: context)
                         
                         isParentSet = true
                     }
@@ -80,7 +77,10 @@ extension _opaque_Entity {
     }
     
     @usableFromInline
-    init(_underlyingDatabaseRecord record: DatabaseRecord?) {
+    init<Context: DatabaseRecordContext>(
+        _underlyingDatabaseRecord record: DatabaseRecord?,
+        context: Context.RecordCreateContext
+    ) {
         if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {
             if let entityType = schema.entityNameToTypeMap[(record as! _CoreData.DatabaseRecord).base.entity.name]?.value {
                 self = entityType.init() as! Self
@@ -93,7 +93,7 @@ extension _opaque_Entity {
             self.init()
         }
         
-        _runtime_configurePropertyAccessors(underlyingRecord: record)
+        _runtime_configurePropertyAccessors(underlyingRecord: record, context: context)
         
         if let record = record {
             record
@@ -105,7 +105,7 @@ extension _opaque_Entity {
 }
 
 extension _opaque_Entity where Self: Entity {
-    public static var _opaque_Parent: _opaque_Entity.Type? {
+    public static var _opaque_ParentEntity: _opaque_Entity.Type? {
         return nil
     }
     
@@ -137,14 +137,14 @@ extension _opaque_Entity where Self: Entity {
 }
 
 extension _opaque_Entity where Self: Entity & AnyObject {
-    public static var _opaque_Parent: _opaque_Entity.Type? {
+    public static var _opaque_ParentEntity: _opaque_Entity.Type? {
         ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
     }
 }
 
 
 extension _opaque_Entity where Self: Entity & ObservableObject {
-    public static var _opaque_Parent: _opaque_Entity.Type? {
+    public static var _opaque_ParentEntity: _opaque_Entity.Type? {
         ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
     }
     

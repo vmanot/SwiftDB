@@ -10,7 +10,7 @@ public protocol _opaque_Subentity: _opaque_Entity {
 }
 
 extension _opaque_Entity where Self: Subentity {
-    public static var _opaque_Parent: _opaque_Entity.Type? {
+    public static var _opaque_ParentEntity: _opaque_Entity.Type? {
         guard Parent.self != _DefaultParentEntity.self else {
             return nil
         }

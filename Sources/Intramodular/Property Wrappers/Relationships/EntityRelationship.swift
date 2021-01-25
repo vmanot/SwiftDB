@@ -170,6 +170,7 @@ extension _opaque_Entity {
         }
     }
 }
+
 extension EntityRelationship {
     @_disfavoredOverload
     @inlinable

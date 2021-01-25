@@ -8,31 +8,34 @@ import Swallow
 
 extension _CloudKit {
     public struct DatabaseZone {
-        let base: CKRecordZone
+        let ckRecordZone: CKRecordZone
         
-        init(base: CKRecordZone) {
-            self.base = base
+        init(recordZone: CKRecordZone) {
+            self.ckRecordZone = recordZone
         }
     }
 }
 
 extension _CloudKit.DatabaseZone: DatabaseZone {
     public var name: String {
-        base.zoneID.zoneName
+        ckRecordZone.zoneID.zoneName
     }
     
     public var ownerName: String {
-        base.zoneID.ownerName
+        ckRecordZone.zoneID.ownerName
     }
 }
 
 extension _CloudKit.DatabaseZone {
     public struct ID: Codable & Hashable {
-        let zoneName: String
-        let ownerName: String
+        let zoneName: String?
+        let ownerName: String?
     }
     
     public var id: ID {
-        .init(zoneName: base.zoneID.zoneName, ownerName: base.zoneID.ownerName)
+        .init(
+            zoneName: ckRecordZone.zoneID.zoneName,
+            ownerName: ckRecordZone.zoneID.ownerName
+        )
     }
 }

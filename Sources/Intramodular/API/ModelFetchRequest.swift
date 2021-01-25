@@ -12,13 +12,28 @@ public struct ModelFetchRequest<Result: Entity> {
     public var sortDescriptors: [SortDescriptor]?
     public var fetchLimit: FetchLimit?
     
+    @_disfavoredOverload
+    public init(
+        predicate: NSPredicate?,
+        sortDescriptors: [SortDescriptor]?,
+        fetchLimit: FetchLimit?
+    ) {
+        self.predicate = predicate
+        self.sortDescriptors = sortDescriptors
+        self.fetchLimit = fetchLimit
+    }
+}
+
+extension ModelFetchRequest {
     public init(
         predicate: NSPredicate?,
         sortDescriptors: [SortDescriptor]?,
         fetchLimit: Int?
     ) {
-        self.predicate = predicate
-        self.sortDescriptors = sortDescriptors
-        self.fetchLimit = fetchLimit.map(PaginationCursor.offset).map(FetchLimit.cursor)
+        self.init(
+            predicate: predicate,
+            sortDescriptors: sortDescriptors,
+            fetchLimit: fetchLimit.map({ .cursor(.offset($0)) })
+        )
     }
 }

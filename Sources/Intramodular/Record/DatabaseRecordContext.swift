@@ -24,9 +24,7 @@ public protocol DatabaseRecordContext {
     ) throws -> Record
     
     func recordID(from record: Record) throws -> RecordID
-    
     func zone(for: Record) throws -> Zone?
-    func update(_: Record) throws
     func delete(_: Record) throws
     
     func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error>

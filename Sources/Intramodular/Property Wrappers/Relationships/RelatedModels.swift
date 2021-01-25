@@ -25,7 +25,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     }
     
     public func makeIterator() -> AnyIterator<Model> {
-        .init(base.lazy.map({ Model(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)) }).makeIterator())
+        .init(base.lazy.map({ Model(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()) }).makeIterator())
     }
 }
 
