@@ -61,7 +61,6 @@ extension PersistentContainer {
         !database.nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
     }
     
-    
     public func save() throws {
         try database
             .recordContext(forZones: nil)
