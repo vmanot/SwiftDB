@@ -7,6 +7,11 @@ import FoundationX
 import Merge
 import Swallow
 
+public struct DatabaseRecordRelationshipDereferenceRequest<Context: DatabaseRecordContext> {
+    public let recordID: Context.RecordID
+    public let key: AnyStringKey
+}
+
 public protocol DatabaseRecordContext {
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord

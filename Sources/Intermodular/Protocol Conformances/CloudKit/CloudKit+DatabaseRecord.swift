@@ -10,6 +10,14 @@ extension _CloudKit {
     public final class DatabaseRecord {
         public struct ID: Codable & Hashable {
             let rawValue: String
+            
+            init(rawValue: String) {
+                self.rawValue = rawValue
+            }
+            
+            init(recordID: CKRecord.ID) {
+                self.rawValue = recordID.recordName
+            }
         }
         
         let base: CKRecord
@@ -71,6 +79,14 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         } else {
             throw DecodingError.some
         }
+    }
+    
+    public func reference(forKey key: CodingKey) throws -> Reference? {
+        Reference(reference: try cast(try base.value(forKey: key.stringValue).unwrap(), to: CKRecord.Reference.self))
+    }
+    
+    public func setReference(_ reference: Reference?, forKey key: CodingKey) throws  {
+        base.setValue(reference?.ckReference, forKey: key.stringValue)
     }
 }
 

@@ -5,7 +5,7 @@
 import API
 import FoundationX
 
-public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Hashable {
+public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Codable, Hashable {
     public let recordType: Context.RecordType?
     @NSKeyedArchived
     public var predicate: NSPredicate?

@@ -21,7 +21,23 @@ public protocol _opaque_DatabaseRecord: _opaque_ObservableObject, CancellablesHo
 }
 
 public protocol DatabaseRecord: _opaque_DatabaseRecord {
+    associatedtype Reference: DatabaseRecordReference
     
+    var isInitialized: Bool { get }
+    
+    var allReservedKeys: [CodingKey] { get }
+    var allKeys: [CodingKey] { get }
+    
+    func contains(_ key: CodingKey) -> Bool
+    func containsValue(forKey key: CodingKey) -> Bool
+    
+    func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey: CodingKey) throws
+    
+    func encode<Value>(_ value: Value, forKey key: CodingKey) throws
+    func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
+    
+    func reference(forKey key: CodingKey) throws -> Reference?
+    func setReference(_ reference: Reference?, forKey key: CodingKey) throws 
 }
 
 // MARK: - Implementation -

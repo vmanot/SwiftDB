@@ -44,7 +44,7 @@ extension _opaque_Entity {
     
     @usableFromInline
     mutating func _runtime_configurePropertyAccessors<Context: DatabaseRecordContext>(
-        underlyingRecord: DatabaseRecord?,
+        underlyingRecord: _opaque_DatabaseRecord?,
         context: Context.RecordCreateContext
     ) {
         var instance = AnyNominalOrTupleMirror(self)!
@@ -78,7 +78,7 @@ extension _opaque_Entity {
     
     @usableFromInline
     init<Context: DatabaseRecordContext>(
-        _underlyingDatabaseRecord record: DatabaseRecord?,
+        _underlyingDatabaseRecord record: _opaque_DatabaseRecord?,
         context: Context.RecordCreateContext
     ) {
         if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {

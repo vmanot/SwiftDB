@@ -47,13 +47,13 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func recordID(from record: Record) throws -> RecordID {
-        .init(managedObject: record.base.objectID)
+        .init(managedObjectID: record.base.objectID)
     }
     
     public func zone(for object: Record) throws -> Zone? {
         object.base.objectID.persistentStore.map({ Zone(persistentStore: $0) })
     }
-        
+    
     public func delete(_ object: Record) throws {
         managedObjectContext.delete(object.base)
     }

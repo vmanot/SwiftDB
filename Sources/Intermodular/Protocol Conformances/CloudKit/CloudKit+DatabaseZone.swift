@@ -30,6 +30,23 @@ extension _CloudKit.DatabaseZone {
     public struct ID: Codable & Hashable {
         let zoneName: String?
         let ownerName: String?
+        
+        var ckRecordZoneID: CKRecordZone.ID {
+            .init(
+                zoneName: zoneName ?? CKRecordZone.ID.defaultZoneName,
+                ownerName: ownerName ?? CKCurrentUserDefaultName
+            )
+        }
+        
+        init(zoneName: String?, ownerName: String?) {
+            self.zoneName = zoneName
+            self.ownerName = ownerName
+        }
+        
+        init(zoneID: CKRecordZone.ID) {
+            self.zoneName = zoneID.zoneName
+            self.ownerName = zoneID.ownerName
+        }
     }
     
     public var id: ID {

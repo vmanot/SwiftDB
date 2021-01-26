@@ -9,10 +9,32 @@ import Swallow
 extension _CoreData {
     public final class DatabaseRecord {
         public struct ID: Hashable {
-            let base: NSManagedObjectID
+            private let base: NSManagedObjectID
             
-            init(managedObject: NSManagedObjectID) {
-                self.base = managedObject
+            var nsManagedObjectID: NSManagedObjectID {
+                base
+            }
+            
+            init(managedObjectID: NSManagedObjectID) {
+                self.base = managedObjectID
+            }
+        }
+        
+        public struct Reference: DatabaseRecordReference {
+            public typealias RecordContext = _CoreData.DatabaseRecordContext
+            
+            private let nsManagedObject: NSManagedObject
+            
+            public var recordID: RecordContext.RecordID {
+                .init(managedObjectID: nsManagedObject.objectID)
+            }
+            
+            public var zoneID: RecordContext.Zone.ID {
+                nsManagedObject.objectID.persistentStore!.identifier
+            }
+            
+            init(managedObject: NSManagedObject) {
+                self.nsManagedObject = managedObject
             }
         }
         
@@ -74,6 +96,23 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
             return try valueType.decode(from: self, forKey: key) as! Value
         } else {
             throw DecodingError.some
+        }
+    }
+    
+    public func reference(forKey key: CodingKey) throws -> Reference? {
+        if let value = base.value(forKey: key.stringValue) {
+            return try Reference(managedObject: cast(value, to: NSManagedObject.self))
+        } else {
+            return nil
+        }
+    }
+    
+    public func setReference(_ reference: Reference?, forKey key: CodingKey) throws {
+        if let reference = reference {
+            /// Here, the zone ID is unused because CoreData wraps over all its 'zones' at once. This raises concerns about the record context APIs.
+            base.setValue(try base.managedObjectContext.unwrap().object(with: reference.recordID.nsManagedObjectID), forKey: key.stringValue)
+        } else {
+            base.setValue(nil, forKey: key.stringValue)
         }
     }
 }

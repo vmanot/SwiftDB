@@ -34,20 +34,15 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
     ) throws -> Record {
         let record: CKRecord
         
-        if let zone = configuration.zone {
-            record = CKRecord(
-                recordType: configuration.recordType,
-                recordID: .init(
-                    recordName: configuration.recordID?.rawValue ?? UUID().uuidString,
-                    zoneID: .init(zoneName: zone.name, ownerName: zone.ownerName)
-                )
+        record = CKRecord(
+            recordType: configuration.recordType,
+            recordID: CKRecord.ID(
+                recordName: configuration.recordID?.rawValue,
+                zoneID: configuration.zone.map {
+                    CKRecordZone.ID(zoneName: $0.name, ownerName: $0.ownerName)
+                }
             )
-        } else {
-            record = CKRecord(
-                recordType: configuration.recordType,
-                recordID: .init(recordName: configuration.recordID?.rawValue ?? UUID().uuidString)
-            )
-        }
+        )
         
         records[record.recordID] = record
         
