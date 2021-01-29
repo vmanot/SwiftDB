@@ -65,9 +65,9 @@ extension PersistentContainer {
         try database
             .recordContext(forZones: nil)
             .save()
-            .onStatus(.success) { status in
-                self.objectWillChange.send()
-            }
+            .successPublisher
+            .toResultPublisher()
+            .publish(to: objectWillChange)
             .subscribe(in: cancellables)
     }
     

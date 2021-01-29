@@ -19,25 +19,7 @@ extension _CoreData {
                 self.base = managedObjectID
             }
         }
-        
-        public struct Reference: DatabaseRecordReference {
-            public typealias RecordContext = _CoreData.DatabaseRecordContext
-            
-            private let nsManagedObject: NSManagedObject
-            
-            public var recordID: RecordContext.RecordID {
-                .init(managedObjectID: nsManagedObject.objectID)
-            }
-            
-            public var zoneID: RecordContext.Zone.ID {
-                nsManagedObject.objectID.persistentStore!.identifier
-            }
-            
-            init(managedObject: NSManagedObject) {
-                self.nsManagedObject = managedObject
-            }
-        }
-        
+                
         let base: NSManagedObject
         
         init(base: NSManagedObject) {
@@ -55,7 +37,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
         base.managedObjectContext != nil
     }
     
-    public var allReservedKeys: [CodingKey] {
+    public static var allReservedKeys: [CodingKey] {
         []
     }
     

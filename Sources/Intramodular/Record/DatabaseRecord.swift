@@ -8,7 +8,8 @@ import Swallow
 public protocol _opaque_DatabaseRecord: _opaque_ObservableObject, CancellablesHolder {
     var isInitialized: Bool { get }
     
-    var allReservedKeys: [CodingKey] { get }
+    static var allReservedKeys: [CodingKey] { get }
+    
     var allKeys: [CodingKey] { get }
     
     func contains(_ key: CodingKey) -> Bool
@@ -25,7 +26,8 @@ public protocol DatabaseRecord: _opaque_DatabaseRecord {
     
     var isInitialized: Bool { get }
     
-    var allReservedKeys: [CodingKey] { get }
+    static var allReservedKeys: [CodingKey] { get }
+    
     var allKeys: [CodingKey] { get }
     
     func contains(_ key: CodingKey) -> Bool
@@ -37,7 +39,7 @@ public protocol DatabaseRecord: _opaque_DatabaseRecord {
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
     
     func reference(forKey key: CodingKey) throws -> Reference?
-    func setReference(_ reference: Reference?, forKey key: CodingKey) throws 
+    func setReference(_ reference: Reference?, forKey key: CodingKey) throws
 }
 
 // MARK: - Implementation -

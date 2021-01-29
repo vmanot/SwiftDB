@@ -99,7 +99,7 @@ extension _opaque_Entity {
             record
                 ._opaque_objectWillChange
                 .publish(to: self)
-                .store(in: record.cancellables)
+                .subscribe(in: record.cancellables)
         }
     }
 }

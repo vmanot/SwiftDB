@@ -31,6 +31,6 @@ public class _PublisherToObservableObject: ObservableObject {
     private var cancellable: Cancellable?
     
     func setPublisher<P: Publisher>(_ publisher: P) where P.Failure == Never {
-        cancellable = publisher.publish(to: objectWillChange)
+        cancellable = publisher.publish(to: objectWillChange).sink()
     }
 }

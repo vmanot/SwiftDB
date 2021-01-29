@@ -6,9 +6,9 @@ import CoreData
 import FoundationX
 import Swift
 
-@objc(SwiftDB_NSEntityDescription)
-class _NSEntityDescription: NSEntityDescription, NSSecureCoding {
-    weak var parent: _NSEntityDescription?
+@objc(_SwiftDB_NSEntityDescription)
+class _SwiftDB_NSEntityDescription: NSEntityDescription, NSSecureCoding {
+    weak var parent: _SwiftDB_NSEntityDescription?
     
     var _SwiftDB_propertyDescriptions: [String: DatabaseSchema.Entity.Property] = [:]
     
@@ -36,6 +36,6 @@ class _NSEntityDescription: NSEntityDescription, NSSecureCoding {
             _SwiftDB_propertyDescriptions[property.name] = property
         }
         
-        subentities = description.subentities.knownValue?.map({ _NSEntityDescription($0) }) ?? []
+        subentities = description.subentities.knownValue?.map({ _SwiftDB_NSEntityDescription($0) }) ?? []
     }
 }

@@ -124,6 +124,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
             if _self.objectWillChangeConduit == nil {
                 _self.objectWillChangeConduit = _self.objectWillChange
                     .publish(to: instance)
+                    .sink()
             }
             
             return instance[keyPath: storageKeyPath].wrappedValue
