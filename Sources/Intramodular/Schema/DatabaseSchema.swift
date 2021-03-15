@@ -3,7 +3,6 @@
 //
 
 import Compute
-import CoreData
 import Runtime
 import Swallow
 import SwiftUI
@@ -19,21 +18,28 @@ public struct DatabaseSchema: Codable, Hashable {
     @TransientProperty
     var entityToTypeMap = BidirectionalMap<Entity,  Metatype<_opaque_Entity.Type>>()
     
-    @inlinable
-    public init(_ schema: Schema) {
-        self.entities = schema.body.map({ .init($0) })
+    public init(entities: [Entity: Metatype<_opaque_Entity.Type>]) {
+        self.entities = Array(entities.keys)
         
-        for (entity, entityType) in entities.zip(schema.body) {
+        for (entity, entityType) in entities {
             entityNameToTypeMap[entity.name] = .init(entityType)
             entityToTypeMap[entity] = .init(entityType)
         }
     }
 }
 
-// MARK: - Auxiliary Implementation -
-
-extension NSManagedObject {
-    var _SwiftDB_databaseSchema: DatabaseSchema? {
-        managedObjectContext?.persistentStoreCoordinator?._SwiftDB_databaseSchema
+extension DatabaseSchema {
+    @inlinable
+    public init(_ schema: Schema) {
+        self.init(
+            entities: Dictionary(
+                schema
+                    .body
+                    .map({ Entity($0) })
+                    .zip(schema.body.lazy.map({ Metatype($0) }))
+                    .lazy
+                    .map({ (key: $0.0, value: $0.1) })
+            )
+        )
     }
 }

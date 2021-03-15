@@ -136,7 +136,7 @@ extension EntityRelationship {
     }
     
     public func schema() -> DatabaseSchema.Entity.Property {
-        return EntityRelationshipDescription(
+        return DatabaseSchema.Entity.Relationship(
             name: name!,
             isOptional: isOptional,
             isTransient: isTransient,
@@ -144,7 +144,8 @@ extension EntityRelationship {
             destinationEntityName: destinationEntityType.name,
             inverseRelationshipName: try! _runtime_findInverse()?.name,
             cardinality: .init(source: InverseValue.entityCardinality, destination: Value.entityCardinality),
-            deleteRule: deleteRule
+            deleteRule: deleteRule,
+            isOrdered: false // FIXME
         )
     }
     

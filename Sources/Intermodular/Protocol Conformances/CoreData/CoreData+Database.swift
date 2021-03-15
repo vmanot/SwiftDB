@@ -50,7 +50,7 @@ extension _CoreData {
             self.state = state
             
             if let schema = schema {
-                self.nsPersistentContainer = .init(name: configuration.name, managedObjectModel: .init(schema))
+                self.nsPersistentContainer = .init(name: configuration.name, managedObjectModel: try .init(schema))
             } else {
                 self.nsPersistentContainer = .init(name: configuration.name)
             }

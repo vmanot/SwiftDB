@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
 import Foundation
 import Swift
 
@@ -68,33 +67,5 @@ extension DatabaseSchema.Entity {
             hasher.combine(allowsExternalBinaryDataStorage)
             hasher.combine(preservesValueInHistoryOnDeletion)
         }
-        
-        public override func toNSPropertyDescription() -> NSPropertyDescription {
-            NSAttributeDescription(self)
-        }
-    }
-}
-
-// MARK: - Auxiliary Implementation -
-
-extension NSAttributeDescription {
-    public convenience init(_ description: DatabaseSchema.Entity.Attribute) {
-        self.init()
-        
-        name = description.name
-        isOptional = description.isOptional
-        isTransient = description.isTransient
-        attributeType = .init(description.type)
-        
-        if let attributeValueClassName = description.type.className {
-            self.attributeValueClassName = attributeValueClassName
-        }
-        
-        if let valueTransformerName = description.type.transformerName {
-            self.valueTransformerName = valueTransformerName
-        }
-        
-        allowsExternalBinaryDataStorage = description.allowsExternalBinaryDataStorage
-        preservesValueInHistoryOnDeletion = description.preservesValueInHistoryOnDeletion
     }
 }

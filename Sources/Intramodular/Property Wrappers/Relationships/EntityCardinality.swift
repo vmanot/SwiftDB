@@ -9,11 +9,11 @@ public enum EntityCardinality {
     case many
 }
 
-public enum EntityRelationshipCardinality {
-    case oneToOne
-    case oneToMany
-    case manyToOne
-    case manyToMany
+public enum EntityRelationshipCardinality: String, Codable {
+    case oneToOne = "one-to-one"
+    case oneToMany = "one-to-many"
+    case manyToOne = "many-to-one"
+    case manyToMany = "many-to-many"
     
     public init(source: EntityCardinality, destination: EntityCardinality) {
         switch (source, destination) {

@@ -19,7 +19,7 @@ extension _CoreData {
                 self.base = managedObjectID
             }
         }
-                
+        
         let base: NSManagedObject
         
         init(base: NSManagedObject) {

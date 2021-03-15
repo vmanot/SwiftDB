@@ -4,7 +4,7 @@
 
 import CoreData
 import FoundationX
-import Swift
+import Swallow
 
 @objc(_SwiftDB_NSEntityDescription)
 class _SwiftDB_NSEntityDescription: NSEntityDescription, NSSecureCoding {
@@ -25,17 +25,24 @@ class _SwiftDB_NSEntityDescription: NSEntityDescription, NSSecureCoding {
         return parent._SwiftDB_allPropertyDescriptions.merging(_SwiftDB_propertyDescriptions, uniquingKeysWith: { x, _ in x })
     }
     
-    public convenience init(_ description: DatabaseSchema.Entity) {
+    public convenience init(_ description: DatabaseSchema.Entity) throws {
         self.init()
         
         name = description.name
         managedObjectClassName = description.className
-        properties = description.properties.map({ $0.toNSPropertyDescription() })
+        properties = try description.properties.map({ try NSPropertyDescription(from: $0) })
         
         for property in description.properties {
             _SwiftDB_propertyDescriptions[property.name] = property
         }
         
-        subentities = description.subentities.knownValue?.map({ _SwiftDB_NSEntityDescription($0) }) ?? []
+        subentities = try description.subentities.knownValue?.map {
+            let subentity = try _SwiftDB_NSEntityDescription($0)
+            
+            subentity.parent = self
+            
+            return subentity
+        } ?? []
     }
 }
+

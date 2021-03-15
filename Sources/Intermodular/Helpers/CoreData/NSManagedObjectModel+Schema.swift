@@ -8,7 +8,7 @@ import Swift
 
 extension NSManagedObjectModel {
     @usableFromInline
-    convenience init(_ schema: DatabaseSchema) {
+    convenience init(_ schema: DatabaseSchema) throws {
         self.init()
         
         var relationshipNameToRelationship: [String: NSRelationshipDescription] = [:]
@@ -16,7 +16,7 @@ extension NSManagedObjectModel {
         var nameToEntityMap: [String: _SwiftDB_NSEntityDescription] = [:]
         
         for entity in schema.entities {
-            let description = _SwiftDB_NSEntityDescription(entity)
+            let description = try _SwiftDB_NSEntityDescription(entity)
             
             nameToEntityMap[entity.name] = description
             
@@ -46,7 +46,7 @@ extension NSManagedObjectModel {
                 if let property = property as? NSRelationshipDescription {
                     if let destinationEntityName = property.destinationEntityName {
                         property.destinationEntity = nameToEntityMap[destinationEntityName]!
-                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? EntityRelationshipDescription {
+                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
                         property.destinationEntity = nameToEntityMap[_SwiftDB_propertyDescription.destinationEntityName]
                     } else {
                         assertionFailure()
@@ -54,7 +54,7 @@ extension NSManagedObjectModel {
                     
                     if let inverseRelationshipName = property.inverseRelationshipName {
                         property.inverseRelationship = relationshipNameToRelationship[inverseRelationshipName]
-                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? EntityRelationshipDescription {
+                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
                         property.inverseRelationship = _SwiftDB_propertyDescription.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
                     }
                 }

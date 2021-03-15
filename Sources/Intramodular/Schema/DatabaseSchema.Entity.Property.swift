@@ -58,10 +58,6 @@ extension DatabaseSchema.Entity {
             hasher.combine(isTransient)
             hasher.combine(renamingIdentifier)
         }
-        
-        public func toNSPropertyDescription() -> NSPropertyDescription {
-            Never.materialize(reason: .abstract)
-        }
     }
 }
 
