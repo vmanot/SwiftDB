@@ -45,7 +45,7 @@ extension HierarchicalNamespace {
     }
 }
 
-// MARK: - Protocol Conformances -
+// MARK: - Conformances -
 
 extension HierarchicalNamespace: Collection {
     public var startIndex: Int {

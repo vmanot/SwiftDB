@@ -23,7 +23,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_Persiste
     
     @Published public private(set) var id = UUID()
     
-    let database: _CoreData.Database
+    private(set) var database: _CoreData.Database
     
     public init(
         name: String,
@@ -71,23 +71,24 @@ extension PersistentContainer {
             .subscribe(in: cancellables)
     }
     
-    /*    public func destroyAndRebuild() throws {
-     try deleteAllFiles()
-     
-     viewContext = nil
-     
-     base.viewContext.rollback()
-     base.viewContext.reset()
-     
-     try base.persistentStoreCoordinator.destroyAll()
-     
-     base = NSPersistentContainer(
-     name: schema.name,
-     managedObjectModel: NSManagedObjectModel(self.schema)
-     )
-     
-     try loadPersistentStores()
-     }*/
+    public func destroyAndRebuild() throws {
+        try deleteAll()
+        
+        if database.nsPersistentContainer.viewContext.hasChanges {
+            database.nsPersistentContainer.viewContext.rollback()
+            database.nsPersistentContainer.viewContext.reset()
+        }
+        
+        try database.delete().successPublisher.subscribeAndWaitUntilDone().get()
+        
+        database = try .init(
+            schema: database.schema,
+            configuration: database.configuration,
+            state: nil
+        )
+        
+        database.fetchAllZones()
+    }
     
     public func deleteAll() throws {
         try fetchAllInstances().forEach({ try self.delete($0) })
@@ -96,7 +97,9 @@ extension PersistentContainer {
 
 extension PersistentContainer {
     public func fetchAllInstances() throws -> [_opaque_Entity] {
-        try database.nsPersistentContainer.viewContext.save()
+        if database.nsPersistentContainer.viewContext.hasChanges {
+            try database.nsPersistentContainer.viewContext.save()
+        }
         
         var result: [_opaque_Entity] = []
         
@@ -161,12 +164,18 @@ extension PersistentContainer {
             .convertToTask()
     }
     
+    public func first<Instance: Entity>(
+        _ type: Instance.Type
+    ) throws -> Instance? {
+        try fetchFirst(type).successPublisher.subscribeAndWaitUntilDone().get()
+    }
+    
     public func delete(_ instance: _opaque_Entity) throws {
         let context = try database.recordContext(forZones: nil)
         
         try context.delete(try instance._underlyingDatabaseRecord.unwrap() as! _CoreData.DatabaseRecordContext.Record)
         
-        context.save()
+        try context.save().successPublisher.subscribeAndWaitUntilDone().get()
     }
 }
 

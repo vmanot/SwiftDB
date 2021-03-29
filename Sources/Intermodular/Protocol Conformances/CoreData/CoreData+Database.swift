@@ -108,7 +108,7 @@ extension _CoreData {
     }
 }
 
-// MARK: - Protocol Conformances -
+// MARK: - Conformances -
 
 extension _CoreData.Database: Database {
     public typealias RecordContext = _CoreData.DatabaseRecordContext
@@ -117,6 +117,7 @@ extension _CoreData.Database: Database {
         []
     }
     
+    @discardableResult
     public func fetchAllZones() -> AnyTask<[Zone], Error> {
         if nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty {
             return nsPersistentContainer.loadPersistentStores().map {

@@ -60,6 +60,10 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     
     public func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error> {
         do {
+            if request.sortDescriptors.isNil {
+                return .success(.init(records: try request.toNSFetchRequest(context: self).execute().map({ Record(base: $0) })))
+            }
+            
             let fetchedResultsController = NSFetchedResultsController(
                 fetchRequest: try request.toNSFetchRequest(context: self),
                 managedObjectContext: managedObjectContext,
@@ -82,7 +86,6 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         }
     }
     
-    @discardableResult
     public func save() -> AnyTask<Void, SaveError> {
         guard managedObjectContext.hasChanges else {
             return .just(.success(()))

@@ -250,7 +250,7 @@ extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSP
             },
             name: name,
             isTransient: isTransient,
-            typeDescriptionHint: nil,
+            typeDescriptionHint: DatabaseSchema.Entity.AttributeType(Value.RawValue.toNSAttributeType()),
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
