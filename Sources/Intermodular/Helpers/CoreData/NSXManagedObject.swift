@@ -7,6 +7,7 @@ import Merge
 import Swift
 
 /// A `NSManagedObject` subclass with modern provisions.
+@objc(NSXManagedObject)
 open class NSXManagedObject: NSManagedObject {
     lazy private(set) var cancellables = Cancellables()
     
