@@ -77,23 +77,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
     public var _runtime_wrappedValueType: Any.Type {
         (Value.self as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? Value.self
     }
-    
-    public var typeDescription: DatabaseSchema.Entity.AttributeType {
-        if let type = _runtime_wrappedValueType as? NSPrimitiveAttributeCoder.Type, let result = DatabaseSchema.Entity.AttributeType(type.toNSAttributeType()) {
-            return result
-        } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = DatabaseSchema.Entity.AttributeType(wrappedValue.getNSAttributeType()) {
-            return result
-        } else if let typeDescriptionHint = typeDescriptionHint {
-            return typeDescriptionHint
-        } else if let type = _runtime_wrappedValueType as? NSSecureCoding.Type {
-            return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
-        } else if let type = _runtime_wrappedValueType as? NSCoding.Type {
-            return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
-        } else {
-            return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
-        }
-    }
-    
+        
     init(
         initialValue: Value?,
         decodeImpl: @escaping (Attribute) throws -> Value,
@@ -218,7 +202,7 @@ extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSP
             },
             name: name,
             isTransient: isTransient,
-            typeDescriptionHint: nil,
+            typeDescriptionHint: .init(wrappedValue.rawValue.getNSAttributeType()),
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
@@ -266,11 +250,27 @@ extension Attribute {
             isOptional: isOptional,
             isTransient: isTransient,
             renamingIdentifier: renamingIdentifier,
-            type: typeDescription,
+            type: schemaAttributeType,
             defaultValue: initialValue as? NSPrimitiveAttributeCoder,
             allowsExternalBinaryDataStorage: allowsExternalBinaryDataStorage,
             preservesValueInHistoryOnDeletion: preservesValueInHistoryOnDeletion
         )
+    }
+    
+    private var schemaAttributeType: DatabaseSchema.Entity.AttributeType {
+        if let type = _runtime_wrappedValueType as? NSPrimitiveAttributeCoder.Type, let result = DatabaseSchema.Entity.AttributeType(type.toNSAttributeType()) {
+            return result
+        } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = DatabaseSchema.Entity.AttributeType(wrappedValue.getNSAttributeType()) {
+            return result
+        } else if let typeDescriptionHint = typeDescriptionHint {
+            return typeDescriptionHint
+        } else if let type = _runtime_wrappedValueType as? NSSecureCoding.Type {
+            return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
+        } else if let type = _runtime_wrappedValueType as? NSCoding.Type {
+            return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
+        } else {
+            return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
+        }
     }
 }
 

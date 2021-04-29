@@ -9,14 +9,14 @@ import Swallow
 
 extension _CoreData {
     public final class DatabaseRecordContext {
-        let managedObjectContext: NSManagedObjectContext
+        let nsManagedObjectContext: NSManagedObjectContext
         let affectedStores: [NSPersistentStore]?
         
         init(
             managedObjectContext: NSManagedObjectContext,
             affectedStores: [NSPersistentStore]?
         ) {
-            self.managedObjectContext = managedObjectContext
+            self.nsManagedObjectContext = managedObjectContext
             self.affectedStores = affectedStores
         }
     }
@@ -35,12 +35,12 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         let object = Record(
             base: NSEntityDescription.insertNewObject(
                 forEntityName: configuration.recordType,
-                into: managedObjectContext
+                into: nsManagedObjectContext
             )
         )
         
         if let zone = configuration.zone {
-            managedObjectContext.assign(object.base, to: zone.persistentStore)
+            nsManagedObjectContext.assign(object.base, to: zone.persistentStore)
         }
         
         return object
@@ -55,18 +55,18 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func delete(_ object: Record) throws {
-        managedObjectContext.delete(object.base)
+        nsManagedObjectContext.delete(object.base)
     }
     
     public func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error> {
         do {
             if request.sortDescriptors.isNil {
-                return .success(.init(records: try request.toNSFetchRequest(context: self).execute().map({ Record(base: $0) })))
+                return .success(.init(records: try nsManagedObjectContext.fetch(try request.toNSFetchRequest(context: self)) .map({ Record(base: $0) })))
             }
             
             let fetchedResultsController = NSFetchedResultsController(
                 fetchRequest: try request.toNSFetchRequest(context: self),
-                managedObjectContext: managedObjectContext,
+                managedObjectContext: nsManagedObjectContext,
                 sectionNameKeyPath: nil,
                 cacheName: nil
             )
@@ -87,14 +87,14 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func save() -> AnyTask<Void, SaveError> {
-        guard managedObjectContext.hasChanges else {
+        guard nsManagedObjectContext.hasChanges else {
             return .just(.success(()))
         }
         
         return PassthroughTask { attemptToFulfill in
-            self.managedObjectContext.perform {
+            self.nsManagedObjectContext.perform {
                 do {
-                    try self.managedObjectContext.save()
+                    try self.nsManagedObjectContext.save()
                     
                     attemptToFulfill(.success(()))
                 } catch {

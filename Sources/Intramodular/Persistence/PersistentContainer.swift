@@ -150,24 +150,22 @@ extension PersistentContainer {
             .recordContext(forZones: nil)
             .execute(.init(recordType: type.name, predicate: nil, sortDescriptors: nil, zones: nil, includesSubentities: true, cursor: nil, limit: .cursor(.offset(1))))
             .successPublisher
-            .map({ $0.records?.first })
+            .tryMap({ try $0.records.unwrap().first.unwrap() })
             .map {
-                $0.map {
-                    Instance(
-                        _underlyingDatabaseRecord: $0,
-                        context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
-                    )
-                }
+                Instance(
+                    _underlyingDatabaseRecord: $0,
+                    context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+                )
             }
-            .eraseError()
-            .eraseToAnyPublisher()
             .convertToTask()
     }
     
     public func first<Instance: Entity>(
         _ type: Instance.Type
     ) throws -> Instance? {
-        try fetchFirst(type).successPublisher.subscribeAndWaitUntilDone().get()
+        try awaitAndUnwrap {
+            try fetchFirst(type)
+        }
     }
     
     public func delete(_ instance: _opaque_Entity) throws {
