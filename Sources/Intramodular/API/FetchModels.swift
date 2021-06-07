@@ -68,7 +68,7 @@ extension FetchModels {
     }
     
     public init(
-        sortDescriptors: [SortDescriptor] = [],
+        sortDescriptors: [AnySortDescriptor] = [],
         predicate: NSPredicate? = nil,
         animation: Animation? = nil
     ) {

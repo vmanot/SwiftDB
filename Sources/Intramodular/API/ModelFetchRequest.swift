@@ -9,13 +9,13 @@ import Swallow
 /// A description of search criteria used to retrieve data from a persistent store.
 public struct ModelFetchRequest<Result: Entity> {
     public var predicate: NSPredicate?
-    public var sortDescriptors: [SortDescriptor]?
+    public var sortDescriptors: [AnySortDescriptor]?
     public var fetchLimit: FetchLimit?
     
     @_disfavoredOverload
     public init(
         predicate: NSPredicate?,
-        sortDescriptors: [SortDescriptor]?,
+        sortDescriptors: [AnySortDescriptor]?,
         fetchLimit: FetchLimit?
     ) {
         self.predicate = predicate
@@ -27,7 +27,7 @@ public struct ModelFetchRequest<Result: Entity> {
 extension ModelFetchRequest {
     public init(
         predicate: NSPredicate?,
-        sortDescriptors: [SortDescriptor]?,
+        sortDescriptors: [AnySortDescriptor]?,
         fetchLimit: Int?
     ) {
         self.init(

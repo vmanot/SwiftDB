@@ -29,7 +29,7 @@ extension HierarchicalNamespace.Segment {
                     }
                 }
                 case .some: do {
-                    return !(lhs == .none)
+                    return !(Self.none == rhs)
                 }
             }
         }

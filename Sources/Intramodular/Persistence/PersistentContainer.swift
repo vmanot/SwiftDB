@@ -13,7 +13,12 @@ public protocol _opaque_PersistentContainer: AnyProtocol {
     func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance
 }
 
-public final class PersistentContainer<Schema: SwiftDB.Schema>: _opaque_PersistentContainer, CancellablesHolder, Identifiable, ObservableObject {
+public final class PersistentContainer<Schema: SwiftDB.Schema>:
+    _opaque_PersistentContainer,
+    CancellablesHolder,
+    Identifiable,
+    ObservableObject
+{
     public let cancellables = Cancellables()
     
     fileprivate let fileManager = FileManager.default
@@ -62,13 +67,11 @@ extension PersistentContainer {
     }
     
     public func save() throws {
-        try database
-            .recordContext(forZones: nil)
-            .save()
-            .successPublisher
-            .toResultPublisher()
-            .publish(to: objectWillChange)
-            .subscribe(in: cancellables)
+        try awaitAndUnwrap {
+            try database
+                .recordContext(forZones: nil)
+                .save()
+        }
     }
     
     public func destroyAndRebuild() throws {
@@ -87,7 +90,9 @@ extension PersistentContainer {
             state: nil
         )
         
-        database.fetchAllZones()
+        try awaitAndUnwrap {
+            database.fetchAllZones()
+        }
     }
     
     public func deleteAll() throws {
@@ -148,7 +153,17 @@ extension PersistentContainer {
     ) throws -> AnyTask<Instance?, Error> {
         try database
             .recordContext(forZones: nil)
-            .execute(.init(recordType: type.name, predicate: nil, sortDescriptors: nil, zones: nil, includesSubentities: true, cursor: nil, limit: .cursor(.offset(1))))
+            .execute(
+                .init(
+                    recordType: type.name,
+                    predicate: nil,
+                    sortDescriptors: nil,
+                    zones: nil,
+                    includesSubentities: true,
+                    cursor: nil,
+                    limit: .cursor(.offset(1))
+                )
+            )
             .successPublisher
             .tryMap({ try $0.records.unwrap().first.unwrap() })
             .map {
@@ -170,10 +185,16 @@ extension PersistentContainer {
     
     public func delete(_ instance: _opaque_Entity) throws {
         let context = try database.recordContext(forZones: nil)
+        let record = try cast(
+            try instance._underlyingDatabaseRecord.unwrap(),
+            to: _CoreData.DatabaseRecordContext.Record.self
+        )
         
-        try context.delete(try instance._underlyingDatabaseRecord.unwrap() as! _CoreData.DatabaseRecordContext.Record)
+        try context.delete(record)
         
-        try context.save().successPublisher.subscribeAndWaitUntilDone().get()
+        try awaitAndUnwrap {
+            context.save()
+        }
     }
 }
 
@@ -181,7 +202,7 @@ extension View {
     public func persistentContainer<Schema>(
         _ container: PersistentContainer<Schema>
     ) -> some View {
-        self.environment(\.managedObjectContext, container.database.nsPersistentContainer.viewContext)
+        environment(\.managedObjectContext, container.database.nsPersistentContainer.viewContext)
             .environmentObject(container)
     }
 }

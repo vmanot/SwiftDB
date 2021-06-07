@@ -4,17 +4,24 @@
 
 import Combine
 import CoreData
+import Runtime
 import Swallow
 
 extension NSPersistentContainer {
     public func loadPersistentStores() -> Future<Void, Error> {
         .init { attemptToFulfill in
-            self.loadPersistentStores { storeDescription, error in
-                if let error = error {
-                    attemptToFulfill(.failure(error))
-                } else {
-                    attemptToFulfill(.success(()))
+            do {
+                try catchExceptionAsError {
+                    self.loadPersistentStores { storeDescription, error in
+                        if let error = error {
+                            attemptToFulfill(.failure(error))
+                        } else {
+                            attemptToFulfill(.success(()))
+                        }
+                    }
                 }
+            } catch {
+                attemptToFulfill(.failure(error))
             }
         }
     }

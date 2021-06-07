@@ -9,7 +9,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Codable, Has
     public let recordType: Context.RecordType?
     @NSKeyedArchived
     public var predicate: NSPredicate?
-    public var sortDescriptors: [SortDescriptor]?
+    public var sortDescriptors: [AnySortDescriptor]?
     public let zones: [Context.Zone.ID]?
     public let includesSubentities: Bool
     
@@ -19,7 +19,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Codable, Has
     public init(
         recordType: Context.RecordType?,
         predicate: NSPredicate?,
-        sortDescriptors: [SortDescriptor]?,
+        sortDescriptors: [AnySortDescriptor]?,
         zones: [Context.Zone.ID]?,
         includesSubentities: Bool,
         cursor: PaginationCursor?,

@@ -77,7 +77,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
     public var _runtime_wrappedValueType: Any.Type {
         (Value.self as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? Value.self
     }
-        
+    
     init(
         initialValue: Value?,
         decodeImpl: @escaping (Attribute) throws -> Value,
