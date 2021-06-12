@@ -37,10 +37,10 @@ extension DatabaseSchema.Entity {
         public required init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
-            self.name = try container.decode(String.self, forKey: .name)
-            self.isOptional = try container.decode(Bool.self, forKey: .isOptional)
-            self.isTransient = try container.decode(Bool.self, forKey: .isTransient)
-            self.renamingIdentifier = try container.decode(String?.self, forKey: .renamingIdentifier)
+            self.name = try container.decode(forKey: .name)
+            self.isOptional = try container.decode(forKey: .isOptional)
+            self.isTransient = try container.decode(forKey: .isTransient)
+            self.renamingIdentifier = try container.decodeIfPresent(forKey: .renamingIdentifier)
         }
         
         public func encode(to encoder: Encoder) throws {
@@ -61,7 +61,15 @@ extension DatabaseSchema.Entity {
     }
 }
 
-extension DatabaseSchema.Entity.Property {
+// MARK: - Protocol Conformances -
+
+extension DatabaseSchema.Entity.Property: Comparable {
+    public static func < (lhs: DatabaseSchema.Entity.Property, rhs: DatabaseSchema.Entity.Property) -> Bool {
+        (lhs.renamingIdentifier ?? lhs.name) < (rhs.renamingIdentifier ?? rhs.name)
+    }
+}
+
+extension DatabaseSchema.Entity.Property: Equatable {
     public static func == (lhs: DatabaseSchema.Entity.Property, rhs: DatabaseSchema.Entity.Property) -> Bool {
         lhs.hashValue == rhs.hashValue
     }

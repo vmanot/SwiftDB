@@ -16,10 +16,10 @@ public struct DatabaseSchema: Codable, Hashable {
     var entityNameToTypeMap = BidirectionalMap<String,  Metatype<_opaque_Entity.Type>>()
     @usableFromInline
     @TransientProperty
-    var entityToTypeMap = BidirectionalMap<Entity,  Metatype<_opaque_Entity.Type>>()
+    var entityToTypeMap = BidirectionalMap<Entity, Metatype<_opaque_Entity.Type>>()
     
     public init(entities: [Entity: Metatype<_opaque_Entity.Type>]) {
-        self.entities = Array(entities.keys)
+        self.entities = Array(entities.keys.sorted())
         
         for (entity, entityType) in entities {
             entityNameToTypeMap[entity.name] = .init(entityType)

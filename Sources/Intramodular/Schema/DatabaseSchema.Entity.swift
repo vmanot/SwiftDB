@@ -31,6 +31,14 @@ extension DatabaseSchema {
     }
 }
 
+// MARK: - Protocol Conformances -
+
+extension DatabaseSchema.Entity: Comparable {
+    public static func < (lhs: DatabaseSchema.Entity, rhs: DatabaseSchema.Entity) -> Bool {
+        lhs.name < rhs.name
+    }
+}
+
 // MARK: - Auxiliary Implementation -
 
 extension DatabaseSchema.Entity {

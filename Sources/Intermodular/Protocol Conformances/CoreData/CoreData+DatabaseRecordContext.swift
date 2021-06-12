@@ -91,8 +91,8 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
             return .just(.success(()))
         }
         
-        return PassthroughTask { attemptToFulfill in
-            self.nsManagedObjectContext.perform {
+        return PassthroughTask { attemptToFulfill -> () in
+            func save() {
                 do {
                     try self.nsManagedObjectContext.save()
                     
@@ -105,6 +105,14 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                             mergeConflicts: (error.userInfo["conflictList"] as? [NSMergeConflict]).map({ $0.map(DatabaseRecordMergeConflict.init) })
                         )
                     ))
+                }
+            }
+            
+            if self.nsManagedObjectContext.concurrencyType == .mainQueueConcurrencyType {
+                save()
+            } else {
+                self.nsManagedObjectContext.perform {
+                    save()
                 }
             }
         }

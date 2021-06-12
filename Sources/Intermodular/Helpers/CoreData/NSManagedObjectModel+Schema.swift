@@ -5,6 +5,7 @@
 import CoreData
 import Runtime
 import Swift
+import CryptoKit
 
 extension NSManagedObjectModel {
     @usableFromInline

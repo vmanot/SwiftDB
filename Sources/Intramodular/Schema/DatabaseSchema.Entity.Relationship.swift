@@ -14,6 +14,7 @@ extension DatabaseSchema.Entity {
             case inverseRelationshipName
             case cardinality
             case deleteRule
+            case isOrdered
         }
         
         let destinationEntityName: String
@@ -51,16 +52,22 @@ extension DatabaseSchema.Entity {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
             destinationEntityName = try container.decode(forKey: .destinationEntityName)
-            inverseRelationshipName = try container.decode(forKey: .destinationEntityName)
+            inverseRelationshipName = try container.decode(forKey: .inverseRelationshipName)
             cardinality = try container.decode(forKey: .cardinality)
             deleteRule = try container.decode(forKey: .deleteRule)
-            isOrdered = try container.decode(forKey: .destinationEntityName)
+            isOrdered = try container.decode(forKey: .isOrdered)
             
             try super.init(from: decoder)
         }
         
         public override func encode(to encoder: Encoder) throws {
-            fatalError()
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            
+            try container.encode(destinationEntityName, forKey: .destinationEntityName)
+            try container.encode(inverseRelationshipName, forKey: .inverseRelationshipName)
+            try container.encode(cardinality, forKey: .cardinality)
+            try container.encode(deleteRule, forKey: .deleteRule)
+            try container.encode(isOrdered, forKey: .isOrdered)
         }
         
         public override func hash(into hasher: inout Hasher) {
@@ -70,6 +77,7 @@ extension DatabaseSchema.Entity {
             hasher.combine(inverseRelationshipName)
             hasher.combine(cardinality)
             hasher.combine(deleteRule)
+            hasher.combine(isOrdered)
         }
     }
 }
