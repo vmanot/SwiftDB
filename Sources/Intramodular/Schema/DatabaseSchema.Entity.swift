@@ -43,7 +43,10 @@ extension DatabaseSchema.Entity: Comparable {
 
 extension DatabaseSchema.Entity {
     public init(_ type: _opaque_Entity.Type) {
-        let instance = type.init(_underlyingDatabaseRecord: nil, context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
+        let instance = type.init(
+            _underlyingDatabaseRecord: nil,
+            context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+        )
         
         self.init(
             parent: type._opaque_ParentEntity.map(DatabaseSchema.Entity.init),
