@@ -67,11 +67,10 @@ extension PersistentContainer {
     }
     
     public func save() throws {
-        try awaitAndUnwrap {
-            try database
-                .recordContext(forZones: nil)
-                .save()
-        }
+        try database
+            .recordContext(forZones: nil)
+            .save()
+            .blockAndUnwrap()
     }
     
     public func destroyAndRebuild() throws {
@@ -82,7 +81,7 @@ extension PersistentContainer {
             database.nsPersistentContainer.viewContext.reset()
         }
         
-        try database.delete().successPublisher.subscribeAndWaitUntilDone().get()
+        try database.delete().blockAndUnwrap()
         
         database = try .init(
             schema: database.schema,
@@ -90,9 +89,7 @@ extension PersistentContainer {
             state: nil
         )
         
-        try awaitAndUnwrap {
-            database.fetchAllZones()
-        }
+        try database.fetchAllZones().blockAndUnwrap()
     }
     
     public func deleteAll() throws {
@@ -178,9 +175,7 @@ extension PersistentContainer {
     public func first<Instance: Entity>(
         _ type: Instance.Type
     ) throws -> Instance? {
-        try awaitAndUnwrap {
-            try fetchFirst(type)
-        }
+        try fetchFirst(type).blockAndUnwrap()
     }
     
     public func delete(_ instance: _opaque_Entity) throws {
@@ -192,9 +187,7 @@ extension PersistentContainer {
         
         try context.delete(record)
         
-        try awaitAndUnwrap {
-            context.save()
-        }
+        try context.save().blockAndUnwrap()
     }
 }
 
