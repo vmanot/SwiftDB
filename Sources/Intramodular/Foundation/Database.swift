@@ -27,7 +27,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     ) throws
     
     @discardableResult
-    func fetchAllZones() -> AnyTask<[Zone], Error>
+    func fetchAllAvailableZones() -> AnyTask<[Zone], Error>
     @discardableResult
     func fetchZone(named _: String) -> AnyTask<Zone, Error>
     

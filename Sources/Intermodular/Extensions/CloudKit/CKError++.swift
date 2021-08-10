@@ -79,7 +79,10 @@ extension CKError {
                 return false
             case .assetNotAvailable:
                 return false
-                
+            #if swift(>=5.5)
+            case .accountTemporarilyUnavailable:
+                return true
+            #endif
             @unknown default:
                 return false
         }

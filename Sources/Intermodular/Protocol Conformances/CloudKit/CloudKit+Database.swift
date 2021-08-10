@@ -80,7 +80,7 @@ extension _CloudKit.Database: Database {
         []
     }
     
-    public func fetchAllZones() -> AnyTask<[Zone], Error> {
+    public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
         let operation = CKFetchRecordZonesOperation()
         
         let result = PassthroughTask<[Zone], Error>()

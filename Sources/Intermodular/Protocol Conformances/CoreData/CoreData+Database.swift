@@ -118,7 +118,7 @@ extension _CoreData.Database: Database {
     }
     
     @discardableResult
-    public func fetchAllZones() -> AnyTask<[Zone], Error> {
+    public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
         if nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty {
             return nsPersistentContainer.loadPersistentStores().map {
                 self.nsPersistentContainer
@@ -133,7 +133,7 @@ extension _CoreData.Database: Database {
     }
     
     public func fetchZone(named name: String) -> AnyTask<Zone, Error> {
-        fetchAllZones()
+        fetchAllAvailableZones()
             .successPublisher
             .tryMap({ try $0.filter({ $0.name == name }).first.unwrap() })
             .eraseError()

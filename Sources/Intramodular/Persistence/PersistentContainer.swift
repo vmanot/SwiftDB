@@ -10,7 +10,7 @@ import SwiftUIX
 public protocol _opaque_PersistentContainer: AnyProtocol {
     func _opaque_create(_: _opaque_Entity.Type) throws -> _opaque_Entity
     
-    func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance
+    func create<Instance: Entity>(_ typel: Instance.Type) throws -> Instance
 }
 
 public final class PersistentContainer<Schema: SwiftDB.Schema>:
@@ -89,7 +89,7 @@ extension PersistentContainer {
             state: nil
         )
         
-        try database.fetchAllZones().blockAndUnwrap()
+        try database.fetchAllAvailableZones().blockAndUnwrap()
     }
     
     public func deleteAll() throws {
