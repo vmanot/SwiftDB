@@ -33,6 +33,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>:
     public init(
         name: String,
         schema: Schema,
+        location: URL? = nil,
         applicationGroupID: String? = nil,
         cloudKitContainerIdentifier: String? = nil
     ) throws {
@@ -40,6 +41,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>:
             schema: .init(schema),
             configuration: _CoreData.Database.Configuration(
                 name: name,
+                location: location,
                 applicationGroupID: applicationGroupID,
                 cloudKitContainerIdentifier: cloudKitContainerIdentifier
             ),
@@ -64,6 +66,10 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>:
 extension PersistentContainer {
     public var arePersistentStoresLoaded: Bool {
         !database.nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
+    }
+    
+    public func load() throws {
+        try database.fetchAllAvailableZones().blockAndUnwrap()
     }
     
     public func save() throws {

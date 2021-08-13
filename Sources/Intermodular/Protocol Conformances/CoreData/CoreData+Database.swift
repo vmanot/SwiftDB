@@ -10,15 +10,18 @@ extension _CoreData {
     public final class Database: CancellablesHolder {
         public struct Configuration: Codable {
             public let name: String
+            public let location: URL?
             public let applicationGroupID: String?
             public let cloudKitContainerIdentifier: String?
             
             public init(
                 name: String,
+                location: URL?,
                 applicationGroupID: String?,
                 cloudKitContainerIdentifier: String?
             ) {
                 self.name = name
+                self.location = location
                 self.applicationGroupID = applicationGroupID
                 self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
             }
@@ -33,7 +36,7 @@ extension _CoreData {
         public let runtime: DatabaseRuntime
         public let schema: DatabaseSchema?
         public let configuration: Configuration
-        public let state: State
+        public var state: State
         public var viewContext: DatabaseRecordContext?
         
         public let nsPersistentContainer: NSPersistentContainer
@@ -63,6 +66,7 @@ extension _CoreData {
             self.schema = nil // FIXME!!!
             self.configuration = .init(
                 name: container.name,
+                location: nil,
                 applicationGroupID: nil,
                 cloudKitContainerIdentifier: nil
             )
@@ -169,11 +173,15 @@ extension _CoreData.Database: Named {
 
 extension _CoreData.Database {
     public var sqliteStoreURL: URL? {
-        guard let applicationGroupID = configuration.applicationGroupID else {
-            return nsPersistentContainer.persistentStoreDescriptions.first?.url
+        if let location = configuration.location {
+            return location
+        } else {
+            guard let applicationGroupID = configuration.applicationGroupID else {
+                return nsPersistentContainer.persistentStoreDescriptions.first?.url
+            }
+            
+            return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(nsPersistentContainer.name + ".sqlite")
         }
-        
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(nsPersistentContainer.name + ".sqlite")
     }
     
     public var allStoreFiles: [URL] {

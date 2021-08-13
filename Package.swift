@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/vmanot/API.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Compute.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/Filesystem.git", .branch("master")),
         .package(url: "https://github.com/vmanot/FoundationX.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Runtime.git", .branch("master")),
@@ -29,6 +30,7 @@ let package = Package(
             dependencies: [
                 "API",
                 "Compute",
+                "Filesystem",
                 "FoundationX",
                 "Merge",
                 "Runtime",
