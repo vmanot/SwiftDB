@@ -5,10 +5,16 @@
 import API
 import FoundationX
 
-public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Codable, Hashable {
+public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordContext>: Hashable {
+    case related(to: Context.RecordID, byKey: String)
+    case child(of: Context.RecordID)
+
+    case _nsPredicate(NSPredicate)
+}
+
+public struct DatabazeZoneQueryRequest<Context: DatabaseRecordContext>: Hashable {
     public let recordType: Context.RecordType?
-    @NSKeyedArchived
-    public var predicate: NSPredicate?
+    public var predicate: DatabaseZoneQueryPredicate<Context>?
     public var sortDescriptors: [AnySortDescriptor]?
     public let zones: [Context.Zone.ID]?
     public let includesSubentities: Bool
@@ -18,7 +24,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Codable, Has
     
     public init(
         recordType: Context.RecordType?,
-        predicate: NSPredicate?,
+        predicate: DatabaseZoneQueryPredicate<Context>?,
         sortDescriptors: [AnySortDescriptor]?,
         zones: [Context.Zone.ID]?,
         includesSubentities: Bool,
@@ -35,7 +41,7 @@ public struct DatabaseFetchRequest<Context: DatabaseRecordContext>: Codable, Has
     }
 }
 
-extension DatabaseFetchRequest {
+extension DatabazeZoneQueryRequest {
     public struct Result {
         let records: [Context.Record]?
     }

@@ -1,8 +1,11 @@
 //
-//  File.swift
-//  
-//
-//  Created by Vatsal Manot on 1/27/21.
+// Copyright (c) Vatsal Manot
 //
 
-import Foundation
+import CoreData
+import Merge
+import Swallow
+
+extension _CoreData {
+    
+}

@@ -16,7 +16,7 @@ public protocol _opaque_EntityRelatable {
     init(noRelatedModels: ())
 }
 
-/// A type that can be related to/fro an entity.
+/// A type that can be related to & from an entity.
 public protocol EntityRelatable: _opaque_EntityRelatable {
     associatedtype RelatableEntityType: Entity
     

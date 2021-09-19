@@ -20,8 +20,9 @@ public protocol DatabaseRecordContext {
     associatedtype RecordConfiguration = DatabaseRecordConfiguration<Self>
     
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
-    typealias FetchRequest = DatabaseFetchRequest<Self>
-    typealias SaveError = DatabaseRecordContextSaveError<Self>
+    typealias ZoneQueryRequest = DatabazeZoneQueryRequest<Self>
+    typealias SaveError =
+    DatabaseRecordContextSaveError<Self>
     
     func createRecord(
         withConfiguration _: DatabaseRecordConfiguration<Self>,
@@ -32,7 +33,7 @@ public protocol DatabaseRecordContext {
     func zone(for: Record) throws -> Zone?
     func delete(_: Record) throws
     
-    func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error>
+    func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error>
     
     func save() -> AnyTask<Void, SaveError>
 }

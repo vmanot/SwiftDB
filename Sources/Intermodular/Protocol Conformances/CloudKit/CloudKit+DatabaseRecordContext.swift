@@ -64,7 +64,7 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         records[object.base.recordID] = nil
     }
     
-    public func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error> {
+    public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
         fatalError(reason: .unimplemented)
     }
     

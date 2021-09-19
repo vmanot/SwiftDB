@@ -9,7 +9,7 @@ public enum EntityCardinality {
     case many
 }
 
-public enum EntityRelationshipCardinality: String, Codable {
+public enum EntityRelationshipType: String, Codable {
     case oneToOne = "one-to-one"
     case oneToMany = "one-to-many"
     case manyToOne = "many-to-one"

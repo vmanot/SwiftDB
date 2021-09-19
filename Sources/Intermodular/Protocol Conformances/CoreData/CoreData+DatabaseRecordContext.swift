@@ -58,7 +58,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         nsManagedObjectContext.delete(object.base)
     }
     
-    public func execute(_ request: FetchRequest) -> AnyTask<FetchRequest.Result, Error> {
+    public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
         do {
             if request.sortDescriptors.isNil {
                 return .success(.init(records: try nsManagedObjectContext.fetch(try request.toNSFetchRequest(context: self)) .map({ Record(base: $0) })))
@@ -71,11 +71,11 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                 cacheName: nil
             )
             
-            return PassthroughTask<FetchRequest.Result, Error> { attemptToFulfill -> Void in
+            return PassthroughTask<ZoneQueryRequest.Result, Error> { attemptToFulfill -> Void in
                 do {
                     try fetchedResultsController.performFetch()
                     
-                    attemptToFulfill(.success(FetchRequest.Result(records: fetchedResultsController.fetchedObjects?.map({ Record(base: $0) }))))
+                    attemptToFulfill(.success(ZoneQueryRequest.Result(records: fetchedResultsController.fetchedObjects?.map({ Record(base: $0) }))))
                 } catch {
                     attemptToFulfill(.failure(error))
                 }
@@ -128,11 +128,21 @@ fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.Dat
     }
 }
 
-fileprivate extension DatabaseFetchRequest where Context == _CoreData.DatabaseRecordContext {
+fileprivate extension DatabazeZoneQueryRequest where Context == _CoreData.DatabaseRecordContext {
     func toNSFetchRequest(context: Context) throws -> NSFetchRequest<NSManagedObject> {
         let result = NSFetchRequest<NSManagedObject>(entityName: try recordType.unwrap())
         
-        result.predicate = self.predicate
+        switch self.predicate {
+            case .child(_):
+                TODO.unimplemented
+            case .related(_, _):
+                TODO.unimplemented
+            case let ._nsPredicate(predicate):
+                result.predicate = predicate
+            case .none:
+                result.predicate = nil
+        }
+        
         result.sortDescriptors = self.sortDescriptors.map({ $0.map({ $0 as NSSortDescriptor }) })
         result.affectedStores = context.affectedStores?.filter({ (self.zones?.contains($0.identifier) ?? false) })
         result.includesSubentities = includesSubentities

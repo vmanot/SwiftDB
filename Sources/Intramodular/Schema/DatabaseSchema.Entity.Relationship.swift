@@ -19,7 +19,7 @@ extension DatabaseSchema.Entity {
         
         let destinationEntityName: String
         let inverseRelationshipName: String?
-        let cardinality: EntityRelationshipCardinality
+        let cardinality: EntityRelationshipType
         let deleteRule: NSDeleteRule?
         let isOrdered: Bool
         
@@ -30,7 +30,7 @@ extension DatabaseSchema.Entity {
             renamingIdentifier: String?,
             destinationEntityName: String,
             inverseRelationshipName: String?,
-            cardinality: EntityRelationshipCardinality,
+            cardinality: EntityRelationshipType,
             deleteRule: NSDeleteRule?,
             isOrdered: Bool
         ) {
