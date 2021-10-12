@@ -9,7 +9,7 @@ import SwiftUIX
 /// An collection of models related to an entity.
 public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     @inlinable
-    public static var entityCardinality: EntityCardinality {
+    public static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
         .many
     }
     
@@ -25,7 +25,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     }
     
     public func makeIterator() -> AnyIterator<Model> {
-        .init(base.lazy.map({ Model(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()) }).makeIterator())
+        AnyIterator(base.lazy.map({ try! Model(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()) }).makeIterator())
     }
 }
 

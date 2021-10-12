@@ -3,51 +3,39 @@
 //
 
 import Foundation
-import Swift
+import Swallow
 
 extension DatabaseSchema.Entity {
+    public struct AttributeConfiguration: Codable, Hashable {
+        public var type: DatabaseSchema.Entity.AttributeType
+        public var allowsExternalBinaryDataStorage: Bool
+        public var preservesValueInHistoryOnDeletion: Bool
+    }
+    
     public final class Attribute: DatabaseSchema.Entity.Property {
         public enum CodingKeys: String, CodingKey {
-            case type
-            case allowsExternalBinaryDataStorage
-            case preservesValueInHistoryOnDeletion
+            case attributeConfiguration
         }
         
-        public let type: DatabaseSchema.Entity.AttributeType
-        public let defaultValue: Any?
-        public let allowsExternalBinaryDataStorage: Bool
-        public let preservesValueInHistoryOnDeletion: Bool
+        public let attributeConfiguration: AttributeConfiguration
         
         public init(
             name: String,
-            isOptional: Bool,
-            isTransient: Bool,
-            renamingIdentifier: String?,
-            type: DatabaseSchema.Entity.AttributeType,
-            defaultValue: Any?,
-            allowsExternalBinaryDataStorage: Bool,
-            preservesValueInHistoryOnDeletion: Bool
+            propertyConfiguration: PropertyConfiguration,
+            attributeConfiguration: AttributeConfiguration
         ) {
-            self.type = type
-            self.defaultValue = defaultValue
-            self.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
-            self.preservesValueInHistoryOnDeletion = preservesValueInHistoryOnDeletion
+            self.attributeConfiguration = attributeConfiguration
             
             super.init(
                 name: name,
-                isOptional: isOptional,
-                isTransient: isTransient,
-                renamingIdentifier: renamingIdentifier
+                propertyConfiguration: propertyConfiguration
             )
         }
         
         public required init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
-            self.type = try container.decode(DatabaseSchema.Entity.AttributeType.self, forKey: .type)
-            self.defaultValue = nil
-            self.allowsExternalBinaryDataStorage = try container.decode(Bool.self, forKey: .allowsExternalBinaryDataStorage)
-            self.preservesValueInHistoryOnDeletion = try container.decode(Bool.self, forKey: .preservesValueInHistoryOnDeletion)
+            self.attributeConfiguration = try container.decode(forKey: .attributeConfiguration)
             
             try super.init(from: decoder)
         }
@@ -55,17 +43,13 @@ extension DatabaseSchema.Entity {
         public override func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             
-            try container.encode(type, forKey: .type)
-            try container.encode(allowsExternalBinaryDataStorage, forKey: .allowsExternalBinaryDataStorage)
-            try container.encode(preservesValueInHistoryOnDeletion, forKey: .preservesValueInHistoryOnDeletion)
+            try container.encode(attributeConfiguration, forKey: .attributeConfiguration)
         }
         
         public override func hash(into hasher: inout Hasher) {
             super.hash(into: &hasher)
             
-            hasher.combine(type)
-            hasher.combine(allowsExternalBinaryDataStorage)
-            hasher.combine(preservesValueInHistoryOnDeletion)
+            hasher.combine(attributeConfiguration)
         }
     }
 }

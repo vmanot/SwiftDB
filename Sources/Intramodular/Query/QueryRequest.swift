@@ -7,7 +7,7 @@ import FoundationX
 import Swallow
 
 /// A description of search criteria used to retrieve data from a persistent store.
-public struct ModelFetchRequest<Result: Entity> {
+public struct QueryRequest<Result: Entity> {
     public var predicate: NSPredicate?
     public var sortDescriptors: [AnySortDescriptor]?
     public var fetchLimit: FetchLimit?
@@ -24,7 +24,7 @@ public struct ModelFetchRequest<Result: Entity> {
     }
 }
 
-extension ModelFetchRequest {
+extension QueryRequest {
     public init(
         predicate: NSPredicate?,
         sortDescriptors: [AnySortDescriptor]?,

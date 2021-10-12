@@ -48,7 +48,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>:
             state: nil
         )
         
-        self.schema = DatabaseSchema(schema)
+        self.schema = try DatabaseSchema(schema)
         self.applicationGroupID = applicationGroupID
         self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
     }
@@ -79,7 +79,7 @@ extension PersistentContainer {
             .blockAndUnwrap()
     }
     
-    public func destroyAndRebuild() throws {
+    public func  destroyAndRebuild() throws {
         try deleteAll()
         
         if database.nsPersistentContainer.viewContext.hasChanges {
@@ -115,7 +115,7 @@ extension PersistentContainer {
             let instances = try! database.nsPersistentContainer.viewContext
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
                 .map {
-                    type.value.init(
+                    try type.value.init(
                         _underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0),
                         context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
                     )
@@ -133,7 +133,7 @@ extension PersistentContainer {
 extension PersistentContainer {
     @discardableResult
     public func _opaque_create(_ type: _opaque_Entity.Type) throws -> _opaque_Entity {
-        type.init(
+        try type.init(
             _underlyingDatabaseRecord: try database.recordContext(forZones: nil).createRecord(
                 withConfiguration: .init(
                     recordType: type.name,
@@ -158,19 +158,17 @@ extension PersistentContainer {
             .recordContext(forZones: nil)
             .execute(
                 .init(
-                    recordType: type.name,
                     predicate: nil,
                     sortDescriptors: nil,
-                    zones: nil,
-                    includesSubentities: true,
+                    filters: .init(zones: nil, recordType: type.name, includesSubentities: true),
                     cursor: nil,
                     limit: .cursor(.offset(1))
                 )
             )
             .successPublisher
             .tryMap({ try $0.records.unwrap().first.unwrap() })
-            .map {
-                Instance(
+            .tryMap {
+                try Instance(
                     _underlyingDatabaseRecord: $0,
                     context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
                 )

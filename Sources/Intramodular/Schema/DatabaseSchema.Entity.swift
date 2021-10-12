@@ -42,18 +42,18 @@ extension DatabaseSchema.Entity: Comparable {
 // MARK: - Auxiliary Implementation -
 
 extension DatabaseSchema.Entity {
-    public init(_ type: _opaque_Entity.Type) {
-        let instance = type.init(
+    public init(_ type: _opaque_Entity.Type) throws {
+        let instance = try type.init(
             _underlyingDatabaseRecord: nil,
             context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
         )
         
         self.init(
-            parent: type._opaque_ParentEntity.map(DatabaseSchema.Entity.init),
+            parent: try type._opaque_ParentEntity.map(DatabaseSchema.Entity.init),
             name: type.name,
             className: type.underlyingDatabaseRecordClass.name,
             subentities: .unknown,
-            properties: instance._runtime_propertyAccessors.map({ $0.schema() })
+            properties: try instance._runtime_propertyAccessors.map({ try $0.schema() })
         )
     }
 }

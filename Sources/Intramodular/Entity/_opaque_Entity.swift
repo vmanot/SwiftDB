@@ -30,27 +30,23 @@ extension _opaque_Entity {
         ObjCClass(
             name: "_SwiftDB_NSManagedObject_" + name,
             superclass: nil
-                ?? _opaque_ParentEntity?.underlyingDatabaseRecordClass
-                ?? ObjCClass(NSXManagedObject.self)
+            ?? _opaque_ParentEntity?.underlyingDatabaseRecordClass
+            ?? ObjCClass(NSXManagedObject.self)
         )
     }
     
-    @usableFromInline
     var _runtime_propertyAccessors: [_opaque_PropertyAccessor] {
         AnyNominalOrTupleMirror(self)!.allChildren.compactMap { key, value in
             (value as? _opaque_PropertyAccessor)
         }
     }
     
-    @usableFromInline
     mutating func _runtime_configurePropertyAccessors<Context: DatabaseRecordContext>(
         underlyingRecord: _opaque_DatabaseRecord?,
         context: Context.RecordCreateContext
-    ) {
+    ) throws {
         var instance = AnyNominalOrTupleMirror(self)!
-        
-        var isParentSet: Bool = false
-        
+                
         for (key, value) in instance.allChildren {
             if var property = value as? _opaque_PropertyAccessor {
                 property.underlyingRecord = underlyingRecord
@@ -58,29 +54,20 @@ extension _opaque_Entity {
                 if property.name == nil {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 }
-                
-                if self is _opaque_Subentity {
-                    if let parentType = Self._opaque_ParentEntity, !isParentSet {
-                        property._opaque_modelEnvironment.parent = parentType.init(_underlyingDatabaseRecord: underlyingRecord, context: context)
-                        
-                        isParentSet = true
-                    }
-                }
-                
-                property._runtime_initialize()
+                                
+                try property._runtime_initializePostNameResolution()
                 
                 instance[key] = property
             }
         }
         
-        self = instance.value as! Self
+        self = try cast(instance.value, to: Self.self)
     }
     
-    @usableFromInline
     init<Context: DatabaseRecordContext>(
         _underlyingDatabaseRecord record: _opaque_DatabaseRecord?,
         context: Context.RecordCreateContext
-    ) {
+    ) throws {
         if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {
             if let entityType = schema.entityNameToTypeMap[(record as! _CoreData.DatabaseRecord).base.entity.name]?.value {
                 self = entityType.init() as! Self
@@ -93,7 +80,7 @@ extension _opaque_Entity {
             self.init()
         }
         
-        _runtime_configurePropertyAccessors(underlyingRecord: record, context: context)
+        try _runtime_configurePropertyAccessors(underlyingRecord: record, context: context)
         
         if let record = record {
             record
@@ -163,7 +150,20 @@ extension _opaque_Entity where Self: Entity & Identifiable {
     }
 }
 
-// MARK: -
+// MARK: - Helpers -
+
+extension _opaque_Entity {
+    public static func isSuperclass(of other: _opaque_Entity.Type) -> Bool {
+        if other == Self.self {
+            return false
+        } else if other is Self.Type {
+            return true
+        } else {
+            return false
+        }
+    }
+}
+
 extension NSEntityDescription {
     fileprivate func hasParentEntityOfName(_ name: String) -> Bool {
         if name == self.name {

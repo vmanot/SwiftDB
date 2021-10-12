@@ -30,12 +30,12 @@ public struct DatabaseSchema: Codable, Hashable {
 
 extension DatabaseSchema {
     @inlinable
-    public init(_ schema: Schema) {
+    public init(_ schema: Schema) throws {
         self.init(
             entities: Dictionary(
-                schema
+                try schema
                     .body
-                    .map({ Entity($0) })
+                    .map({ try Entity($0) })
                     .zip(schema.body.lazy.map({ Metatype($0) }))
                     .lazy
                     .map({ (key: $0.0, value: $0.1) })

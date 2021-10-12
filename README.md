@@ -44,7 +44,7 @@ Create a list view:
 struct ListView: View {
     @EnvironmentObject var container: PersistentContainer
     
-    @FetchModels<Foo>() var models
+    @QueryModels<Foo>() var models
     
     var body: some View {
         NavigationView {

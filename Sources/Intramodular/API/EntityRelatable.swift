@@ -10,7 +10,7 @@ import Swift
 /// A type-erased shadow protocol for `EntityRelatable`.
 public protocol _opaque_EntityRelatable {
     @inlinable
-    static var entityCardinality: EntityCardinality { get }
+    static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality { get }
     
     @inlinable
     init(noRelatedModels: ())
@@ -22,8 +22,8 @@ public protocol EntityRelatable: _opaque_EntityRelatable {
     
     /// The cardinality of the number of models this type exports.
     @inlinable
-    static var entityCardinality: EntityCardinality { get }
-    
+    static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality { get }
+
     /// Creates a new instance by decoding from the given database reference.
     @inlinable
     static func decode(from _: NSManagedObject, forKey _: AnyStringKey) throws -> Self
@@ -40,16 +40,16 @@ public protocol EntityRelatable: _opaque_EntityRelatable {
 // MARK: - Implementation -
 
 extension EntityRelatable where Self: Entity {
-    public static var entityCardinality: EntityCardinality {
+    public static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
         .one
     }
     
     public init(noRelatedModels: Void) {
-        self.init(_underlyingDatabaseRecord: nil, context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
+        try! self.init(_underlyingDatabaseRecord: nil, context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
     }
     
     public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        Self(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
+        try Self(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
     }
     
     public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
@@ -63,7 +63,7 @@ extension EntityRelatable where Self: Entity {
 
 extension Optional: _opaque_EntityRelatable where Wrapped: _opaque_EntityRelatable {
     @inlinable
-    public static var entityCardinality: EntityCardinality {
+    public static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
         Wrapped.entityCardinality
     }
     

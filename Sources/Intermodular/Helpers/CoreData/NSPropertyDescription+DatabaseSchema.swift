@@ -21,24 +21,24 @@ extension AnyProtocol where Self: NSPropertyDescription {
 }
 
 extension NSAttributeDescription {
-    public convenience init(_ description: DatabaseSchema.Entity.Attribute) {
+    public convenience init(_ description: DatabaseSchema.Entity.Attribute) throws {
         self.init()
         
         name = description.name
-        isOptional = description.isOptional
-        isTransient = description.isTransient
-        attributeType = .init(description.type)
+        isOptional = try description.propertyConfiguration.isOptional.unwrap()
+        isTransient = description.propertyConfiguration.isTransient
+        attributeType = .init(description.attributeConfiguration.type)
         
-        if let attributeValueClassName = description.type.className {
+        if let attributeValueClassName = description.attributeConfiguration.type.className {
             self.attributeValueClassName = attributeValueClassName
         }
         
-        if let valueTransformerName = description.type.transformerName {
+        if let valueTransformerName = description.attributeConfiguration.type.transformerName {
             self.valueTransformerName = valueTransformerName
         }
         
-        allowsExternalBinaryDataStorage = description.allowsExternalBinaryDataStorage
-        preservesValueInHistoryOnDeletion = description.preservesValueInHistoryOnDeletion
+        allowsExternalBinaryDataStorage = description.attributeConfiguration.allowsExternalBinaryDataStorage
+        preservesValueInHistoryOnDeletion = description.attributeConfiguration.preservesValueInHistoryOnDeletion
     }
 }
 
@@ -62,33 +62,39 @@ extension NSRelationshipDescription {
         }
     }
     
-    convenience init(_ description: DatabaseSchema.Entity.Relationship) {
+    convenience init(_ description: DatabaseSchema.Entity.Relationship) throws {
         self.init()
         
         name = description.name
-        isOptional = description.isOptional
-        isTransient = description.isTransient
+        isOptional = try description.propertyConfiguration.isOptional.unwrap()
+        isTransient = description.propertyConfiguration.isTransient
         
-        destinationEntityName = description.destinationEntityName
-        inverseRelationshipName = description.inverseRelationshipName
+        destinationEntityName = description.relationshipConfiguration.destinationEntityName
+        inverseRelationshipName = description.relationshipConfiguration.inverseRelationshipName
         
-        switch description.cardinality {
+        switch description.relationshipConfiguration.cardinality {
             case .oneToOne:
-                minCount = description.isOptional ? 0 : 1
+                minCount = isOptional ? 0 : 1
                 maxCount = 1
             case .oneToMany:
                 minCount = 0
                 maxCount = 0
             case .manyToOne:
-                minCount = description.isOptional ? 0 : 1
+                minCount = isOptional ? 0 : 1
                 maxCount = 1
             case .manyToMany:
                 minCount = 0
                 maxCount = 0
         }
         
-        if let deleteRule = description.deleteRule {
+        if let deleteRule = description.relationshipConfiguration.deleteRule {
             self.deleteRule = deleteRule
         }
+    }
+}
+
+extension NSAttributeDescription {
+    convenience init(_ attribute: _opaque_PropertyAccessor) throws {
+        try self.init(try cast(try attribute.schema(), to: DatabaseSchema.Entity.Attribute.self))
     }
 }

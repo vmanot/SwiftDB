@@ -48,7 +48,7 @@ extension NSManagedObjectModel {
                     if let destinationEntityName = property.destinationEntityName {
                         property.destinationEntity = nameToEntityMap[destinationEntityName]!
                     } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
-                        property.destinationEntity = nameToEntityMap[_SwiftDB_propertyDescription.destinationEntityName]
+                        property.destinationEntity = nameToEntityMap[_SwiftDB_propertyDescription.relationshipConfiguration.destinationEntityName]
                     } else {
                         assertionFailure()
                     }
@@ -56,7 +56,7 @@ extension NSManagedObjectModel {
                     if let inverseRelationshipName = property.inverseRelationshipName {
                         property.inverseRelationship = relationshipNameToRelationship[inverseRelationshipName]
                     } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
-                        property.inverseRelationship = _SwiftDB_propertyDescription.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
+                        property.inverseRelationship = _SwiftDB_propertyDescription.relationshipConfiguration.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
                     }
                 }
             }

@@ -9,25 +9,7 @@ import Combine
 import Merge
 import XCTest
 
-class Foo: CustomStringConvertible, Entity, Codable, ObservableObject {
-    @Attribute var x: Int = 0
-    
-    var description: String {
-        "Foo \(x)"
-    }
-    
-    required init() {
-        
-    }
-}
-
-struct TestSchema: Schema {
-    var body: Body {
-        Foo.self
-    }
-}
-
-final class SwiftDBTests: XCTestCase {
+final class _CoreDataTestSuite: XCTestCase {
     func testRuntime() throws {
         let database = try PersistentContainer(
             name: "FooCoreDataDatabase",
@@ -37,9 +19,13 @@ final class SwiftDBTests: XCTestCase {
         
         try database.load()
         
-        let foo = try database.create(Foo.self)
+        let foo = try database.create(FooEntity.self)
         
-        foo.x += 1
+        foo.x += 100
+        
+        try database.save()
+        
+        try database.fetchFirst(FooEntity.self).blockAndUnwrap().unwrap().x.printSelf()
         
         try database.deleteAll()
         try database.fetchAllInstances().printSelf()

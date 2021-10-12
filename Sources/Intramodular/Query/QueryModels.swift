@@ -9,7 +9,7 @@ import SwiftUIX
 
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
-public struct FetchModels<Result: Entity>: DynamicProperty {
+public struct QueryModels<Result: Entity>: DynamicProperty {
     @usableFromInline
     @FetchRequest var base: FetchedResults<NSManagedObject>
     
@@ -29,7 +29,7 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
         }).map({ object -> Result in
             hasher.combine(object)
             
-            return Result(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: object), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
+            return try! Result(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: object), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
         })
         
         wrappedValueHash = hasher.finalize()
@@ -52,16 +52,16 @@ public struct FetchModels<Result: Entity>: DynamicProperty {
     }
 }
 
-extension FetchModels {
+extension QueryModels {
     public init(
-        fetchRequest: ModelFetchRequest<Result>,
+        fetchRequest: QueryRequest<Result>,
         animation: Animation? = nil
     ) {
         _base = .init(fetchRequest: fetchRequest.toNSFetchRequest(), animation: animation)
     }
     
     public init(
-        fetchRequest: ModelFetchRequest<Result>,
+        fetchRequest: QueryRequest<Result>,
         transaction: Transaction
     ) {
         _base = .init(fetchRequest: fetchRequest.toNSFetchRequest(), transaction: transaction)
@@ -89,7 +89,7 @@ extension FetchModels {
 
 // MARK: - Auxiliary Implementation -
 
-fileprivate extension ModelFetchRequest {
+fileprivate extension QueryRequest {
     func toNSFetchRequest() -> NSFetchRequest<NSManagedObject> {
         let request = NSFetchRequest<NSManagedObject>(entityName: Result.name)
         

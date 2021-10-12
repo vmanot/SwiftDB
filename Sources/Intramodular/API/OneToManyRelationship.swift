@@ -1,19 +1,16 @@
 //
-//  File.swift
-//  
-//
-//  Created by Vatsal Manot on 15/09/21.
+// Copyright (c) Vatsal Manot
 //
 
-import Foundation
+import Swallow
 
 @propertyWrapper
-public struct _OneToManyRelationship<Source: Entity, Destination: Entity & Identifiable> {
+public struct _RelationshipToMany<Source: Entity & Identifiable, Destination: Entity & Identifiable> {
     public var wrappedValue: RelatedModels<Destination> {
         fatalError()
     }
     
-    public init(inverse: KeyPath<Destination, Optional<Source>>) {
+    public init(inverse: KeyPath<Destination, Source>) {
         
     }
 }
@@ -24,13 +21,12 @@ public struct _RelationshipToOne<Source: Entity & Identifiable, Destination: Ent
         fatalError()
     }
     
-    public init(inverse: KeyPath<Destination, RelatedModels<Source>>) {
+    public init(inverse: KeyPath<Destination, Source?>) {
         
     }
 }
 
 extension Entity where Self: Identifiable {
     public typealias RelationshipToOne<Destination: Entity & Identifiable> = _RelationshipToOne<Self, Destination>
-    public typealias RelationshipToMany<Destination: Entity & Identifiable> = _OneToManyRelationship<Self, Destination>
+    public typealias RelationshipToMany<Destination: Entity & Identifiable> = _RelationshipToMany<Self, Destination>
 }
-

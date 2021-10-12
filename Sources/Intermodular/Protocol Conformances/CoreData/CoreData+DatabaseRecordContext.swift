@@ -130,11 +130,9 @@ fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.Dat
 
 fileprivate extension DatabazeZoneQueryRequest where Context == _CoreData.DatabaseRecordContext {
     func toNSFetchRequest(context: Context) throws -> NSFetchRequest<NSManagedObject> {
-        let result = NSFetchRequest<NSManagedObject>(entityName: try recordType.unwrap())
+        let result = NSFetchRequest<NSManagedObject>(entityName: try filters.recordType.unwrap())
         
         switch self.predicate {
-            case .child(_):
-                TODO.unimplemented
             case .related(_, _):
                 TODO.unimplemented
             case let ._nsPredicate(predicate):
@@ -144,8 +142,8 @@ fileprivate extension DatabazeZoneQueryRequest where Context == _CoreData.Databa
         }
         
         result.sortDescriptors = self.sortDescriptors.map({ $0.map({ $0 as NSSortDescriptor }) })
-        result.affectedStores = context.affectedStores?.filter({ (self.zones?.contains($0.identifier) ?? false) })
-        result.includesSubentities = includesSubentities
+        result.affectedStores = context.affectedStores?.filter({ (self.filters.zones?.contains($0.identifier) ?? false) })
+        result.includesSubentities = filters.includesSubentities
         
         if let cursor = cursor {
             if case .offset(let offset) = cursor {

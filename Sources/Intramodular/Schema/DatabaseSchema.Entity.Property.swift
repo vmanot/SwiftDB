@@ -7,56 +7,48 @@ import FoundationX
 import Swift
 
 extension DatabaseSchema.Entity {
+    public struct PropertyConfiguration: Codable, Hashable {
+        public var isOptional: Bool?
+        public var isTransient: Bool = false
+        public var renamingIdentifier: String?
+    }
+    
     public class Property: Codable, Hashable, Model {
         public static let version: Version? = "0.0.0"
         
         fileprivate enum CodingKeys: String, CodingKey {
             case name
-            case isOptional
-            case isTransient
-            case renamingIdentifier
+            case propertyConfiguration
         }
         
         public let name: String
-        public let isOptional: Bool
-        public let isTransient: Bool
-        public let renamingIdentifier: String?
+        public let propertyConfiguration: PropertyConfiguration
         
         public init(
             name: String,
-            isOptional: Bool,
-            isTransient: Bool,
-            renamingIdentifier: String?
+            propertyConfiguration: PropertyConfiguration
         ) {
             self.name = name
-            self.isOptional = isOptional
-            self.isTransient = isTransient
-            self.renamingIdentifier = renamingIdentifier
+            self.propertyConfiguration = propertyConfiguration
         }
         
         public required init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
             self.name = try container.decode(forKey: .name)
-            self.isOptional = try container.decode(forKey: .isOptional)
-            self.isTransient = try container.decode(forKey: .isTransient)
-            self.renamingIdentifier = try container.decodeIfPresent(forKey: .renamingIdentifier)
+            self.propertyConfiguration = try container.decode(forKey: .propertyConfiguration)
         }
         
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             
             try container.encode(name, forKey: .name)
-            try container.encode(isOptional, forKey: .isOptional)
-            try container.encode(isTransient, forKey: .isTransient)
-            try container.encode(renamingIdentifier, forKey: .renamingIdentifier)
+            try container.encode(propertyConfiguration, forKey: .propertyConfiguration)
         }
         
         public func hash(into hasher: inout Hasher) {
             hasher.combine(name)
-            hasher.combine(isOptional)
-            hasher.combine(isTransient)
-            hasher.combine(renamingIdentifier)
+            hasher.combine(propertyConfiguration)
         }
     }
 }
@@ -65,7 +57,7 @@ extension DatabaseSchema.Entity {
 
 extension DatabaseSchema.Entity.Property: Comparable {
     public static func < (lhs: DatabaseSchema.Entity.Property, rhs: DatabaseSchema.Entity.Property) -> Bool {
-        (lhs.renamingIdentifier ?? lhs.name) < (rhs.renamingIdentifier ?? rhs.name)
+        (lhs.propertyConfiguration.renamingIdentifier ?? lhs.name) < (rhs.propertyConfiguration.renamingIdentifier ?? rhs.name)
     }
 }
 
