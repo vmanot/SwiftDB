@@ -13,7 +13,7 @@ extension DatabaseSchema.Entity {
     }
     
     public final class Attribute: DatabaseSchema.Entity.Property {
-        public enum CodingKeys: String, CodingKey {
+        private enum CodingKeys: String, CodingKey {
             case attributeConfiguration
         }
         

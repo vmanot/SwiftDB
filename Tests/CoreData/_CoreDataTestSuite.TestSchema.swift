@@ -7,17 +7,13 @@ import SwiftDB
 extension _CoreDataTestSuite {
     struct TestSchema: Schema {
         var body: Body {
-            FooEntity.self
+            TestEntity.self
         }
     }
     
-    class FooEntity: CustomStringConvertible, Entity, Codable, ObservableObject {
-        @Attribute var x: Int = 0
-        
-        var description: String {
-            "Foo \(x)"
-        }
-        
+    class TestEntity: CustomStringConvertible, Entity, Codable {
+        @Attribute var foo: Int = 0
+                
         required init() {
             
         }

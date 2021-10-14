@@ -14,22 +14,19 @@ final class _CoreDataTestSuite: XCTestCase {
         let database = try PersistentContainer(
             name: "FooCoreDataDatabase",
             schema: TestSchema(),
-            location: .filePath("/Users/vmanot/Desktop/Junk/SwiftDB-Tests/Test.sqlite")
+            location: URL(.temporaryDirectory())
         )
         
         try database.load()
         
-        let foo = try database.create(FooEntity.self)
+        let foo = try database.create(TestEntity.self)
         
-        foo.x += 100
+        foo.foo += 100
         
         try database.save()
-        
-        try database.fetchFirst(FooEntity.self).blockAndUnwrap().unwrap().x.printSelf()
-        
+        try database.fetchFirst(TestEntity.self).blockAndUnwrap().unwrap().foo.printSelf()
         try database.deleteAll()
         try database.fetchAllInstances().printSelf()
-        
         try database.save()
     }
 }

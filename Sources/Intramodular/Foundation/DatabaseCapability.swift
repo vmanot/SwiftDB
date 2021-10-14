@@ -15,4 +15,5 @@ public struct DatabaseCapability: Codable, Hashable, RawRepresentable {
 
 extension DatabaseCapability {
     public static let schemaless = Self(rawValue: "schemaless")
+    public static let schemafull = Self(rawValue: "schemafull")
 }

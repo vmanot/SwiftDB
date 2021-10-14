@@ -40,7 +40,7 @@ extension DatabaseSchema.Entity {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
             relationshipConfiguration = try container.decode(forKey: .relationshipConfiguration)
-
+            
             try super.init(from: decoder)
         }
         
