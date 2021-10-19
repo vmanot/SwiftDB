@@ -15,7 +15,8 @@ public protocol _opaque_DatabaseRecord: _opaque_ObservableObject, CancellablesHo
     func contains(_ key: CodingKey) -> Bool
     func containsValue(forKey key: CodingKey) -> Bool
     
-    func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey: CodingKey) throws
+    /// Set a primitive value for a given key.
+    func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws
     
     func encode<Value>(_ value: Value, forKey key: CodingKey) throws
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value

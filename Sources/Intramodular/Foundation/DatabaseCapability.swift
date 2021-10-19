@@ -16,4 +16,13 @@ public struct DatabaseCapability: Codable, Hashable, RawRepresentable {
 extension DatabaseCapability {
     public static let schemaless = Self(rawValue: "schemaless")
     public static let schemafull = Self(rawValue: "schemafull")
+    public static let relationships = Self(rawValue: "relationships")
+}
+
+public struct UnsupportedDatabaseCapability: Error {
+    let capability: DatabaseCapability
+    
+    public init(capability: DatabaseCapability) {
+        self.capability = capability
+    }
 }

@@ -79,7 +79,7 @@ extension CKError {
                 return false
             case .assetNotAvailable:
                 return false
-            #if swift(>=5.5) && !(os(macOS) || targetEnvironment(macCatalyst))
+            #if canImport(GroupActivities)
             case .accountTemporarilyUnavailable:
                 return true
             #endif

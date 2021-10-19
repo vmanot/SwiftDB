@@ -15,3 +15,13 @@ public protocol DatabaseRecordReference {
     
     var recordID: RecordContext.RecordID { get }
 }
+
+// MARK: - Auxiliary Implementation -
+
+public struct NoDatabaseRecordReference<Context: DatabaseRecordContext>: DatabaseRecordReference {
+    public typealias RecordContext = Context
+    
+    public var recordID: RecordContext.RecordID {
+        fatalError()
+    }
+}
