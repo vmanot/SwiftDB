@@ -11,7 +11,7 @@ extension _CoreDataTestSuite {
         }
     }
     
-    class TestEntity: CustomStringConvertible, Entity, Codable {
+    class TestEntity: Entity, Codable {
         @Attribute var foo: Int = 0
                 
         required init() {

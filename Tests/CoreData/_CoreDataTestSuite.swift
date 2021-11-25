@@ -24,9 +24,8 @@ final class _CoreDataTestSuite: XCTestCase {
         foo.foo += 100
         
         try database.save()
-        try database.fetchFirst(TestEntity.self).blockAndUnwrap().unwrap().foo.printSelf()
+        try database.fetchFirst(TestEntity.self).blockAndUnwrap().unwrap()
         try database.deleteAll()
-        try database.fetchAllInstances().printSelf()
         try database.save()
     }
 }

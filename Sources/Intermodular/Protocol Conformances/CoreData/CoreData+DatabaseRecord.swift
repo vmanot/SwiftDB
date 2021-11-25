@@ -37,7 +37,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
         base.managedObjectContext != nil
     }
     
-    public static var allReservedKeys: [CodingKey] {
+    public var allReservedKeys: [CodingKey] {
         []
     }
     

@@ -37,7 +37,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         true
     }
     
-    public static var allReservedKeys: [CodingKey] {
+    public var allReservedKeys: [CodingKey] {
         [AnyCodingKey(stringValue: "systemFields")]
     }
     

@@ -21,8 +21,7 @@ public protocol DatabaseRecordContext {
     
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
     typealias ZoneQueryRequest = DatabazeZoneQueryRequest<Self>
-    typealias SaveError =
-    DatabaseRecordContextSaveError<Self>
+    typealias SaveError = DatabaseRecordContextSaveError<Self>
     
     func createRecord(
         withConfiguration _: DatabaseRecordConfiguration<Self>,

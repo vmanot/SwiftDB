@@ -9,13 +9,15 @@ import SwiftUI
 
 /// A type-erased description of a `Schema`.
 public struct DatabaseSchema: Codable, Hashable {
+    public enum CodingKeys: String, CodingKey {
+        case entities
+    }
+    
     public let entities: [Entity]
     
     @usableFromInline
-    @TransientProperty
     var entityNameToTypeMap = BidirectionalMap<String,  Metatype<_opaque_Entity.Type>>()
     @usableFromInline
-    @TransientProperty
     var entityToTypeMap = BidirectionalMap<Entity, Metatype<_opaque_Entity.Type>>()
     
     public init(entities: [Entity: Metatype<_opaque_Entity.Type>]) {
