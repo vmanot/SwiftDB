@@ -160,10 +160,14 @@ extension Attribute where Value: NSAttributeCoder {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
-                try attribute.underlyingRecord.unwrap().decode(Value.self, forKey: attribute.key.unwrap(), initialValue: wrappedValue)
+                try attribute.underlyingRecord
+                    .unwrap()
+                    .decode(Value.self, forKey: attribute.key.unwrap(), initialValue: wrappedValue)
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingRecord.unwrap().encode(newValue, forKey: attribute.key.unwrap())
+                try attribute.underlyingRecord
+                    .unwrap()
+                    .encode(newValue, forKey: attribute.key.unwrap())
             },
             propertyConfiguration: .init(),
             attributeConfiguration: .init(
