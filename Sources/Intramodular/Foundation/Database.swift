@@ -5,6 +5,12 @@
 import Merge
 import Swallow
 
+/// A type that represents a database.
+///
+/// A SwiftDB database has three main parts:
+/// - Schema (if available)
+/// - Configuration
+/// - State
 public protocol Database: Named, Identifiable where ID: Codable {
     typealias Runtime = DatabaseRuntime
     typealias Schema = DatabaseSchema

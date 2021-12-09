@@ -7,13 +7,15 @@ import FoundationX
 import Swallow
 import SwiftUIX
 
+public typealias FetchedQueryResults<T> = Array<T>
+
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
 public struct QueryModels<Result: Entity>: DynamicProperty {
     @usableFromInline
     @FetchRequest var base: FetchedResults<NSManagedObject>
     
-    public var wrappedValue: [Result] = []
+    public var wrappedValue: FetchedQueryResults<Result> = []
     @usableFromInline
     var wrappedValueHash: Int?
     

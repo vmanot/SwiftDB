@@ -5,19 +5,14 @@
 import FoundationX
 import Swallow
 
-/// A shadow protocol for `Model`.
-public protocol _opaque_Model {
-    static var version: Version? { get }
-}
-
 /// A type that represents a data model.
-public protocol Model: _opaque_Model {
+public protocol Model {
     static var version: Version? { get }
 }
 
 // MARK: - Implementation -
 
-extension _opaque_Model {
+extension Model {
     static public var version: Version? {
         return nil
     }

@@ -8,6 +8,10 @@ import Swallow
 
 extension _CoreData {
     public final class Database: CancellablesHolder {
+        enum ConfigurationError: Error {
+            case customLocationPathExtensionMissing
+        }
+
         public struct Configuration: Codable {
             public let name: String
             public let location: URL?
@@ -51,7 +55,19 @@ extension _CoreData {
             self.schema = schema
             self.configuration = configuration
             self.state = state
-            
+
+            if let location = configuration.location {
+                guard location.pathExtension == "sqlite" else {
+                    throw ConfigurationError.customLocationPathExtensionMissing
+                }
+
+                let locationContainer = location.deletingLastPathComponent()
+
+                if !FileManager.default.directoryExists(at: locationContainer) {
+                    try FileManager.default.createDirectory(at: locationContainer, withIntermediateDirectories: true, attributes: nil)
+                }
+            }
+
             if let schema = schema {
                 self.nsPersistentContainer = .init(name: configuration.name, managedObjectModel: try .init(schema))
             } else {
