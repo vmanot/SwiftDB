@@ -108,6 +108,10 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         }
         .eraseToAnyTask()
     }
+    
+    public func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest {
+        fatalError()
+    }
 }
 
 extension DatabaseRecordMergeConflict where Context == _CloudKit.DatabaseRecordContext {

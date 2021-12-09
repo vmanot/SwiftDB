@@ -8,17 +8,7 @@ import Swallow
 
 extension _CoreData {
     public final class DatabaseRecord {
-        public struct ID: Hashable {
-            private let base: NSManagedObjectID
-            
-            var nsManagedObjectID: NSManagedObjectID {
-                base
-            }
-            
-            init(managedObjectID: NSManagedObjectID) {
-                self.base = managedObjectID
-            }
-        }
+        public lazy var cancellables = Cancellables()
         
         let base: NSManagedObject
         
@@ -29,6 +19,10 @@ extension _CoreData {
 }
 
 extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
+    public var id: ID {
+        ID(managedObjectID: base.objectID)
+    }
+    
     public var objectWillChange: ObservableObjectPublisher {
         base.objectWillChange
     }
@@ -100,6 +94,36 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
 }
 
 // MARK: - Auxiliary Implementation -
+
+extension _CoreData.DatabaseRecord {
+    public struct RecordType: Codable, CustomStringConvertible, Hashable, LosslessStringConvertible {
+        public let rawValue: String
+        
+        public var description: String {
+            rawValue
+        }
+        
+        public init(rawValue: String) {
+            self.rawValue = rawValue
+        }
+        
+        public init(_ description: String) {
+            self.rawValue = description
+        }
+    }
+    
+    public struct ID: Hashable {
+        private let base: NSManagedObjectID
+        
+        var nsManagedObjectID: NSManagedObjectID {
+            base
+        }
+        
+        init(managedObjectID: NSManagedObjectID) {
+            self.base = managedObjectID
+        }
+    }
+}
 
 fileprivate extension Decodable where Self: Encodable {
     static func decode(from object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws -> Self {

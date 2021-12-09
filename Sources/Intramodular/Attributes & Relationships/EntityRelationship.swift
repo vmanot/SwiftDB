@@ -43,7 +43,7 @@ public final class EntityRelationship<
     public var wrappedValue: Value {
         get {
             do {
-                return try Value.decode(from: (underlyingRecord.unwrap() as! _CoreData.DatabaseRecord).base, forKey: .init(stringValue: name.unwrap()))
+                return try Value.decode(from: underlyingRecord.unwrap(), forKey: .init(stringValue: name.unwrap()))
             } catch {
                 return .init(noRelatedModels: ())
             }

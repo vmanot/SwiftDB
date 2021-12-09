@@ -14,9 +14,9 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     }
     
     @usableFromInline
-    var base: Set<NSManagedObject>
+    var base: [_opaque_DatabaseRecord]
     
-    public init(base: Set<NSManagedObject>) {
+    public init(base: [_opaque_DatabaseRecord]) {
         self.base = base
     }
     
@@ -25,7 +25,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     }
     
     public func makeIterator() -> AnyIterator<Model> {
-        AnyIterator(base.lazy.map({ try! Model(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()) }).makeIterator())
+        AnyIterator(base.lazy.map({ try! Model(_underlyingDatabaseRecord: $0) }).makeIterator()) // FIXME
     }
 }
 
@@ -33,21 +33,13 @@ extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
     
     @inlinable
-    public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        let key = key.stringValue
-        
-        guard let value = base.value(forKey: key) else {
-            base.setValue(NSSet(), forKey: key)
-            
-            return .init(noRelatedModels: ())
-        }
-        
-        return .init(base: try cast(try cast(value, to: NSSet.self), to: Set<NSManagedObject>.self))
+    public static func decode(from base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws -> Self {
+        fatalError()
     }
     
     @inlinable
-    public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
-        base.setValue(self.base as NSSet, forKey: key.stringValue)
+    public func encode(to base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws {
+        fatalError()
     }
     
     public func exportRelatableModels() -> [Model] {
@@ -57,14 +49,16 @@ extension RelatedModels: EntityRelatable {
 
 extension RelatedModels {
     public mutating func insert(_ model: Model) {
-        base.insert((model._underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base)
+        base.insert(try! model._underlyingDatabaseRecord.unwrap())
     }
     
     public mutating func remove(_ model: Model) {
-        base.remove((model._underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base)
+        base.removeAll(where: {
+            try! $0._opaque_id == model._underlyingDatabaseRecord.unwrap()._opaque_id
+        })
     }
     
     public mutating func set<S: Sequence>(_ models: S) where S.Element == Model {
-        base = Set(models.lazy.map({ $0._underlyingDatabaseRecord as! _CoreData.DatabaseRecord }).map({ $0.base }))
+        base = models.map({ try! $0._underlyingDatabaseRecord.unwrap() })
     }
 }

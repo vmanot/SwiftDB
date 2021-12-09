@@ -28,6 +28,14 @@ public struct DatabaseSchema: Codable, Hashable {
             entityToTypeMap[entity] = .init(entityType)
         }
     }
+    
+    func entity<Model>(forModelType modelType: Model.Type) -> Entity? {
+        guard let type = modelType as? _opaque_Entity.Type else {
+            return nil
+        }
+        
+        return entityToTypeMap[Metatype(type)]
+    }
 }
 
 extension DatabaseSchema {

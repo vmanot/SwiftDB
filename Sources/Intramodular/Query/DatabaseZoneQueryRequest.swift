@@ -12,24 +12,24 @@ public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordContext>: Hashable
     case _nsPredicate(NSPredicate)
 }
 
-public struct DatabazeZoneQueryRequest<Context: DatabaseRecordContext>: Hashable {
+public struct DatabaseZoneQueryRequest<Context: DatabaseRecordContext>: Hashable {
     public struct Filters: Codable, Hashable {
         public let zones: [Context.Zone.ID]?
-        public let recordType: Context.RecordType?
+        public let recordTypes: Set<Context.RecordType>
         public let includesSubentities: Bool
     }
     
+    public var filters: Filters
     public var predicate: DatabaseZoneQueryPredicate<Context>?
     public var sortDescriptors: [AnySortDescriptor]?
-    public var filters: Filters
     
     public let cursor: PaginationCursor?
     public let fetchLimit: FetchLimit?
     
     public init(
+        filters: Filters,
         predicate: DatabaseZoneQueryPredicate<Context>?,
         sortDescriptors: [AnySortDescriptor]?,
-        filters: Filters,
         cursor: PaginationCursor?,
         limit: FetchLimit?
     ) {
@@ -41,7 +41,7 @@ public struct DatabazeZoneQueryRequest<Context: DatabaseRecordContext>: Hashable
     }
 }
 
-extension DatabazeZoneQueryRequest {
+extension DatabaseZoneQueryRequest {
     public struct Result {
         let records: [Context.Record]?
     }

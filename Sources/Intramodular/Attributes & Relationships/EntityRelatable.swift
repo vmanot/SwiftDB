@@ -26,11 +26,11 @@ public protocol EntityRelatable: _opaque_EntityRelatable {
 
     /// Creates a new instance by decoding from the given database reference.
     @inlinable
-    static func decode(from _: NSManagedObject, forKey _: AnyStringKey) throws -> Self
+    static func decode(from _: _opaque_DatabaseRecord, forKey _: AnyStringKey) throws -> Self
     
     /// Encodes a relationship to this instance's related models into the given database reference.
     @inlinable
-    func encode(to _: NSManagedObject, forKey _: AnyStringKey) throws
+    func encode(to _: _opaque_DatabaseRecord, forKey _: AnyStringKey) throws
     
     /// Exports all the models associated with this instance.
     @inlinable
@@ -45,15 +45,15 @@ extension EntityRelatable where Self: Entity {
     }
     
     public init(noRelatedModels: Void) {
-        try! self.init(_underlyingDatabaseRecord: nil, context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
+        try! self.init(_underlyingDatabaseRecord: nil)
     }
     
-    public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Self {
-        try Self(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: try cast(base.value(forKey: key.stringValue), to: NSManagedObject.self).unwrap()), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
+    public static func decode(from base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws -> Self {
+        fatalError()
     }
     
-    public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws  {
-        base.setValue(self._underlyingDatabaseRecord, forKey: key.stringValue)
+    public func encode(to base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws {
+        fatalError()
     }
     
     public func exportRelatableModels() throws -> [Self.RelatableEntityType] {
@@ -77,17 +77,13 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     public typealias RelatableEntityType = Wrapped.RelatableEntityType
     
     @inlinable
-    public static func decode(from base: NSManagedObject, forKey key: AnyStringKey) throws -> Optional<Wrapped> {
-        if base.value(forKey: key.stringValue) != nil {
-            return .some(try Wrapped.decode(from: base, forKey: key))
-        } else {
-            return .none
-        }
+    public static func decode(from base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws -> Optional<Wrapped> {
+        fatalError()
     }
     
     @inlinable
-    public func encode(to base: NSManagedObject, forKey key: AnyStringKey) throws {
-        try self?.encode(to: base, forKey: key)
+    public func encode(to base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws {
+        fatalError()
     }
     
     @inlinable

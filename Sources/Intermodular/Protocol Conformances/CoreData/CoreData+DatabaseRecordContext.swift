@@ -8,16 +8,47 @@ import Merge
 import Swallow
 
 extension _CoreData {
-    public final class DatabaseRecordContext {
+    public final class DatabaseRecordContext: ObservableObject {
+        unowned let parent: Database
+
+        let notificationCenter: NotificationCenter = .default
         let nsManagedObjectContext: NSManagedObjectContext
         let affectedStores: [NSPersistentStore]?
         
         init(
+            parent: Database,
             managedObjectContext: NSManagedObjectContext,
             affectedStores: [NSPersistentStore]?
         ) {
+            self.parent = parent
             self.nsManagedObjectContext = managedObjectContext
             self.affectedStores = affectedStores
+            
+            notificationCenter.addObserver(self, selector: #selector(managedObjectContextObjectsDidChange), name: .NSManagedObjectContextObjectsDidChange, object: managedObjectContext)
+            notificationCenter.addObserver(self, selector: #selector(managedObjectContextObjectsDidChange), name: .NSManagedObjectContextWillSave, object: managedObjectContext)
+            notificationCenter.addObserver(self, selector: #selector(managedObjectContextObjectsDidChange), name: .NSManagedObjectContextDidSave, object: managedObjectContext)
+        }
+        
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+        
+        @objc private func managedObjectContextObjectsDidChange(notification: NSNotification) {
+            guard let userInfo = notification.userInfo else {
+                return
+            }
+            
+            if let insertedObjects = userInfo[NSInsertedObjectsKey] as? Set<NSManagedObject>, insertedObjects.count > 0 {
+                objectWillChange.send()
+            }
+            
+            if let updatedObjects = userInfo[NSUpdatedObjectsKey] as? Set<NSManagedObject>, updatedObjects.count > 0 {
+                objectWillChange.send()
+            }
+            
+            if let deletedObjects = userInfo[NSDeletedObjectsKey] as? Set<NSManagedObject>, deletedObjects.count > 0 {
+                objectWillChange.send()
+            }
         }
     }
 }
@@ -25,7 +56,7 @@ extension _CoreData {
 extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = _CoreData.Database.Zone
     public typealias Record = _CoreData.DatabaseRecord
-    public typealias RecordType = String
+    public typealias RecordType = _CoreData.DatabaseRecord.RecordType
     public typealias RecordID = _CoreData.DatabaseRecord.ID
     
     public func createRecord(
@@ -34,7 +65,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     ) throws -> Record {
         let object = Record(
             base: NSEntityDescription.insertNewObject(
-                forEntityName: configuration.recordType,
+                forEntityName: configuration.recordType.rawValue,
                 into: nsManagedObjectContext
             )
         )
@@ -118,6 +149,20 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         }
         .eraseToAnyTask()
     }
+
+    public func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest {
+        try ZoneQueryRequest(
+            filters: .init(
+                zones: nil,
+                recordTypes: [.init(rawValue: parent.schema.entity(forModelType: Model.self).unwrap().name)],
+                includesSubentities: true
+            ),
+            predicate: queryRequest.predicate.map(DatabaseZoneQueryPredicate._nsPredicate),
+            sortDescriptors: queryRequest.sortDescriptors,
+            cursor: nil,
+            limit: queryRequest.fetchLimit
+        )
+    }
 }
 
 // MARK: - Helpers -
@@ -128,9 +173,18 @@ fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.Dat
     }
 }
 
-fileprivate extension DatabazeZoneQueryRequest where Context == _CoreData.DatabaseRecordContext {
+fileprivate extension DatabaseZoneQueryRequest where Context == _CoreData.DatabaseRecordContext {
     func toNSFetchRequest(context: Context) throws -> NSFetchRequest<NSManagedObject> {
-        let result = NSFetchRequest<NSManagedObject>(entityName: try filters.recordType.unwrap())
+        guard let recordType = filters.recordTypes.first else {
+            throw _CoreData.DatabaseRecordContext.DatabaseZoneQueryRequestError.recordTypeRequired
+        }
+        
+        guard filters.recordTypes.count == 1 else {
+            throw _CoreData.DatabaseRecordContext.DatabaseZoneQueryRequestError.multipleRecordTypesUnsupported
+        }
+        
+        
+        let result = NSFetchRequest<NSManagedObject>(entityName: recordType.rawValue)
         
         switch self.predicate {
             case .related(_, _):
@@ -165,5 +219,12 @@ fileprivate extension DatabazeZoneQueryRequest where Context == _CoreData.Databa
         }
         
         return result
+    }
+}
+
+extension _CoreData.DatabaseRecordContext {
+    enum DatabaseZoneQueryRequestError: Swift.Error {
+        case recordTypeRequired
+        case multipleRecordTypesUnsupported
     }
 }

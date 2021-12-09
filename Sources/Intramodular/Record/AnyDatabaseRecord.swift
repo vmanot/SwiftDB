@@ -2,16 +2,21 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Merge
 import Swift
 
-public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject, ObservableObject {
+public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject, Identifiable, ObservableObject {
     private let base: _opaque_DatabaseRecord
     
     public init(base: _opaque_DatabaseRecord) {
         self.base = base
     }
     
-    public var objectWillChange: AnyPublisher<Any, Never> {
+    public var id: AnyHashable {
+        base._opaque_id
+    }
+    
+    public var objectWillChange: AnyObjectWillChangePublisher {
         base._opaque_objectWillChange
     }
     

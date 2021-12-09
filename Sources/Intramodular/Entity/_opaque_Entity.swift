@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
 import Merge
 import Runtime
 import Swallow
@@ -28,7 +27,7 @@ extension _opaque_Entity where Self: Entity {
 extension _opaque_Entity {
     static var underlyingDatabaseRecordClass: ObjCClass {
         ObjCClass(
-            name: "_SwiftDB_NSManagedObject_" + name,
+            name: "_SwiftDB_" + name,
             superclass: nil
             ?? _opaque_ParentEntity?.underlyingDatabaseRecordClass
             ?? ObjCClass(NSXManagedObject.self)
@@ -41,12 +40,11 @@ extension _opaque_Entity {
         }
     }
     
-    mutating func _runtime_configurePropertyAccessors<Context: DatabaseRecordContext>(
-        underlyingRecord: _opaque_DatabaseRecord?,
-        context: Context.RecordCreateContext
+    mutating func _runtime_configurePropertyAccessors(
+        underlyingRecord: _opaque_DatabaseRecord?
     ) throws {
         var instance = AnyNominalOrTupleMirror(self)!
-                
+        
         for (key, value) in instance.allChildren {
             if var property = value as? _opaque_PropertyAccessor {
                 property.underlyingRecord = underlyingRecord
@@ -54,7 +52,7 @@ extension _opaque_Entity {
                 if property.name == nil {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 }
-                                
+                
                 try property._runtime_initializePostNameResolution()
                 
                 instance[key] = property
@@ -64,9 +62,8 @@ extension _opaque_Entity {
         self = try cast(instance.value, to: Self.self)
     }
     
-    init<Context: DatabaseRecordContext>(
-        _underlyingDatabaseRecord record: _opaque_DatabaseRecord?,
-        context: Context.RecordCreateContext
+    init(
+        _underlyingDatabaseRecord record: _opaque_DatabaseRecord?
     ) throws {
         if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {
             if let entityType = schema.entityNameToTypeMap[(record as! _CoreData.DatabaseRecord).base.entity.name]?.value {
@@ -80,7 +77,7 @@ extension _opaque_Entity {
             self.init()
         }
         
-        try _runtime_configurePropertyAccessors(underlyingRecord: record, context: context)
+        try _runtime_configurePropertyAccessors(underlyingRecord: record)
         
         if let record = record {
             record
@@ -104,8 +101,8 @@ extension _opaque_Entity where Self: Entity {
         nil
     }
     
-    public var _opaque_objectWillChange: AnyPublisher<Any, Never> {
-        _underlyingDatabaseRecord?._opaque_objectWillChange ?? Combine.Empty<Any, Never>().eraseToAnyPublisher()
+    public var _opaque_objectWillChange: AnyObjectWillChangePublisher {
+        _underlyingDatabaseRecord?._opaque_objectWillChange ?? .empty
     }
     
     public func _opaque_objectWillChange_send() throws {
@@ -158,18 +155,6 @@ extension _opaque_Entity {
             return false
         } else if other is Self.Type {
             return true
-        } else {
-            return false
-        }
-    }
-}
-
-extension NSEntityDescription {
-    fileprivate func hasParentEntityOfName(_ name: String) -> Bool {
-        if name == self.name {
-            return true
-        } else if let superentity = superentity {
-            return superentity.hasParentEntityOfName(name)
         } else {
             return false
         }

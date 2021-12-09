@@ -20,7 +20,7 @@ protocol _opaque_PropertyAccessor: _opaque_ObservableObject, _opaque_PropertyWra
     
     func schema() throws -> DatabaseSchema.Entity.Property
     
-    mutating func _runtime_initializePostNameResolution() throws
+    func _runtime_initializePostNameResolution() throws
 }
 
 // MARK: - Implementation -

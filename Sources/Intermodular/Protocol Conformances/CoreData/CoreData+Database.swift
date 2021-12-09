@@ -37,8 +37,9 @@ extension _CoreData {
             }
         }
         
-        public let runtime: DatabaseRuntime
-        public let schema: DatabaseSchema?
+        let runtime: DatabaseRuntime
+        let schema: DatabaseSchema
+        
         public let configuration: Configuration
         public var state: State
         public var viewContext: DatabaseRecordContext?
@@ -52,7 +53,7 @@ extension _CoreData {
             state: State
         ) throws {
             self.runtime = runtime
-            self.schema = schema
+            self.schema = try schema.unwrap()
             self.configuration = configuration
             self.state = state
 
@@ -77,9 +78,9 @@ extension _CoreData {
             try loadPersistentStores()
         }
         
-        public init(container: NSPersistentContainer) throws {
+        public init(container: NSPersistentContainer, schema: DatabaseSchema) throws {
             self.runtime = _DefaultDatabaseRuntime()
-            self.schema = nil // FIXME!!!
+            self.schema = schema
             self.configuration = .init(
                 name: container.name,
                 location: nil,
@@ -119,6 +120,7 @@ extension _CoreData {
                         .automaticallyMergesChangesFromParent = true
                     
                     self.viewContext = DatabaseRecordContext(
+                        parent: self,
                         managedObjectContext: self.nsPersistentContainer.viewContext,
                         affectedStores: nil
                     )
@@ -161,7 +163,7 @@ extension _CoreData.Database: Database {
     }
     
     public func recordContext(forZones zones: [Zone]?) throws -> RecordContext {
-        .init(managedObjectContext: nsPersistentContainer.viewContext, affectedStores: zones?.map({ $0.persistentStore }))
+        .init(parent: self, managedObjectContext: nsPersistentContainer.viewContext, affectedStores: zones?.map({ $0.persistentStore }))
     }
     
     public func delete() -> AnyTask<Void, Error> {

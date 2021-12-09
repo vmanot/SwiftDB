@@ -22,19 +22,3 @@ extension Entity {
         String(describing: Self.self)
     }
 }
-
-// MARK: - Auxiliary Implementation -
-
-public struct _DefaultParentEntity: Entity {
-    public static var name: String {
-        Never.materialize(reason: .abstract)
-    }
-    
-    public static var version: Version? {
-        Never.materialize(reason: .abstract)
-    }
-    
-    public init() {
-        self = Never.materialize(reason: .abstract)
-    }
-}

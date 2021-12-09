@@ -5,7 +5,7 @@
 import Merge
 import Swallow
 
-public protocol _opaque_DatabaseRecord: _opaque_ObservableObject, CancellablesHolder {
+public protocol _opaque_DatabaseRecord: _opaque_Identifiable, _opaque_ObservableObject, CancellablesHolder {
     var isInitialized: Bool { get }
     
     var allReservedKeys: [CodingKey] { get }
@@ -21,7 +21,7 @@ public protocol _opaque_DatabaseRecord: _opaque_ObservableObject, CancellablesHo
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
 }
 
-public protocol DatabaseRecord: _opaque_DatabaseRecord {
+public protocol DatabaseRecord: _opaque_DatabaseRecord, Identifiable {
     associatedtype Reference: DatabaseRecordReference
     
     var isInitialized: Bool { get }

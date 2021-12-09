@@ -44,8 +44,7 @@ extension DatabaseSchema.Entity: Comparable {
 extension DatabaseSchema.Entity {
     public init(_ type: _opaque_Entity.Type) throws {
         let instance = try type.init(
-            _underlyingDatabaseRecord: nil,
-            context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+            _underlyingDatabaseRecord: nil
         )
         
         self.init(

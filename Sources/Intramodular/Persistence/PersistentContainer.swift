@@ -79,7 +79,7 @@ extension PersistentContainer {
             .blockAndUnwrap()
     }
     
-    public func  destroyAndRebuild() throws {
+    public func destroyAndRebuild() throws {
         try deleteAll()
         
         if database.nsPersistentContainer.viewContext.hasChanges {
@@ -116,8 +116,7 @@ extension PersistentContainer {
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
                 .map {
                     try type.value.init(
-                        _underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0),
-                        context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+                        _underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)
                     )
                 }
             
@@ -136,13 +135,12 @@ extension PersistentContainer {
         try type.init(
             _underlyingDatabaseRecord: try database.recordContext(forZones: nil).createRecord(
                 withConfiguration: .init(
-                    recordType: type.name,
+                    recordType: .init(rawValue: type.name),
                     recordID: nil,
                     zone: nil
                 ),
                 context: .init()
-            ),
-            context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+            )
         )
     }
     
@@ -158,9 +156,13 @@ extension PersistentContainer {
             .recordContext(forZones: nil)
             .execute(
                 .init(
+                    filters: .init(
+                        zones: nil,
+                        recordTypes: [.init(rawValue: type.name)],
+                        includesSubentities: true
+                    ),
                     predicate: nil,
                     sortDescriptors: nil,
-                    filters: .init(zones: nil, recordType: type.name, includesSubentities: true),
                     cursor: nil,
                     limit: .cursor(.offset(1))
                 )
@@ -169,8 +171,7 @@ extension PersistentContainer {
             .tryMap({ try $0.records.unwrap().first.unwrap() })
             .tryMap {
                 try Instance(
-                    _underlyingDatabaseRecord: $0,
-                    context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>()
+                    _underlyingDatabaseRecord: $0
                 )
             }
             .convertToTask()
@@ -199,8 +200,14 @@ extension View {
     public func persistentContainer<Schema>(
         _ container: PersistentContainer<Schema>
     ) -> some View {
-        environment(\.managedObjectContext, container.database.nsPersistentContainer.viewContext)
+        self
+            .environment(
+                \.managedObjectContext,
+                 container.database.nsPersistentContainer.viewContext
+            )
+            .environment(\._databaseRecordContext, container.database.viewContext)
             .environmentObject(container)
+        
     }
 }
 

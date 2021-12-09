@@ -20,9 +20,9 @@ public protocol Database: Named, Identifiable where ID: Codable {
     associatedtype RecordContext: DatabaseRecordContext
     associatedtype Zone where Zone == RecordContext.Zone
     
-    var schema: DatabaseSchema? { get }
     var configuration: Configuration { get }
     var state: State { get }
+    
     var capabilities: [DatabaseCapability] { get }
     
     init(

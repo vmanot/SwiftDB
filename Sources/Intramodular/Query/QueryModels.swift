@@ -2,71 +2,91 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
+import Diagnostics
 import FoundationX
 import Swallow
 import SwiftUIX
-
-public typealias FetchedQueryResults<T> = Array<T>
+import Merge
 
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
-public struct QueryModels<Result: Entity>: DynamicProperty {
-    @usableFromInline
-    @FetchRequest var base: FetchedResults<NSManagedObject>
+public struct QueryModels<Model>: DynamicProperty {
+    fileprivate class RequestOutputCoordinator: ObservableObject {
+        private lazy var cancellables = Cancellables()
+        private lazy var logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "QueryModels.RequestOutputCoordinator<\(String(describing: Model.self))>")
+        
+        var queryRequest: QueryRequest<Model>!
+        var _databaseRecordContext: _opaque_DatabaseRecordContext! {
+            didSet {
+                _databaseRecordContext
+                    ._opaque_objectWillChange
+                    .sink(in: cancellables) { [unowned self] _ in
+                        self.runQuery()
+                    }
+            }
+        }
+                
+        @Published var output: QueryRequest<Model>.Output?
+        
+        init() {
+            
+        }
+        
+        func runQuery() {
+            let queryTask = _databaseRecordContext.execute(queryRequest)
+            
+            queryTask.start()
+            
+            queryTask
+                .successPublisher
+                .receiveOnMainQueue()
+                .sinkResult(in: cancellables) { result in
+                    self.output = try? result.get()
+                }
+        }
+    }
     
-    public var wrappedValue: FetchedQueryResults<Result> = []
-    @usableFromInline
-    var wrappedValueHash: Int?
+    @Environment(\._databaseRecordContext) var _databaseRecordContext
+    
+    private let queryRequest: QueryRequest<Model>
+    private let transaction: Transaction?
+    private let animation: Animation?
+    
+    @PersistentObject private var coordinator = RequestOutputCoordinator()
+    
+    public var wrappedValue: QueryRequest<Model>.Output.Results {
+        guard let output = coordinator.output else {
+            return []
+        }
+        
+        return output.results
+    }
     
     public mutating func update() {
-        guard needsUpdate else {
-            return
-        }
-        
-        var hasher = Hasher()
-        
-        wrappedValue = base.lazy.filter({
-            !$0.isDeleted && $0.managedObjectContext != nil
-        }).map({ object -> Result in
-            hasher.combine(object)
+        if coordinator.queryRequest == nil {
+            coordinator.queryRequest = queryRequest
+            coordinator._databaseRecordContext = _databaseRecordContext
             
-            return try! Result(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: object), context: DatabaseRecordCreateContext<_CoreData.DatabaseRecordContext>())
-        })
-        
-        wrappedValueHash = hasher.finalize()
-    }
-    
-    private var needsUpdate: Bool {
-        guard base.count == wrappedValue.count else {
-            return true
+            coordinator.runQuery()
         }
-        
-        return wrappedValueHash != getBaseHash()
     }
     
-    private func getBaseHash() -> Int {
-        var hasher = Hasher()
-        
-        base.forEach({ hasher.combine($0) })
-        
-        return hasher.finalize()
-    }
-}
-
-extension QueryModels {
     public init(
-        fetchRequest: QueryRequest<Result>,
+        queryRequest: QueryRequest<Model>,
         animation: Animation? = nil
     ) {
-        _base = .init(fetchRequest: fetchRequest.toNSFetchRequest(), animation: animation)
+        self.queryRequest = queryRequest
+        self.transaction = nil
+        self.animation = animation
     }
     
     public init(
-        fetchRequest: QueryRequest<Result>,
+        queryRequest: QueryRequest<Model>,
         transaction: Transaction
     ) {
-        _base = .init(fetchRequest: fetchRequest.toNSFetchRequest(), transaction: transaction)
+        self.queryRequest = queryRequest
+        self.transaction = transaction
+        self.animation = nil
     }
     
     public init(
@@ -75,7 +95,7 @@ extension QueryModels {
         animation: Animation? = nil
     ) {
         self.init(
-            fetchRequest: .init(
+            queryRequest: .init(
                 predicate: predicate,
                 sortDescriptors: sortDescriptors,
                 fetchLimit: nil
@@ -86,26 +106,5 @@ extension QueryModels {
     
     public init() {
         self.init(sortDescriptors: [])
-    }
-}
-
-// MARK: - Auxiliary Implementation -
-
-fileprivate extension QueryRequest {
-    func toNSFetchRequest() -> NSFetchRequest<NSManagedObject> {
-        let request = NSFetchRequest<NSManagedObject>(entityName: Result.name)
-        
-        request.predicate = predicate
-        request.sortDescriptors = sortDescriptors?.map({ $0 as NSSortDescriptor })
-        
-        if let fetchLimit = fetchLimit {
-            if case let .cursor(.offset(offset)) = fetchLimit {
-                request.fetchLimit = offset
-            } else {
-                fatalError(reason: .unimplemented)
-            }
-        }
-        
-        return request
     }
 }
