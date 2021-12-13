@@ -39,6 +39,8 @@ extension NSAttributeDescription {
         
         allowsExternalBinaryDataStorage = description.attributeConfiguration.allowsExternalBinaryDataStorage
         preservesValueInHistoryOnDeletion = description.attributeConfiguration.preservesValueInHistoryOnDeletion
+        
+        defaultValue = description.attributeConfiguration.defaultValue?.cocoaObjectValue()
     }
 }
 

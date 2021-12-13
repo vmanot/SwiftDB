@@ -17,7 +17,6 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
     
     var name: String?
     var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
-    var attributeConfiguration: DatabaseSchema.Entity.AttributeConfiguration
     var typeDescriptionHint: DatabaseSchema.Entity.AttributeType?
     
     var initialValue: Value?
@@ -74,14 +73,12 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
         initialValue: Value?,
         decodeImpl: @escaping (Attribute) throws -> Value,
         encodeImpl: @escaping (Attribute, Value) throws -> Void,
-        propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration,
-        attributeConfiguration: DatabaseSchema.Entity.AttributeConfiguration
+        propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
     ) {
         self.initialValue = initialValue
         self.decodeImpl = decodeImpl
         self.encodeImpl = encodeImpl
         self.propertyConfiguration = propertyConfiguration
-        self.attributeConfiguration = attributeConfiguration
     }
     
     public static subscript<EnclosingSelf: Entity>(
@@ -108,13 +105,25 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
         DatabaseSchema.Entity.Attribute(
             name: name!.stringValue,
             propertyConfiguration: propertyConfiguration,
-            attributeConfiguration: attributeConfiguration
+            attributeConfiguration: .init(
+                type: determineSchemaAttributeType(),
+                defaultValue: initialValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
+                    do {
+                        return try AnyCodableOrNSCodingValue(from: value)
+                    } catch {
+                        assertionFailure(String(describing: error))
+                        
+                        return nil
+                    }
+                }),
+                allowsExternalBinaryDataStorage: false,
+                preservesValueInHistoryOnDeletion: false
+            )
         )
     }
     
-    public func _runtime_initializePostNameResolution() throws {
+    func _runtime_initializePostNameResolution() throws {
         self.propertyConfiguration.isOptional = isOptional
-        self.attributeConfiguration.type = determineSchemaAttributeType()
         
         try _runtime_encodeDefaultValueIfNecessary()
     }
@@ -134,6 +143,8 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
     }
     
     private func determineSchemaAttributeType() -> DatabaseSchema.Entity.AttributeType {
+        TODO.whole(.refactor, note: "Make less dependent on CoreData")
+
         if let type = _runtime_wrappedValueType as? NSPrimitiveAttributeCoder.Type, let result = DatabaseSchema.Entity.AttributeType(type.toNSAttributeType()) {
             return result
         } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = DatabaseSchema.Entity.AttributeType(wrappedValue.getNSAttributeType()) {
@@ -144,15 +155,15 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else if let type = _runtime_wrappedValueType as? NSCoding.Type {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
+        } else if let initialValue = initialValue, let type = (try? AnyCodableOrNSCodingValue(from: initialValue).cocoaObjectValue()).map({ type(of: $0) }) {
+            return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else {
             return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
         }
     }
-}
 
-// MARK: - Initializers -
+    // MARK: - Initializers -
 
-extension Attribute  {
     public convenience init(
         wrappedValue: Value
     ) {
@@ -171,20 +182,13 @@ extension Attribute  {
                     forKey: attribute.key.unwrap()
                 )
             },
-            propertyConfiguration: .init(),
-            attributeConfiguration: .init(
-                type: .undefined,
-                allowsExternalBinaryDataStorage: false,
-                preservesValueInHistoryOnDeletion: false
-            )
+            propertyConfiguration: .init()
         )
     }
-}
 
-extension Attribute where Value: NSAttributeCoder {
     public convenience init(
         wrappedValue: Value
-    ) {
+    ) where Value: NSAttributeCoder {
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
@@ -199,12 +203,7 @@ extension Attribute where Value: NSAttributeCoder {
                     .unwrap()
                     .encode(newValue, forKey: attribute.key.unwrap())
             },
-            propertyConfiguration: .init(),
-            attributeConfiguration: .init(
-                type: .undefined,
-                allowsExternalBinaryDataStorage: false,
-                preservesValueInHistoryOnDeletion: false
-            )
+            propertyConfiguration: .init()
         )
     }
 }

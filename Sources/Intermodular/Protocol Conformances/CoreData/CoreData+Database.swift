@@ -8,7 +8,7 @@ import Merge
 import Swallow
 
 extension _CoreData {
-    public final class Database: CancellablesHolder {
+    public final class Database: CancellablesHolder, ObservableObject {
         private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
 
         enum ConfigurationError: Error {
@@ -128,6 +128,8 @@ extension _CoreData {
                         managedObjectContext: self.nsPersistentContainer.viewContext,
                         affectedStores: nil
                     )
+                    
+                    self.objectWillChange.send()
                 })
                 .store(in: cancellables)
         }

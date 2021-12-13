@@ -47,7 +47,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
         base.primitiveValueExists(forKey: key.stringValue)
     }
     
-    public func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
+    public func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }
     

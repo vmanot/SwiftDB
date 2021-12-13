@@ -40,8 +40,8 @@ public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject
         base.containsValue(forKey: key)
     }
     
-    public func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
-        try base.setValue(value, forKey: key)
+    public func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
+        try base.encodePrimitiveValue(value, forKey: key)
     }
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {

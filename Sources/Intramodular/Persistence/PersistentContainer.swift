@@ -28,7 +28,7 @@ public final class PersistentContainer<Schema: SwiftDB.Schema>:
     
     @Published public private(set) var id = UUID()
     
-    private(set) var database: _CoreData.Database
+    @Observed private(set) var database: _CoreData.Database
     
     public init(
         name: String,

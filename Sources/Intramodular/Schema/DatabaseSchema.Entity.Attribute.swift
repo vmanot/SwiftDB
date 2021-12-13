@@ -2,12 +2,13 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Foundation
+import FoundationX
 import Swallow
 
 extension DatabaseSchema.Entity {
     public struct AttributeConfiguration: Codable, Hashable {
         public var type: DatabaseSchema.Entity.AttributeType
+        public var defaultValue: AnyCodableOrNSCodingValue?
         public var allowsExternalBinaryDataStorage: Bool
         public var preservesValueInHistoryOnDeletion: Bool
     }

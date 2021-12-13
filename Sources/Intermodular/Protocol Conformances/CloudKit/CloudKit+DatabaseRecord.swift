@@ -32,7 +32,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     public var objectWillChange: ObjectWillChangePublisher {
         .init()
     }
-    
+
     public var isInitialized: Bool {
         true
     }
@@ -53,7 +53,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         base.object(forKey: key.stringValue) != nil
     }
     
-    public func setValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
+    public func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }
     
