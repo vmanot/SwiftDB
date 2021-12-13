@@ -18,7 +18,7 @@ extension _CoreData {
     }
 }
 
-extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
+extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
     public var id: ID {
         ID(managedObjectID: base.objectID)
     }
@@ -58,12 +58,11 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
             try value.encode(to: self, forKey: AnyCodingKey(key))
         }
     }
-    
-    fileprivate enum DecodingError: Error {
-        case some
-    }
-    
-    public func decode<Value>(_ valueType: Value.Type, forKey key: CodingKey) throws -> Value {
+        
+    public func decode<Value>(
+        _ valueType: Value.Type,
+        forKey key: CodingKey
+    ) throws -> Value {
         if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
             return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value
         } else if let valueType = valueType as? NSAttributeCoder.Type {
@@ -72,6 +71,21 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject  {
             return try valueType.decode(from: self, forKey: key) as! Value
         } else {
             throw DecodingError.some
+        }
+    }
+    
+    public func setInitialValue<Value>(
+        _ value: @autoclosure () -> Value,
+        forKey key: CodingKey
+    ) throws {
+        if !containsValue(forKey: key) {
+            let value = value()
+            
+            if let value = value as? NSAttributeCoder {
+                try value.encodePrimitive(to: base, forKey: AnyCodingKey(key))
+            } else if let value = value as? Codable {
+                try value.encodePrimitive(to: self, forKey: AnyCodingKey(key))
+            }
         }
     }
     
@@ -125,6 +139,12 @@ extension _CoreData.DatabaseRecord {
     }
 }
 
+extension _CoreData.DatabaseRecord {
+    fileprivate enum DecodingError: Error {
+        case some
+    }
+}
+
 fileprivate extension Decodable where Self: Encodable {
     static func decode(from object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws -> Self {
         return try _CodableToNSAttributeCoder<Self>.decode(
@@ -136,6 +156,13 @@ fileprivate extension Decodable where Self: Encodable {
     
     func encode(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {
         try _CodableToNSAttributeCoder<Self>(self).encode(
+            to: object.base,
+            forKey: AnyCodingKey(key)
+        )
+    }
+    
+    func encodePrimitive(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {
+        try _CodableToNSAttributeCoder<Self>(self).encodePrimitive(
             to: object.base,
             forKey: AnyCodingKey(key)
         )

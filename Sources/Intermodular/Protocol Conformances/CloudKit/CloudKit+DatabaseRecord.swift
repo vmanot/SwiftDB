@@ -65,6 +65,19 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         }
     }
     
+    public func setInitialValue<Value>(
+        _ value: @autoclosure () -> Value,
+        forKey key: CodingKey
+    ) throws {
+        guard !containsValue(forKey: key) else {
+            return
+        }
+        
+        let value = value()
+        
+        try encode(value, forKey: key)
+    }
+
     fileprivate enum DecodingError: Error {
         case some
     }

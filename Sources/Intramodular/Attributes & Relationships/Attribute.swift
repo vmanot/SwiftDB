@@ -170,17 +170,16 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
         self.init(
             initialValue: wrappedValue,
             decodeImpl: { attribute in
-                try attribute.underlyingRecord.unwrap().decode(
-                    Value.self,
-                    forKey: attribute.key.unwrap(),
-                    initialValue: attribute.initialValue
-                )
+                try attribute
+                    .underlyingRecord
+                    .unwrap()
+                    .decode(Value.self, forKey: attribute.key.unwrap())
             },
             encodeImpl: { attribute, newValue in
-                try attribute.underlyingRecord.unwrap().encode(
-                    newValue,
-                    forKey: attribute.key.unwrap()
-                )
+                try attribute
+                    .underlyingRecord
+                    .unwrap()
+                    .encode(newValue, forKey: attribute.key.unwrap())
             },
             propertyConfiguration: .init()
         )
@@ -195,7 +194,7 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
                 try attribute
                     .underlyingRecord
                     .unwrap()
-                    .decode(Value.self, forKey: attribute.key.unwrap(), initialValue: wrappedValue)
+                    .decode(Value.self, forKey: attribute.key.unwrap())
             },
             encodeImpl: { attribute, newValue in
                 try attribute
