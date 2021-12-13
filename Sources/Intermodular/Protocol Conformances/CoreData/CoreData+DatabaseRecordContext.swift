@@ -38,15 +38,15 @@ extension _CoreData {
                 return
             }
             
-            if let insertedObjects = userInfo[NSInsertedObjectsKey] as? Set<NSManagedObject>, insertedObjects.count > 0 {
+            if let insertedObjects = userInfo[NSInsertedObjectsKey] as? Set<NSManagedObject>, !insertedObjects.isEmpty {
                 objectWillChange.send()
             }
             
-            if let updatedObjects = userInfo[NSUpdatedObjectsKey] as? Set<NSManagedObject>, updatedObjects.count > 0 {
+            if let updatedObjects = userInfo[NSUpdatedObjectsKey] as? Set<NSManagedObject>, !updatedObjects.isEmpty {
                 objectWillChange.send()
             }
             
-            if let deletedObjects = userInfo[NSDeletedObjectsKey] as? Set<NSManagedObject>, deletedObjects.count > 0 {
+            if let deletedObjects = userInfo[NSDeletedObjectsKey] as? Set<NSManagedObject>, !deletedObjects.isEmpty {
                 objectWillChange.send()
             }
         }

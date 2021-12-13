@@ -24,6 +24,7 @@ extension NSAttributeDescription {
     public convenience init(_ description: DatabaseSchema.Entity.Attribute) throws {
         self.init()
         
+        renamingIdentifier = description.propertyConfiguration.renamingIdentifier
         name = description.name
         isOptional = try description.propertyConfiguration.isOptional.unwrap()
         isTransient = description.propertyConfiguration.isTransient
