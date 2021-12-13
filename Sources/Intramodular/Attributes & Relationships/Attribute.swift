@@ -10,7 +10,7 @@ import SwiftUI
 
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject, PropertyWrapper {
+public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPropertyAccessor, ObservableObject, PropertyWrapper {
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
@@ -35,7 +35,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
             do {
                 return try decodeImpl(self)
             } catch {
-                assertionFailure(error.localizedDescription)
+                assertionFailure(String(describing: error))
                 
                 if let initialValue = initialValue {
                     return initialValue
@@ -115,7 +115,7 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
     public func _runtime_initializePostNameResolution() throws {
         self.propertyConfiguration.isOptional = isOptional
         self.attributeConfiguration.type = determineSchemaAttributeType()
-
+        
         try _runtime_encodeDefaultValueIfNecessary()
     }
     
@@ -152,33 +152,6 @@ public final class Attribute<Value>: _opaque_PropertyAccessor, ObservableObject,
 
 // MARK: - Initializers -
 
-extension Attribute where Value: NSAttributeCoder {
-    public convenience init(
-        wrappedValue: Value,
-        name: String? = nil
-    ) {
-        self.init(
-            initialValue: wrappedValue,
-            decodeImpl: { attribute in
-                try attribute.underlyingRecord
-                    .unwrap()
-                    .decode(Value.self, forKey: attribute.key.unwrap(), initialValue: wrappedValue)
-            },
-            encodeImpl: { attribute, newValue in
-                try attribute.underlyingRecord
-                    .unwrap()
-                    .encode(newValue, forKey: attribute.key.unwrap())
-            },
-            propertyConfiguration: .init(),
-            attributeConfiguration: .init(
-                type: .undefined,
-                allowsExternalBinaryDataStorage: false,
-                preservesValueInHistoryOnDeletion: false
-            )
-        )
-    }
-}
-
 extension Attribute  {
     public convenience init(
         wrappedValue: Value
@@ -208,64 +181,30 @@ extension Attribute  {
     }
 }
 
-/*extension Attribute where Value: RawRepresentable, Value.RawValue: Codable & NSPrimitiveAttributeCoder {
- public convenience init(
- wrappedValue: Value,
- name: String? = nil
- ) {
- self.init(
- initialValue: wrappedValue,
- decodeImpl: { attribute in
- try Value(
- rawValue: try attribute.underlyingRecord.unwrap().decode(
- Value.RawValue.self,
- forKey: attribute.key.unwrap(),
- initialValue: attribute.initialValue?.rawValue
- )
- ).unwrap()
- },
- encodeImpl: { attribute, newValue in
- try attribute.underlyingRecord.unwrap().encode(
- newValue.rawValue,
- forKey: attribute.key.unwrap()
- )
- },
- name: name,
- )
- }
- 
- public convenience init(
- wrappedValue: Value,
- name: String? = nil,
- isTransient: Bool = false,
- allowsExternalBinaryDataStorage: Bool = false,
- preservesValueInHistoryOnDeletion: Bool = false
- ) where Value: Codable {
- self.init(
- initialValue: wrappedValue,
- decodeImpl: { attribute in
- try Value(
- rawValue: try attribute.underlyingRecord.unwrap().decode(
- Value.RawValue.self,
- forKey: attribute.key.unwrap(),
- initialValue: attribute.initialValue?.rawValue
- )
- ).unwrap()
- },
- encodeImpl: { attribute, newValue in
- try attribute.underlyingRecord.unwrap().encode(
- newValue.rawValue,
- forKey: attribute.key.unwrap()
- )
- },
- name: name,
- propertyConfiguration: .init(isOptional: self.isOptional),
- attributeConfiguration: .init(
- type: .undefined,
- defaultValue: nil,
- allowsExternalBinaryDataStorage: false,
- preservesValueInHistoryOnDeletion: false
- )
- )
- }
- }*/
+extension Attribute where Value: NSAttributeCoder {
+    public convenience init(
+        wrappedValue: Value
+    ) {
+        self.init(
+            initialValue: wrappedValue,
+            decodeImpl: { attribute in
+                try attribute
+                    .underlyingRecord
+                    .unwrap()
+                    .decode(Value.self, forKey: attribute.key.unwrap(), initialValue: wrappedValue)
+            },
+            encodeImpl: { attribute, newValue in
+                try attribute
+                    .underlyingRecord
+                    .unwrap()
+                    .encode(newValue, forKey: attribute.key.unwrap())
+            },
+            propertyConfiguration: .init(),
+            attributeConfiguration: .init(
+                type: .undefined,
+                allowsExternalBinaryDataStorage: false,
+                preservesValueInHistoryOnDeletion: false
+            )
+        )
+    }
+}

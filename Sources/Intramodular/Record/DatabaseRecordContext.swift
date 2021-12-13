@@ -17,6 +17,7 @@ public protocol _opaque_DatabaseRecordContext: _opaque_ObservableObject {
     func execute<Model>(_ request: QueryRequest<Model>) -> AnyTask<QueryRequest<Model>.Output, Error>
 }
 
+/// An object space to manipulate and track changes to managed objects.
 public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, ObservableObject {
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord

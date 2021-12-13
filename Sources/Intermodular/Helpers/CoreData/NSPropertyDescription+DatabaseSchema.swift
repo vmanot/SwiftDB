@@ -94,7 +94,7 @@ extension NSRelationshipDescription {
 }
 
 extension NSAttributeDescription {
-    convenience init(_ attribute: _opaque_PropertyAccessor) throws {
+    convenience init(_ attribute: _opaque_EntityPropertyAccessor) throws {
         try self.init(try cast(try attribute.schema(), to: DatabaseSchema.Entity.Attribute.self))
     }
 }

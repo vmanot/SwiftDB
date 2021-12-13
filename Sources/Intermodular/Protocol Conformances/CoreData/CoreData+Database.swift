@@ -3,11 +3,14 @@
 //
 
 import CoreData
+import Diagnostics
 import Merge
 import Swallow
 
 extension _CoreData {
     public final class Database: CancellablesHolder {
+        private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
+
         enum ConfigurationError: Error {
             case customLocationPathExtensionMissing
         }
@@ -111,8 +114,9 @@ extension _CoreData {
         private func loadPersistentStores() throws {
             try setupPersistentStoreDescription()
             
-            nsPersistentContainer.loadPersistentStores()
-                .map({
+            nsPersistentContainer
+                .loadPersistentStores()
+                .sinkResult({ result in
                     self.nsPersistentContainer.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
                     
                     self.nsPersistentContainer
@@ -125,7 +129,7 @@ extension _CoreData {
                         affectedStores: nil
                     )
                 })
-                .subscribe(in: cancellables)
+                .store(in: cancellables)
         }
     }
 }

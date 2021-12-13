@@ -18,7 +18,11 @@ public struct QueryModels<Model>: DynamicProperty {
         var queryRequest: QueryRequest<Model>!
         var _databaseRecordContext: _opaque_DatabaseRecordContext! {
             didSet {
-                _databaseRecordContext
+                guard let context = _databaseRecordContext else {
+                    return
+                }
+
+                context
                     ._opaque_objectWillChange
                     .sink(in: cancellables) { [unowned self] _ in
                         self.runQuery()
@@ -63,9 +67,9 @@ public struct QueryModels<Model>: DynamicProperty {
     }
     
     public mutating func update() {
-        if coordinator.queryRequest == nil {
+        if let databaseRecordContext = _databaseRecordContext {
             coordinator.queryRequest = queryRequest
-            coordinator._databaseRecordContext = _databaseRecordContext
+            coordinator._databaseRecordContext = databaseRecordContext
             
             coordinator.runQuery()
         }

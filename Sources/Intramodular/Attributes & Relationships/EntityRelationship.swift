@@ -6,7 +6,7 @@ import CoreData
 import Runtime
 import Swallow
 
-protocol _opaque_EntityRelationshipAccessor: _opaque_PropertyAccessor {
+protocol _opaque_EntityRelationshipAccessor: _opaque_EntityPropertyAccessor {
     var wrappedValue_didSet_hash: AnyHashable? { get set }
 }
 
@@ -121,7 +121,7 @@ extension EntityRelationship {
         
         // Walk through all properties of the empty inverse instance.
         for (key, value) in emptyInverseEntity.children {
-            if var value = value as? _opaque_EntityRelationshipAccessor {
+            if let value = value as? _opaque_EntityRelationshipAccessor {
                 // Find the inverse relationship accessor that was "touched".
                 if value.wrappedValue_didSet_hash != nil {
                     if value.name == nil {

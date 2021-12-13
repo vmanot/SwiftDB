@@ -34,19 +34,17 @@ extension _opaque_Entity {
         )
     }
     
-    var _runtime_propertyAccessors: [_opaque_PropertyAccessor] {
+    var _runtime_propertyAccessors: [_opaque_EntityPropertyAccessor] {
         AnyNominalOrTupleMirror(self)!.allChildren.compactMap { key, value in
-            (value as? _opaque_PropertyAccessor)
+            (value as? _opaque_EntityPropertyAccessor)
         }
     }
     
-    mutating func _runtime_configurePropertyAccessors(
-        underlyingRecord: _opaque_DatabaseRecord?
-    ) throws {
+    mutating func _runtime_configurePropertyAccessors(underlyingRecord: _opaque_DatabaseRecord?) throws {
         var instance = AnyNominalOrTupleMirror(self)!
         
         for (key, value) in instance.allChildren {
-            if var property = value as? _opaque_PropertyAccessor {
+            if let property = value as? _opaque_EntityPropertyAccessor {
                 property.underlyingRecord = underlyingRecord
                 
                 if property.name == nil {
@@ -62,9 +60,7 @@ extension _opaque_Entity {
         self = try cast(instance.value, to: Self.self)
     }
     
-    init(
-        _underlyingDatabaseRecord record: _opaque_DatabaseRecord?
-    ) throws {
+    init(_underlyingDatabaseRecord record: _opaque_DatabaseRecord?) throws {
         if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {
             if let entityType = schema.entityNameToTypeMap[(record as! _CoreData.DatabaseRecord).base.entity.name]?.value {
                 self = entityType.init() as! Self
@@ -79,7 +75,7 @@ extension _opaque_Entity {
         
         try _runtime_configurePropertyAccessors(underlyingRecord: record)
         
-        if let record = record {
+        if let record = record, type(of: self) is AnyObject.Type {
             record
                 ._opaque_objectWillChange
                 .publish(to: self)
@@ -111,7 +107,7 @@ extension _opaque_Entity where Self: Entity {
     
     public var _underlyingDatabaseRecord: _opaque_DatabaseRecord? {
         for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
-            if let value = value as? _opaque_PropertyAccessor {
+            if let value = value as? _opaque_EntityPropertyAccessor {
                 return value.underlyingRecord
             }
         }
