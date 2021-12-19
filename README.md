@@ -1,6 +1,6 @@
 # SwiftDB
 
-A type-safe, SwiftUI-inspired wrapper around CoreData.
+A modern, type-safe database abstraction layer. SwiftDB provides abstractions for relational and document-oriented databases. 
 
 ## Get Started
 
