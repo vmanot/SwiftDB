@@ -1,6 +1,6 @@
 # SwiftDB
 
-A modern, type-safe database abstraction layer. SwiftDB provides abstractions for relational and document-oriented databases. 
+A modern, type-safe database abstraction layer. SwiftDB aims to be an opinionated DBAL for relational and document-oriented databases. 
 
 ## Get Started
 
