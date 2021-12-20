@@ -56,7 +56,7 @@ public struct QueryModels<Model>: DynamicProperty {
     private let transaction: Transaction?
     private let animation: Animation?
     
-    @PersistentObject private var coordinator = RequestOutputCoordinator()
+    @StateObject private var coordinator = RequestOutputCoordinator()
     
     public var wrappedValue: QueryRequest<Model>.Output.Results {
         guard let output = coordinator.output else {
