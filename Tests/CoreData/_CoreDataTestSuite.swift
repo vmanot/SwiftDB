@@ -11,7 +11,7 @@ import XCTest
 
 final class _CoreDataTestSuite: XCTestCase {
     func testRuntime() throws {
-        let database = try PersistentContainer(
+        let database = try DatabaseContainer(
             name: "FooCoreDataDatabase",
             schema: TestSchema(),
             location: URL(.temporaryDirectory())
@@ -25,7 +25,7 @@ final class _CoreDataTestSuite: XCTestCase {
         
         try database.save()
         try database.fetchFirst(TestEntity.self).blockAndUnwrap().unwrap()
-        try database.deleteAll()
+        try database.deleteAllInstances()
         try database.save()
     }
 }

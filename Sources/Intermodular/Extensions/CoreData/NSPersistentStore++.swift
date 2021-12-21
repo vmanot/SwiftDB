@@ -12,7 +12,8 @@ extension NSPersistentStore {
         let url = try self.url.unwrap()
 
         try persistentStoreCoordinator.destroyPersistentStore(at: url, ofType: type, options: nil)
-        
+        try persistentStoreCoordinator.remove(self)
+
         try FileManager.default.removeItem(at: url)
     }
 }

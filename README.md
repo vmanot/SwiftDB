@@ -99,7 +99,7 @@ struct ContentView: View {
     
     var body: some View {
         ListView()
-            .persistentContainer(container)
+            .databaseContainer(container)
     }
 }
 ```

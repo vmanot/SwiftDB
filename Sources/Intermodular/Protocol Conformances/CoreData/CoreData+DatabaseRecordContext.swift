@@ -150,6 +150,10 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         .eraseToAnyTask()
     }
 
+    public func save() async throws {
+        try await save().successPublisher.output()
+    }
+
     public func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest {
         try ZoneQueryRequest(
             filters: .init(

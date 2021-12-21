@@ -21,7 +21,7 @@ public struct QueryModels<Model>: DynamicProperty {
                 guard let context = _databaseRecordContext else {
                     return
                 }
-
+                
                 context
                     ._opaque_objectWillChange
                     .sink(in: cancellables) { [unowned self] _ in
@@ -29,7 +29,7 @@ public struct QueryModels<Model>: DynamicProperty {
                     }
             }
         }
-                
+        
         @Published var output: QueryRequest<Model>.Output?
         
         init() {

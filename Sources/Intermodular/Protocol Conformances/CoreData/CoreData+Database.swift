@@ -80,22 +80,7 @@ extension _CoreData {
             
             try loadPersistentStores()
         }
-        
-        public init(container: NSPersistentContainer, schema: DatabaseSchema) throws {
-            self.runtime = _DefaultDatabaseRuntime()
-            self.schema = schema
-            self.configuration = .init(
-                name: container.name,
-                location: nil,
-                applicationGroupID: nil,
-                cloudKitContainerIdentifier: nil
-            )
-            self.state = nil
-            self.nsPersistentContainer = container
-            
-            try loadPersistentStores()
-        }
-        
+                
         private func setupPersistentStoreDescription() throws {
             if let sqliteStoreURL = sqliteStoreURL {
                 nsPersistentContainer.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
@@ -159,7 +144,12 @@ extension _CoreData.Database: Database {
             return .just(.success(nsPersistentContainer.persistentStoreCoordinator.persistentStores.map({ Zone(persistentStore: $0) })))
         }
     }
-    
+
+    @discardableResult
+    public func fetchAllAvailableZones() async throws -> [Zone] {
+        try await fetchAllAvailableZones().successPublisher.output()
+    }
+
     public func fetchZone(named name: String) -> AnyTask<Zone, Error> {
         fetchAllAvailableZones()
             .successPublisher
@@ -173,11 +163,28 @@ extension _CoreData.Database: Database {
     }
     
     public func delete() -> AnyTask<Void, Error> {
-        allStoreFiles.forEach {
-            try? FileManager.default.removeItem(at: $0)
+        do {
+            if nsPersistentContainer.viewContext.hasChanges {
+                nsPersistentContainer.viewContext.rollback()
+                nsPersistentContainer.viewContext.reset()
+            }
+            
+            try nsPersistentContainer.persistentStoreCoordinator.destroyAll()
+            
+            try allStoreFiles.forEach { url in
+                if FileManager.default.fileExists(at: url) {
+                    try FileManager.default.removeItem(at: url)
+                }
+            }
+                        
+            return .just(.success(()))
+        } catch {
+            return .failure(error)
         }
-        
-        return .just(.success(()))
+    }
+    
+    public func delete() async throws {
+        try await delete().successPublisher.output()
     }
 }
 
