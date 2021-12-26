@@ -8,7 +8,7 @@ import Swallow
 import SwiftUIX
 
 /// An opaque mirror for `DatabaseContainer`.
-protocol _opaque_DatabaseContainer {
+protocol _opaque_DatabaseContainer: _opaque_ObservableObject {
     func load() async throws
     func save() async throws
     
@@ -21,10 +21,7 @@ protocol _opaque_DatabaseContainer {
 }
 
 /// A container that encapsulates a database stack in your app.
-public final class DatabaseContainer<Schema: SwiftDB.Schema>:
-    _opaque_DatabaseContainer,
-    CancellablesHolder,
-    ObservableObject
+public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseContainer, ObservableObject
 {
     public let cancellables = Cancellables()
     
