@@ -2,12 +2,13 @@
 // Copyright (c) Vatsal Manot
 //
 
+import XCTest
+
 @testable import SwiftDB
 
-import Filesystem
 import Combine
+import Filesystem
 import Merge
-import XCTest
 
 final class _CoreDataTestSuite: XCTestCase {
     func testRuntime() throws {
