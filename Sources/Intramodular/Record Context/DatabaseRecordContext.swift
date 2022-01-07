@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
 import FoundationX
 import Merge
 import Swallow
@@ -14,7 +13,7 @@ public struct DatabaseRecordRelationshipDereferenceRequest<Context: DatabaseReco
 }
 
 public protocol _opaque_DatabaseRecordContext: _opaque_ObservableObject {
-    func execute<Model>(_ request: QueryRequest<Model>) -> AnyTask<QueryRequest<Model>.Output, Error>
+    func execute<Model: Entity>(_ request: QueryRequest<Model>) -> AnyTask<QueryRequest<Model>.Output, Error>
 }
 
 /// An object space to manipulate and track changes to managed objects.
@@ -28,12 +27,14 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
     typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
     typealias SaveError = DatabaseRecordContextSaveError<Self>
-    
+
+    /// Create a database record associated with this context.
     func createRecord(
         withConfiguration _: DatabaseRecordConfiguration<Self>,
         context: RecordCreateContext
     ) throws -> Record
-    
+    /// Instantiate a SwiftDB model from a record.
+    func instantiate<Model: Entity>(_ type: Model.Type, from record: Record) throws -> Model
     /// Get the record ID associated with this record.
     func recordID(from record: Record) throws -> RecordID
     /// Get the zone associatdd with this record.
@@ -44,7 +45,7 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
     func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error>
     /// Save the changes made in this record context.
     func save() -> AnyTask<Void, SaveError>
-    
+
     /// Translate a `QueryRequest` into a zone query request for this record context.
     func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest
 }
@@ -52,14 +53,16 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
 // MARK: - Implementation -
 
 extension DatabaseRecordContext {
-    public func execute<Model>(_ request: QueryRequest<Model>) -> AnyTask<QueryRequest<Model>.Output, Error> {
+    public func execute<Model: Entity>(
+        _ request: QueryRequest<Model>
+    ) -> AnyTask<QueryRequest<Model>.Output, Error> {
         do {
             return try execute(zoneQueryRequest(from: request))
                 .successPublisher
                 .tryMap { result in
                     QueryRequest<Model>.Output(
                         results: try (result.records ?? []).map { record in
-                            try cast(cast(Model.self, to: _opaque_Entity.Type.self).init(_underlyingDatabaseRecord: record), to: Model.self) // FIXME: Refactor
+                            try self.instantiate(Model.self.self, from: record)
                         }
                     )
                 }
@@ -68,20 +71,24 @@ extension DatabaseRecordContext {
             return .failure(error)
         }
     }
+    
+    public func save() async throws {
+        try await save().successPublisher.output()
+    }
 }
 
 // MARK: - Auxiliary Implementation -
 
 extension EnvironmentValues {
-    struct _DatabaseRecordContextKey: EnvironmentKey {
-        static let defaultValue: _opaque_DatabaseRecordContext? = nil
+    fileprivate struct DatabaseRecordContextKey: EnvironmentKey {
+        static let defaultValue: AnyDatabaseRecordContext? = nil
     }
     
-    var _databaseRecordContext: _opaque_DatabaseRecordContext? {
+    var databaseRecordContext: AnyDatabaseRecordContext? {
         get {
-            self[_DatabaseRecordContextKey.self]
+            self[DatabaseRecordContextKey.self]
         } set {
-            self[_DatabaseRecordContextKey.self] = newValue
+            self[DatabaseRecordContextKey.self] = newValue
         }
     }
 }

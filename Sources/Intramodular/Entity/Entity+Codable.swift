@@ -17,7 +17,7 @@ extension Entity where Self: Codable {
             throw _EntityDecodingError.couldNotResolveEntityMetatype(forName: metadata.name)
         }
         
-        self = try decoder.userInfo._SwiftDB_PersistentContainer.create(type)
+        self = try decoder.userInfo._SwiftDB_PersistentContainer.mainContext.create(type)
         
         for property in _runtime_propertyAccessors {
             try property.decode(from: try container.decoder(forKey: property.key.unwrap()))

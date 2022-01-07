@@ -10,7 +10,7 @@ import Merge
 
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
-public struct QueryModels<Model>: DynamicProperty {
+public struct QueryModels<Model: Entity>: DynamicProperty {
     fileprivate class RequestOutputCoordinator: ObservableObject {
         private lazy var cancellables = Cancellables()
         private lazy var logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "QueryModels.RequestOutputCoordinator<\(String(describing: Model.self))>")
@@ -50,7 +50,7 @@ public struct QueryModels<Model>: DynamicProperty {
         }
     }
     
-    @Environment(\._databaseRecordContext) var _databaseRecordContext
+    @Environment(\.databaseRecordContext) var databaseRecordContext
     
     private let queryRequest: QueryRequest<Model>
     private let transaction: Transaction?
@@ -67,7 +67,7 @@ public struct QueryModels<Model>: DynamicProperty {
     }
     
     public mutating func update() {
-        if let databaseRecordContext = _databaseRecordContext, coordinator._databaseRecordContext == nil {
+        if let databaseRecordContext = databaseRecordContext, coordinator._databaseRecordContext == nil {
             coordinator.queryRequest = queryRequest
             coordinator._databaseRecordContext = databaseRecordContext
             

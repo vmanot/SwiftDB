@@ -57,3 +57,19 @@ public protocol DatabaseRecord: _opaque_DatabaseRecord, Identifiable {
     func reference(forKey key: CodingKey) throws -> Reference?
     func setReference(_ reference: Reference?, forKey key: CodingKey) throws
 }
+
+// MARK: - Implementation -
+
+extension DatabaseRecord where Reference == NoDatabaseRecordReference<ID> {
+    public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
+        throw Never.Reason.unsupported
+    }
+
+    public func reference(forKey key: CodingKey) throws -> Reference? {
+        throw Never.Reason.unsupported
+    }
+
+    public func setReference(_ reference: Reference?, forKey key: CodingKey) throws {
+        throw Never.Reason.unsupported
+    }
+}

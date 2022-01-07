@@ -44,7 +44,7 @@ extension EntityRelatable where Self: Entity {
     }
     
     public init(noRelatedModels: Void) {
-        try! self.init(_underlyingDatabaseRecord: nil)
+        try! self.init(_underlyingDatabaseRecord: nil) // FIXME!!!
     }
     
     public static func decode(from base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws -> Self {

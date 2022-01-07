@@ -5,15 +5,41 @@
 import Merge
 import Swift
 
-public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject, Identifiable, ObservableObject {
-    private let base: _opaque_DatabaseRecord
+public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject, DatabaseRecord, Identifiable, ObservableObject {
+    public struct ID: Hashable {
+        public let base: AnyHashable
+    
+        init(base: AnyHashable) {
+            self.base = base
+        }
+    }
+    
+    public struct RecordType: Codable, Hashable, LosslessStringConvertible {
+        public let rawValue: String
+        
+        public var description: String {
+            rawValue
+        }
+        
+        public init<T: LosslessStringConvertible>(from value: T) {
+            self.rawValue = value.description
+        }
+        
+        public init(_ description: String) {
+            self.rawValue = description
+        }
+    }
+    
+    public typealias Reference = NoDatabaseRecordReference<ID> // FIXME!!!
+
+    let base: _opaque_DatabaseRecord
     
     public init(base: _opaque_DatabaseRecord) {
         self.base = base
     }
     
-    public var id: AnyHashable {
-        base._opaque_id
+    public var id: ID {
+        .init(base: base._opaque_id)
     }
     
     public var objectWillChange: AnyObjectWillChangePublisher {

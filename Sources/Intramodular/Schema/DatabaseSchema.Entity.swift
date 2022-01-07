@@ -48,7 +48,9 @@ extension DatabaseSchema.Entity {
         )
         
         self.init(
-            parent: try type._opaque_ParentEntity.map(DatabaseSchema.Entity.init),
+            parent: try type._opaque_ParentEntity.map { parentType in
+                try DatabaseSchema.Entity(parentType)
+            },
             name: type.name,
             className: type.underlyingDatabaseRecordClass.name,
             subentities: .unknown,

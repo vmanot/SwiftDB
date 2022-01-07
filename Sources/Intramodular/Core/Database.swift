@@ -12,9 +12,6 @@ import Swallow
 /// - Configuration
 /// - State
 public protocol Database: Named, Identifiable where ID: Codable {
-    typealias Runtime = DatabaseRuntime
-    typealias Schema = DatabaseSchema
-    
     associatedtype Configuration: Codable
     associatedtype State: Codable & ExpressibleByNilLiteral
     associatedtype RecordContext: DatabaseRecordContext
@@ -22,12 +19,11 @@ public protocol Database: Named, Identifiable where ID: Codable {
     
     var configuration: Configuration { get }
     var state: State { get }
-    
     var capabilities: [DatabaseCapability] { get }
     
     init(
-        runtime: Runtime,
-        schema: Schema?,
+        runtime: DatabaseRuntime,
+        schema: DatabaseSchema?,
         configuration: Configuration,
         state: State
     ) throws
@@ -46,7 +42,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
 
 extension Database {
     public init(
-        schema: Schema?,
+        schema: DatabaseSchema?,
         configuration: Configuration,
         state: State
     ) throws {

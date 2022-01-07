@@ -12,9 +12,8 @@ public protocol _opaque_Entity: _opaque_EntityRelatable, _opaque_ObservableObjec
     static var _opaque_ID: Any.Type? { get }
     
     var _opaque_id: AnyHashable? { get }
-    
     var _underlyingDatabaseRecord: _opaque_DatabaseRecord? { get }
-    
+
     static var name: String { get }
 }
 
@@ -24,7 +23,7 @@ extension _opaque_Entity where Self: Entity {
 
 // MARK: - Implementation -
 
-extension _opaque_Entity {
+extension _opaque_Entity  {
     static var underlyingDatabaseRecordClass: ObjCClass {
         ObjCClass(
             name: "_SwiftDB_" + name,
@@ -59,20 +58,10 @@ extension _opaque_Entity {
         
         self = try cast(instance.value, to: Self.self)
     }
-    
+
     init(_underlyingDatabaseRecord record: _opaque_DatabaseRecord?) throws {
-        if let record = record, let schema = (record as! _CoreData.DatabaseRecord).base._SwiftDB_databaseSchema {
-            if let entityType = schema.entityNameToTypeMap[(record as! _CoreData.DatabaseRecord).base.entity.name]?.value {
-                self = entityType.init() as! Self
-            } else {
-                assertionFailure()
-                
-                self.init()
-            }
-        } else {
-            self.init()
-        }
-        
+        self.init()
+
         try _runtime_configurePropertyAccessors(underlyingRecord: record)
         
         if let record = record, type(of: self) is AnyObject.Type {

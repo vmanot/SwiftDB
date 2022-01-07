@@ -76,6 +76,18 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         
         return object
     }
+
+    public func instantiate<Model: Entity>(_ type: Model.Type, from record: Record) throws -> Model {
+        let schema = self.parent.schema
+
+        if let entityType = schema.entityNameToTypeMap[record.base.entity.name]?.value {
+            return try cast(entityType.init(_underlyingDatabaseRecord: record), to: Model.self)
+        } else {
+            assertionFailure()
+
+            return type.init()
+        }
+    }
     
     public func recordID(from record: Record) throws -> RecordID {
         .init(managedObjectID: record.base.objectID)
@@ -148,10 +160,6 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
             }
         }
         .eraseToAnyTask()
-    }
-
-    public func save() async throws {
-        try await save().successPublisher.output()
     }
 
     public func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest {

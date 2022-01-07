@@ -9,13 +9,12 @@ import SwiftUIX
 
 /// An opaque mirror for `DatabaseContainer`.
 protocol _opaque_DatabaseContainer: _opaque_ObservableObject {
+    var mainContext: AnyDatabaseRecordContext { get throws }
+    
     func load() async throws
     func save() async throws
     
-    func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance
-    func first<Instance: Entity>(_ type: Instance.Type) async throws -> Instance?
     func fetchAllInstances() async throws -> [Any]
-    func delete<Instance: Entity>(_ instance: Instance) async throws
     func deleteAllInstances() async throws
     func destroyAndRebuild() async throws
 }
@@ -36,6 +35,12 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
     
     public var isLoaded: Bool {
         !database.nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
+    }
+    
+    public var mainContext: AnyDatabaseRecordContext {
+        get throws {
+            try AnyDatabaseRecordContext(database.viewContext.unwrap())
+        }
     }
     
     public init(
@@ -84,45 +89,8 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
         try await database
             .recordContext(forZones: nil)
             .save()
-        
-        await MainActor.run {
-            objectWillChange.send()
-        }
     }
-    
-    @discardableResult
-    public func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance {
-        try cast(try _opaque_create(type as _opaque_Entity.Type), to: Instance.self)
-    }
-    
-    public func first<Instance: Entity>(
-        _ type: Instance.Type
-    ) async throws -> Instance? {
-        try await database
-            .recordContext(forZones: nil)
-            .execute(
-                .init(
-                    filters: .init(
-                        zones: nil,
-                        recordTypes: [.init(rawValue: type.name)],
-                        includesSubentities: true
-                    ),
-                    predicate: nil,
-                    sortDescriptors: nil,
-                    cursor: nil,
-                    limit: .cursor(.offset(1))
-                )
-            )
-            .successPublisher
-            .tryMap({ try $0.records.unwrap().first.unwrap() })
-            .tryMap {
-                try Instance(
-                    _underlyingDatabaseRecord: $0
-                )
-            }
-            .output()
-    }
-    
+
     public func fetchAllInstances() throws -> [Any] {
         var result: [_opaque_Entity] = []
         
@@ -141,10 +109,6 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
         return result
     }
     
-    public func delete<Instance: Entity>(_ instance: Instance) async throws {
-        try await _opaque_delete(instance)
-    }
-    
     public func deleteAllInstances() async throws {
         let allInstances = try fetchAllInstances()
         
@@ -154,8 +118,8 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
                 
                 continue
             }
-            
-            try await _opaque_delete(instance)
+
+            try await mainContext._opaque_delete(instance)
         }
     }
     
@@ -179,32 +143,6 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
         
         try await load()
     }
-    
-    @discardableResult
-    private func _opaque_create(_ type: _opaque_Entity.Type) throws -> _opaque_Entity {
-        try type.init(
-            _underlyingDatabaseRecord: try database.recordContext(forZones: nil).createRecord(
-                withConfiguration: .init(
-                    recordType: .init(rawValue: type.name),
-                    recordID: nil,
-                    zone: nil
-                ),
-                context: .init()
-            )
-        )
-    }
-    
-    private func _opaque_delete(_ instance: _opaque_Entity) async throws {
-        let context = try database.recordContext(forZones: nil)
-        let record = try cast(
-            try instance._underlyingDatabaseRecord.unwrap(),
-            to: _CoreData.DatabaseRecordContext.Record.self
-        )
-        
-        try context.delete(record)
-        
-        _ = try await context.save()
-    }
 }
 
 extension View {
@@ -216,9 +154,8 @@ extension View {
                 \.managedObjectContext,
                  container.database.nsPersistentContainer.viewContext
             )
-            .environment(\._databaseRecordContext, container.database.viewContext)
+            .environment(\.databaseRecordContext, try? container.mainContext)
             .environmentObject(container)
-        
     }
 }
 

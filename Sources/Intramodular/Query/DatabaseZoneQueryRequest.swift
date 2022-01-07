@@ -15,7 +15,7 @@ public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordContext>: Hashable
 public struct DatabaseZoneQueryRequest<Context: DatabaseRecordContext>: Hashable {
     public struct Filters: Codable, Hashable {
         public let zones: [Context.Zone.ID]?
-        public let recordTypes: Set<Context.RecordType>
+        public var recordTypes: Set<Context.RecordType>
         public let includesSubentities: Bool
     }
     
