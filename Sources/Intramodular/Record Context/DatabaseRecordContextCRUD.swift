@@ -7,17 +7,16 @@ import Swallow
 extension DatabaseRecordContext {
     @discardableResult
     public func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance {
-        try type.init(
-            underlyingRecord: try self.createRecord(
-                withConfiguration: .init(
-                    recordType: try RecordType(type.name).unwrap(),
-                    recordID: nil,
-                    zone: nil
-                ),
-                context: .init()
+        let record = try self.createRecord(
+            withConfiguration: .init(
+                recordType: try RecordType(type.name).unwrap(),
+                recordID: nil,
+                zone: nil
             ),
-            recordContext: self
+            context: .init()
         )
+
+        return try instantiate(type, from: record)
     }
 
     public func first<Instance: Entity>(
