@@ -38,23 +38,3 @@ extension DatabaseSchema.Entity: Comparable {
         lhs.name < rhs.name
     }
 }
-
-// MARK: - Auxiliary Implementation -
-
-extension DatabaseSchema.Entity {
-    public init(_ type: _opaque_Entity.Type) throws {
-        let instance = try type.init(
-            _underlyingDatabaseRecord: nil
-        )
-        
-        self.init(
-            parent: try type._opaque_ParentEntity.map { parentType in
-                try DatabaseSchema.Entity(parentType)
-            },
-            name: type.name,
-            className: type.underlyingDatabaseRecordClass.name,
-            subentities: .unknown,
-            properties: try instance._runtime_propertyAccessors.map({ try $0.schema() })
-        )
-    }
-}

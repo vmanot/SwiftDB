@@ -169,7 +169,18 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                 recordTypes: [.init(rawValue: parent.schema.entity(forModelType: Model.self).unwrap().name)],
                 includesSubentities: true
             ),
-            predicate: queryRequest.predicate.map(DatabaseZoneQueryPredicate._nsPredicate),
+            predicate: queryRequest.predicate.map({ predicate in
+                DatabaseZoneQueryPredicate(
+                    try predicate.toNSPredicate(
+                        context: .init(
+                            expressionConversionContext: .init(
+                                keyPathConversionStrategy: .custom(parent.runtime.convertEntityKeyPathToString),
+                                keyPathPrefix: nil
+                            )
+                        )
+                    )
+                )
+            }),
             sortDescriptors: queryRequest.sortDescriptors,
             cursor: nil,
             limit: queryRequest.fetchLimit

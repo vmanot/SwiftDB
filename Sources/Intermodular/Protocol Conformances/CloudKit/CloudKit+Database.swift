@@ -9,7 +9,7 @@ import Swallow
 
 extension _CloudKit {
     public final class Database {
-        public let runtime: DatabaseRuntime
+        public let runtime: _SwiftDB_Runtime
         public let schema: DatabaseSchema?
         public let configuration: Configuration
         public let state: State
@@ -18,7 +18,7 @@ extension _CloudKit {
         internal var ckDatabase: CKDatabase
 
         public init(
-            runtime: DatabaseRuntime,
+            runtime: _SwiftDB_Runtime,
             schema: DatabaseSchema?,
             configuration: Configuration,
             state: State
@@ -34,7 +34,7 @@ extension _CloudKit {
         }
 
         public init(container: CKContainer, scope: CKDatabase.Scope) throws {
-            self.runtime = _DefaultDatabaseRuntime()
+            self.runtime = _Default_SwiftDB_Runtime()
             self.schema = nil
             self.configuration = .init(
                 containerIdentifier: container.containerIdentifier!,

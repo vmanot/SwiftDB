@@ -12,6 +12,8 @@ import Swallow
 /// - Configuration
 /// - State
 public protocol Database: Named, Identifiable where ID: Codable {
+    typealias Runtime = _SwiftDB_Runtime
+    
     associatedtype Configuration: Codable
     associatedtype State: Codable & ExpressibleByNilLiteral
     associatedtype RecordContext: DatabaseRecordContext
@@ -22,7 +24,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     var capabilities: [DatabaseCapability] { get }
     
     init(
-        runtime: DatabaseRuntime,
+        runtime: _SwiftDB_Runtime,
         schema: DatabaseSchema?,
         configuration: Configuration,
         state: State
@@ -47,7 +49,7 @@ extension Database {
         state: State
     ) throws {
         try self.init(
-            runtime: _DefaultDatabaseRuntime(),
+            runtime: _Default_SwiftDB_Runtime(),
             schema: schema,
             configuration: configuration,
             state: state

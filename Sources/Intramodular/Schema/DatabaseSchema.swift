@@ -39,17 +39,36 @@ public struct DatabaseSchema: Codable, Hashable {
 }
 
 extension DatabaseSchema {
-    @inlinable
     public init(_ schema: Schema) throws {
         self.init(
             entities: Dictionary(
                 try schema
                     .body
-                    .map({ try Entity($0) })
+                    .map({ try Entity(from: $0) })
                     .zip(schema.body.lazy.map({ Metatype($0) }))
                     .lazy
                     .map({ (key: $0.0, value: $0.1) })
             )
+        )
+    }
+}
+
+// MARK: - Helpers -
+
+extension DatabaseSchema.Entity {
+    fileprivate init(from type: _opaque_Entity.Type) throws {
+        let instance = try type.init(
+            _underlyingDatabaseRecord: nil
+        )
+        
+        self.init(
+            parent: try type._opaque_ParentEntity.map { parentType in
+                try DatabaseSchema.Entity(from: parentType)
+            },
+            name: type.name,
+            className: type.underlyingDatabaseRecordClass.name,
+            subentities: .unknown,
+            properties: try instance._runtime_propertyAccessors.map({ try $0.schema() })
         )
     }
 }

@@ -11,10 +11,12 @@ import SwiftUI
 /// A property accessor for entity attributes.
 @propertyWrapper
 public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPropertyAccessor, ObservableObject, PropertyWrapper {
+
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
-    
+
+    var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata()
     var name: String?
     var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
     var typeDescriptionHint: DatabaseSchema.Entity.AttributeType?
@@ -31,11 +33,11 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
     
     public var wrappedValue: Value {
         get {
+            _runtimeMetadata.wrappedValueAccessToken = UUID()
+            
             do {
                 return try decodeImpl(self)
-            } catch {
-                assertionFailure(String(describing: error))
-                
+            } catch {                
                 if let initialValue = initialValue {
                     return initialValue
                 } else if let type = Value.self as? Initiable.Type {

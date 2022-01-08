@@ -6,8 +6,15 @@ import Foundation
 import Runtime
 import Swallow
 
+struct _opaque_EntityPropertyAccessorRuntimeMetadata {
+    var wrappedValueAccessToken: AnyHashable?
+    var wrappedValue_didSet_token: AnyHashable?
+}
+
 /// A prototype for `NSPropertyDescription`.
 protocol _opaque_EntityPropertyAccessor: AnyObject, _opaque_ObservableObject, _opaque_PropertyWrapper {
+    var _runtimeMetadata: _opaque_EntityPropertyAccessorRuntimeMetadata { get set }
+
     var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration { get set }
     var underlyingRecord: _opaque_DatabaseRecord? { get set }
     

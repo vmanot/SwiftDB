@@ -6,10 +6,23 @@ import API
 import FoundationX
 import Swallow
 
-public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordContext>: Hashable {
+public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordContext>: Hashable, NSPredicateConvertible {
     case related(to: Context.RecordID, by: AnyCodingKey)
     
     case _nsPredicate(NSPredicate)
+    
+    public init(_ predicate: NSPredicate) {
+        self = ._nsPredicate(predicate)
+    }
+    
+    public func toNSPredicate(context: NSPredicateConversionContext) throws -> NSPredicate {
+        switch self {
+            case .related:
+                throw Never.Reason.unsupported
+            case ._nsPredicate(let predicate):
+                return predicate
+        }
+    }
 }
 
 public struct DatabaseZoneQueryRequest<Context: DatabaseRecordContext>: Hashable {

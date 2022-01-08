@@ -36,10 +36,18 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
     public var isLoaded: Bool {
         !database.nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
     }
-    
+
+    private var _mainContext: AnyDatabaseRecordContext?
+
     public var mainContext: AnyDatabaseRecordContext {
         get throws {
-            try AnyDatabaseRecordContext(database.viewContext.unwrap())
+            if let _mainContext = _mainContext {
+                return _mainContext
+            } else {
+                _mainContext = try AnyDatabaseRecordContext(database.viewContext.unwrap())
+
+                return try _mainContext.unwrap()
+            }
         }
     }
     

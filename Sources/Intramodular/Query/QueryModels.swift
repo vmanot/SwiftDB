@@ -95,12 +95,12 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
     
     public init(
         sortDescriptors: [AnySortDescriptor] = [],
-        predicate: NSPredicate? = nil,
+        predicate: Predicate<Model>? = nil,
         animation: Animation? = nil
     ) {
         self.init(
             queryRequest: .init(
-                predicate: predicate,
+                predicate: predicate.map(AnyPredicate.init),
                 sortDescriptors: sortDescriptors,
                 fetchLimit: nil
             ),

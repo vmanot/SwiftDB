@@ -37,7 +37,7 @@ public final class AnyDatabase: Database {
     }
 
     public init(
-        runtime: DatabaseRuntime,
+        runtime: _SwiftDB_Runtime,
         schema: DatabaseSchema?,
         configuration: Configuration,
         state: State

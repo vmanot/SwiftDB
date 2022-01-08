@@ -10,11 +10,11 @@ import Swallow
 extension _CoreData {
     public final class Database: CancellablesHolder, ObservableObject {
         private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
-
+        
         enum ConfigurationError: Error {
             case customLocationPathExtensionMissing
         }
-
+        
         public struct Configuration: Codable {
             public let name: String
             public let location: URL?
@@ -40,7 +40,7 @@ extension _CoreData {
             }
         }
         
-        let runtime: DatabaseRuntime
+        let runtime: _SwiftDB_Runtime
         let schema: DatabaseSchema
         
         public let configuration: Configuration
@@ -50,7 +50,7 @@ extension _CoreData {
         public let nsPersistentContainer: NSPersistentContainer
         
         public init(
-            runtime: DatabaseRuntime,
+            runtime: _SwiftDB_Runtime,
             schema: DatabaseSchema?,
             configuration: Configuration,
             state: State
@@ -59,19 +59,19 @@ extension _CoreData {
             self.schema = try schema.unwrap()
             self.configuration = configuration
             self.state = state
-
+            
             if let location = configuration.location {
                 guard location.pathExtension == "sqlite" else {
                     throw ConfigurationError.customLocationPathExtensionMissing
                 }
-
+                
                 let locationContainer = location.deletingLastPathComponent()
-
+                
                 if !FileManager.default.directoryExists(at: locationContainer) {
                     try FileManager.default.createDirectory(at: locationContainer, withIntermediateDirectories: true, attributes: nil)
                 }
             }
-
+            
             if let schema = schema {
                 self.nsPersistentContainer = .init(name: configuration.name, managedObjectModel: try .init(schema))
             } else {
@@ -80,7 +80,7 @@ extension _CoreData {
             
             try loadPersistentStores()
         }
-                
+        
         private func setupPersistentStoreDescription() throws {
             if let sqliteStoreURL = sqliteStoreURL {
                 nsPersistentContainer.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
@@ -144,12 +144,12 @@ extension _CoreData.Database: Database {
             return .just(.success(nsPersistentContainer.persistentStoreCoordinator.persistentStores.map({ Zone(persistentStore: $0) })))
         }
     }
-
+    
     @discardableResult
     public func fetchAllAvailableZones() async throws -> [Zone] {
         try await fetchAllAvailableZones().successPublisher.output()
     }
-
+    
     public func fetchZone(named name: String) -> AnyTask<Zone, Error> {
         fetchAllAvailableZones()
             .successPublisher
@@ -176,7 +176,7 @@ extension _CoreData.Database: Database {
                     try FileManager.default.removeItem(at: url)
                 }
             }
-                        
+            
             return .just(.success(()))
         } catch {
             return .failure(error)

@@ -3,6 +3,7 @@
 //
 
 import Swallow
+import Merge
 
 public final class AnyDatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = AnyDatabaseZone
@@ -12,6 +13,10 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext {
     public typealias RecordConfiguration = DatabaseRecordConfiguration<AnyDatabaseRecordContext>
     
     private let baseBox: _AnyDatabaseRecordContextBoxBase
+
+    public var objectWillChange: AnyObjectWillChangePublisher {
+        baseBox.objectWillChange
+    }
     
     public init<RecordContext: DatabaseRecordContext>(_ recordContext: RecordContext) {
         self.baseBox = _AnyDatabaseRecordContextBox(recordContext)
@@ -62,6 +67,10 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext {
 // MARK: - Underlying Implementation -
 
 class _AnyDatabaseRecordContextBoxBase {
+    var objectWillChange: AnyObjectWillChangePublisher {
+        fatalError()
+    }
+    
     func createRecord(
         withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordContext>,
         context: AnyDatabaseRecordContext.RecordCreateContext
@@ -110,6 +119,10 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
     
     init(_ base: Base) {
         self.base = base
+    }
+    
+    override var objectWillChange: AnyObjectWillChangePublisher {
+        .init(from: base)
     }
     
     override func createRecord(

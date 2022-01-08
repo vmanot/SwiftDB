@@ -9,7 +9,7 @@ extension Entity where Self: Codable {
         let container = try decoder.container(keyedBy: AnyStringKey.self)
         let metadata = try container.decode(_EntityRuntimeMetadata.self, forKey: _EntityRuntimeMetadata.codingKey)
         
-        guard let runtime = decoder.userInfo._SwiftDB_databaseRuntime else {
+        guard let runtime = decoder.userInfo._SwiftDB_runtime else {
             throw _EntityDecodingError.databaseRuntimeMissing
         }
         

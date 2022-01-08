@@ -14,12 +14,12 @@ public struct QueryRequest<Model> {
         public let results: [Model]
     }
     
-    public var predicate: NSPredicate?
+    public var predicate: AnyPredicate?
     public var sortDescriptors: [AnySortDescriptor]?
     public var fetchLimit: FetchLimit?
     
     public init(
-        predicate: NSPredicate?,
+        predicate: AnyPredicate?,
         sortDescriptors: [AnySortDescriptor]?,
         fetchLimit: FetchLimit?
     ) {

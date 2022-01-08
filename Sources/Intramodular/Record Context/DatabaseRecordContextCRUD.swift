@@ -5,6 +5,7 @@
 import Swallow
 
 extension DatabaseRecordContext {
+    /// Create an entity instance.
     @discardableResult
     public func create<Instance: Entity>(_ type: Instance.Type) throws -> Instance {
         let record = try self.createRecord(
@@ -19,10 +20,11 @@ extension DatabaseRecordContext {
         return try instantiate(type, from: record)
     }
 
+    /// Fetch the first available entity instance.
     public func first<Instance: Entity>(
         _ type: Instance.Type
     ) async throws -> Instance? {
-        try await execute(
+        let result = try await execute(
             DatabaseZoneQueryRequest(
                 filters: .init(
                     zones: nil,
@@ -35,10 +37,13 @@ extension DatabaseRecordContext {
                 limit: .cursor(.offset(1))
             )
         )
-        .successPublisher
-        .tryMap({ try $0.records.unwrap().first.unwrap() })
-        .tryMap({ try self.instantiate(type, from: $0) })
-        .output()
+            .successValue
+
+        guard let record = result.records?.first else {
+            return nil
+        }
+
+        return try instantiate(type, from: record)
     }
 
     public func delete<Instance: Entity>(_ instance: Instance) async throws {

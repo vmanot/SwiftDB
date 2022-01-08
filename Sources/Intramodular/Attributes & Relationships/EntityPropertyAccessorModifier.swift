@@ -28,6 +28,14 @@ extension EntityPropertyAccessorModifier {
 }
 
 extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _opaque_EntityPropertyAccessor {
+    var _runtimeMetadata: _opaque_EntityPropertyAccessorRuntimeMetadata {
+        get {
+            base._runtimeMetadata
+        } set {
+            base._runtimeMetadata = newValue
+        }
+    }
+
     var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration {
         get {
             base.propertyConfiguration

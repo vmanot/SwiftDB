@@ -7,7 +7,7 @@ import Runtime
 import Swallow
 
 protocol _opaque_EntityRelationshipAccessor: _opaque_EntityPropertyAccessor {
-    var wrappedValue_didSet_hash: AnyHashable? { get set }
+
 }
 
 /// A property accessor for entity relationships.
@@ -33,8 +33,8 @@ public final class EntityRelationship<
     
     let inverse: InverseKeyPath
     let deleteRule: NSDeleteRule?
-    
-    var wrappedValue_didSet_hash: AnyHashable?
+
+    var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata()
     
     var isOptional: Bool {
         Value.self is _opaque_Optional.Type
@@ -49,7 +49,7 @@ public final class EntityRelationship<
             }
         } set {
             defer {
-                wrappedValue_didSet_hash = UUID()
+                _runtimeMetadata.wrappedValue_didSet_token = UUID()
             }
             
             if let underlyingRecord = underlyingRecord {
@@ -92,7 +92,7 @@ extension EntityRelationship {
                 var subject = ValueEntity.init()
                 
                 // "Touch" the inverse key path (by reassigning its value to itself).
-                // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
+                // This sets the `wrappedValue_didSet_token` for the _one_ relationship accessor representing the inverse.
                 subject[keyPath: inverse] = subject[keyPath: inverse]
                 
                 emptyInverseEntity = AnyNominalOrTupleMirror(subject)!
@@ -102,7 +102,7 @@ extension EntityRelationship {
                 var subject = destinationEntityType.init() as! ValueEntity
                 
                 // "Touch" the inverse key path (by reassigning its value to itself).
-                // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
+                // This sets the `wrappedValue_didSet_token` for the _one_ relationship accessor representing the inverse.
                 subject[keyPath: inverse] = subject[keyPath: inverse]
                 
                 emptyInverseEntity = AnyNominalOrTupleMirror(subject)!
@@ -112,7 +112,7 @@ extension EntityRelationship {
                 var subject = Value.RelatableEntityType.init() as! ValueEntity
                 
                 // "Touch" the inverse key path (by reassigning its value to itself).
-                // This sets the `wrappedValue_didSet_hash` for the _one_ relationship accessor representing the inverse.
+                // This sets the `wrappedValue_didSet_token` for the _one_ relationship accessor representing the inverse.
                 subject[keyPath: inverse] = subject[keyPath: inverse]
                 
                 emptyInverseEntity = AnyNominalOrTupleMirror(subject)!
@@ -123,7 +123,7 @@ extension EntityRelationship {
         for (key, value) in emptyInverseEntity.children {
             if let value = value as? _opaque_EntityRelationshipAccessor {
                 // Find the inverse relationship accessor that was "touched".
-                if value.wrappedValue_didSet_hash != nil {
+                if value._runtimeMetadata.wrappedValue_didSet_token != nil {
                     if value.name == nil {
                         value.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                     }
