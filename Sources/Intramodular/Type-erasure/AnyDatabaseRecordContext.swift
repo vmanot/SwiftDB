@@ -6,6 +6,10 @@ import Swallow
 import Merge
 
 public final class AnyDatabaseRecordContext: DatabaseRecordContext {
+    public static var invalid: AnyDatabaseRecordContext {
+        .init(baseBox: _InvalidDatabaseRecordContextBox())
+    }
+    
     public typealias Zone = AnyDatabaseZone
     public typealias Record = AnyDatabaseRecord
     public typealias RecordType = AnyDatabaseRecord.RecordType
@@ -18,8 +22,12 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext {
         baseBox.objectWillChange
     }
     
-    public init<RecordContext: DatabaseRecordContext>(_ recordContext: RecordContext) {
-        self.baseBox = _AnyDatabaseRecordContextBox(recordContext)
+    private init(baseBox: _AnyDatabaseRecordContextBoxBase) {
+        self.baseBox = baseBox
+    }
+    
+    public convenience init<RecordContext: DatabaseRecordContext>(_ recordContext: RecordContext) {
+        self.init(baseBox: _AnyDatabaseRecordContextBox(recordContext))
     }
     
     public func createRecord(
@@ -37,6 +45,12 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext {
         from record: AnyDatabaseRecord
     ) throws -> Model {
         try baseBox.instantiate(type, from: record)
+    }
+    
+    public func getUnderlyingRecord<Instance: Entity>(
+        from instance: Instance
+    ) throws -> AnyDatabaseRecord {
+        try baseBox.getUnderlyingRecord(from: instance)
     }
     
     public func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
@@ -84,7 +98,13 @@ class _AnyDatabaseRecordContextBoxBase {
     ) throws -> Model {
        fatalError()
     }
-
+    
+    func getUnderlyingRecord<Instance: Entity>(
+        from instance: Instance
+    ) throws -> AnyDatabaseRecord {
+        fatalError()
+    }
+    
     func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
         fatalError()
     }
@@ -148,6 +168,14 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
         let _record = try cast(record.base, to: Base.Record.self)
 
         return try base.instantiate(type, from: _record)
+    }
+    
+    override func getUnderlyingRecord<Instance: Entity>(
+        from instance: Instance
+    ) throws -> AnyDatabaseRecord {
+        let _record = try base.getUnderlyingRecord(from: instance)
+        
+        return .init(base: _record)
     }
     
     override func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
@@ -245,6 +273,60 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
             case ._nsPredicate(let predicate):
                 return ._nsPredicate(predicate)
         }
+    }
+}
+
+class _InvalidDatabaseRecordContextBox: _AnyDatabaseRecordContextBoxBase {
+    override var objectWillChange: AnyObjectWillChangePublisher {
+        .empty
+    }
+    
+    override func createRecord(
+        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordContext>,
+        context: AnyDatabaseRecordContext.RecordCreateContext
+    ) throws -> AnyDatabaseRecord {
+        throw Never.Reason.unavailable
+    }
+    
+    override func instantiate<Model: Entity>(
+        _ type: Model.Type,
+        from record: AnyDatabaseRecord
+    ) throws -> Model {
+        throw Never.Reason.unavailable
+    }
+    
+    override func getUnderlyingRecord<Instance: Entity>(
+        from instance: Instance
+    ) throws -> AnyDatabaseRecord {
+        throw Never.Reason.unavailable
+    }
+
+    override func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
+        throw Never.Reason.unavailable
+    }
+    
+    override func zone(for record: AnyDatabaseRecord) throws -> AnyDatabaseZone? {
+        throw Never.Reason.unavailable
+    }
+    
+    override func zoneQueryRequest<Model>(
+        from queryRequest: QueryRequest<Model>
+    ) throws -> AnyDatabaseRecordContext.ZoneQueryRequest {
+        throw Never.Reason.unavailable
+    }
+    
+    override func execute(
+        _ request: AnyDatabaseRecordContext.ZoneQueryRequest
+    ) -> AnyTask<AnyDatabaseRecordContext.ZoneQueryRequest.Result, Error> {
+        .failure(Never.Reason.unavailable)
+    }
+    
+    override func delete(_ record: AnyDatabaseRecord) throws {
+        throw Never.Reason.unavailable
+    }
+    
+    override func save() -> AnyTask<Void, AnyDatabaseRecordContext.SaveError> {
+        .failure(.init(mergeConflicts: nil))
     }
 }
 

@@ -2,18 +2,20 @@
 // Copyright (c) Vatsal Manot
 //
 
-import SwiftDB
+import XCTest
 
-extension _CoreDataTestSuite {
-    struct TestSchema: Schema {
-        var body: Body {
-            TestEntity.self
-        }
+@testable import SwiftDB
+
+struct TestORMSchema: Schema {
+    var body: Body {
+        TestEntity.self
     }
-    
+}
+
+extension TestORMSchema {
     class TestEntity: Entity, Codable {
         @Attribute var foo: Int = 0
-                
+        
         required init() {
             
         }

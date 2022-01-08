@@ -34,7 +34,7 @@ public final class EntityRelationship<
     let inverse: InverseKeyPath
     let deleteRule: NSDeleteRule?
 
-    var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata()
+    var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     
     var isOptional: Bool {
         Value.self is _opaque_Optional.Type

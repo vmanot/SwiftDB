@@ -7,6 +7,8 @@ import Runtime
 import Swallow
 
 struct _opaque_EntityPropertyAccessorRuntimeMetadata {
+    let valueType: Any.Type
+    
     var wrappedValueAccessToken: AnyHashable?
     var wrappedValue_didSet_token: AnyHashable?
 }

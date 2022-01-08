@@ -15,7 +15,6 @@ protocol _opaque_DatabaseContainer: _opaque_ObservableObject {
     func save() async throws
     
     func fetchAllInstances() async throws -> [Any]
-    func deleteAllInstances() async throws
     func destroyAndRebuild() async throws
 }
 
@@ -36,16 +35,16 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
     public var isLoaded: Bool {
         !database.nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
     }
-
+    
     private var _mainContext: AnyDatabaseRecordContext?
-
+    
     public var mainContext: AnyDatabaseRecordContext {
         get throws {
             if let _mainContext = _mainContext {
                 return _mainContext
             } else {
                 _mainContext = try AnyDatabaseRecordContext(database.viewContext.unwrap())
-
+                
                 return try _mainContext.unwrap()
             }
         }
@@ -98,7 +97,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
             .recordContext(forZones: nil)
             .save()
     }
-
+    
     public func fetchAllInstances() throws -> [Any] {
         var result: [_opaque_Entity] = []
         
@@ -115,20 +114,6 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseCo
         }
         
         return result
-    }
-    
-    public func deleteAllInstances() async throws {
-        let allInstances = try fetchAllInstances()
-        
-        for instance in allInstances {
-            guard let instance = instance as? _opaque_Entity else {
-                assertionFailure()
-                
-                continue
-            }
-
-            try await mainContext._opaque_delete(instance)
-        }
     }
     
     public func destroyAndRebuild() async throws {
@@ -158,11 +143,7 @@ extension View {
         _ container: DatabaseContainer<Schema>
     ) -> some View {
         self
-            .environment(
-                \.managedObjectContext,
-                 container.database.nsPersistentContainer.viewContext
-            )
-            .environment(\.databaseRecordContext, try? container.mainContext)
+            .databaseRecordContext(try? container.mainContext)
             .environmentObject(container)
     }
 }

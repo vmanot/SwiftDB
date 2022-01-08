@@ -53,6 +53,12 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         throw Never.Reason.unimplemented // FIXME!!!
     }
     
+    public func getUnderlyingRecord<Instance: Entity>(
+        from instance: Instance
+    ) throws -> Record {
+        try cast(instance._underlyingDatabaseRecord.unwrap(), to: Record.self)
+    }
+    
     public func recordID(from record: Record) throws -> Record.ID {
         .init(rawValue: record.base.recordID.recordName)
     }

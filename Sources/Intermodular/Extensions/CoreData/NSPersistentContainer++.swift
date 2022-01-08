@@ -8,7 +8,7 @@ import Runtime
 import Swallow
 
 extension NSPersistentContainer {
-    public func loadPersistentStores() -> Future<Void, Error> {
+    func loadPersistentStores() -> Future<Void, Error> {
         .init { attemptToFulfill in
             do {
                 try catchExceptionAsError {
@@ -27,7 +27,7 @@ extension NSPersistentContainer {
     }
     
     @discardableResult
-    public func performBackgroundTaskAndSave(_ closure: @escaping (NSManagedObjectContext) -> Void) -> Future<Void, Error> {
+    func performBackgroundTaskAndSave(_ closure: @escaping (NSManagedObjectContext) -> Void) -> Future<Void, Error> {
         .init { attemptToFulfill in
             self.performBackgroundTask { context in
                 closure(context)

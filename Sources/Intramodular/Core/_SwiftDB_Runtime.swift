@@ -9,7 +9,7 @@ import Swallow
 public protocol _SwiftDB_Runtime {
     func metatype(forEntityNamed: String) -> Metatype<_opaque_Entity.Type>?
     
-    func convertEntityKeyPathToString(_ keyPath: AnyKeyPath) throws -> String 
+    func convertEntityKeyPathToString(_ keyPath: AnyKeyPath) throws -> String
 }
 
 // MARK: - Conformances -
@@ -45,6 +45,11 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime {
         }
         
         public func _getFieldNameForKeyPath(_ keyPath: AnyKeyPath) throws -> String {
+            enum KeyPathToFieldNameConversionError: Error {
+                case valueTypeMismatch(Any.Type, Any.Type)
+            }
+            
+            let valueType = try type(of: cast(keyPath, to: _opaque_KeyPathType.self))._opaque_ValueType
             let prototype = try entityType.init(_underlyingDatabaseRecord: nil)
             
             func _accessKeyPath<T>(_ instance: T) throws  {
@@ -58,6 +63,10 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime {
             let field = try prototype._runtime_propertyAccessors
                 .first(where: { $0._runtimeMetadata.wrappedValueAccessToken != nil })
                 .unwrap()
+            
+            guard field._runtimeMetadata.valueType == valueType else {
+                throw KeyPathToFieldNameConversionError.valueTypeMismatch(field._runtimeMetadata.valueType, valueType)
+            }
             
             return try field.name.unwrap()
         }

@@ -6,7 +6,7 @@ import CoreData
 import Swift
 
 extension NSPersistentStore {
-    public func destroy() throws {
+    func destroy() throws {
         let persistentStoreCoordinator = try persistentStoreCoordinator.unwrap()
         
         let url = try self.url.unwrap()

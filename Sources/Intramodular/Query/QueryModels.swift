@@ -67,7 +67,7 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
     }
     
     public mutating func update() {
-        if let databaseRecordContext = databaseRecordContext, coordinator._databaseRecordContext == nil {
+        if databaseRecordContext !== AnyDatabaseRecordContext.invalid, coordinator._databaseRecordContext == nil {
             coordinator.queryRequest = queryRequest
             coordinator._databaseRecordContext = databaseRecordContext
             

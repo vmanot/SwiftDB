@@ -10,7 +10,7 @@ public struct AnyDatabaseZone: DatabaseZone {
     
     public let name: String
     public let id: Identifier
-
+    
     init<T: DatabaseZone>(base zone: T) {
         self.base = zone
         

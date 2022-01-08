@@ -89,6 +89,12 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         }
     }
     
+    public func getUnderlyingRecord<Instance: Entity>(
+        from instance: Instance
+    ) throws -> Record {
+        try cast(instance._underlyingDatabaseRecord.unwrap(), to: Record.self)
+    }
+
     public func recordID(from record: Record) throws -> RecordID {
         .init(managedObjectID: record.base.objectID)
     }

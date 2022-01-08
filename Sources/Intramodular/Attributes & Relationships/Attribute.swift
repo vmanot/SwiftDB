@@ -16,7 +16,7 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
     
     private var objectWillChangeConduit: AnyCancellable? = nil
 
-    var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata()
+    var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     var name: String?
     var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
     var typeDescriptionHint: DatabaseSchema.Entity.AttributeType?

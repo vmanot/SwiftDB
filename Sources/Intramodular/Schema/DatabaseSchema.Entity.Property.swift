@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
 import FoundationX
 import Swift
 

@@ -33,16 +33,25 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
         withConfiguration _: DatabaseRecordConfiguration<Self>,
         context: RecordCreateContext
     ) throws -> Record
-    /// Instantiate a SwiftDB model from a record.
-    func instantiate<Model: Entity>(_ type: Model.Type, from record: Record) throws -> Model
+    
+    /// Instantiate a SwiftDB entity instance from a record.
+    func instantiate<Instance: Entity>(_ type: Instance.Type, from record: Record) throws -> Instance
+        
+    /// Get the underlying database record from an entity instance.
+    func getUnderlyingRecord<Instance: Entity>(from instance: Instance) throws -> Record
+    
     /// Get the record ID associated with this record.
     func recordID(from record: Record) throws -> RecordID
+    
     /// Get the zone associatdd with this record.
     func zone(for: Record) throws -> Zone?
+    
     /// Mark a record for deletion in this record context.
     func delete(_: Record) throws
+    
     /// Execute a zone query request within the zones captured by this record context.
     func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error>
+    
     /// Save the changes made in this record context.
     func save() -> AnyTask<Void, SaveError>
 
@@ -53,6 +62,10 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
 // MARK: - Implementation -
 
 extension DatabaseRecordContext {
+    public func execute(_ request: ZoneQueryRequest) async throws -> ZoneQueryRequest.Result {
+        try await execute(request).successValue
+    }
+    
     public func execute<Model: Entity>(
         _ request: QueryRequest<Model>
     ) -> AnyTask<QueryRequest<Model>.Output, Error> {
@@ -77,18 +90,24 @@ extension DatabaseRecordContext {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - SwiftUI -
 
 extension EnvironmentValues {
     fileprivate struct DatabaseRecordContextKey: EnvironmentKey {
-        static let defaultValue: AnyDatabaseRecordContext? = nil
+        static let defaultValue: AnyDatabaseRecordContext = .invalid
     }
     
-    var databaseRecordContext: AnyDatabaseRecordContext? {
+    public var databaseRecordContext: AnyDatabaseRecordContext {
         get {
             self[DatabaseRecordContextKey.self]
         } set {
             self[DatabaseRecordContextKey.self] = newValue
         }
+    }
+}
+
+extension View {
+    public func databaseRecordContext(_ context: AnyDatabaseRecordContext?) -> some View {
+        environment(\.databaseRecordContext, context ?? .invalid)
     }
 }

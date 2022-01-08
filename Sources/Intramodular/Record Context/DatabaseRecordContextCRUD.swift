@@ -37,7 +37,6 @@ extension DatabaseRecordContext {
                 limit: .cursor(.offset(1))
             )
         )
-            .successValue
 
         guard let record = result.records?.first else {
             return nil
@@ -47,15 +46,6 @@ extension DatabaseRecordContext {
     }
 
     public func delete<Instance: Entity>(_ instance: Instance) async throws {
-        try await _opaque_delete(instance)
-    }
-
-    func _opaque_delete(_ instance: _opaque_Entity) async throws {
-        let _record = try instance._underlyingDatabaseRecord.unwrap()
-        let record = try cast(_record, to: Record.self)
-
-        try delete(record)
-
-        _ = try await save()
+        try delete(getUnderlyingRecord(from: instance))
     }
 }
