@@ -63,7 +63,7 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
 
 extension DatabaseRecordContext {
     public func execute(_ request: ZoneQueryRequest) async throws -> ZoneQueryRequest.Result {
-        try await execute(request).successValue
+        try await execute(request).value
     }
     
     public func execute<Model: Entity>(
