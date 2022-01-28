@@ -19,7 +19,7 @@ protocol _opaque_DatabaseContainer: _opaque_ObservableObject {
 }
 
 /// A container that encapsulates a database stack in your app.
-public final class DatabaseContainer<Schema: SwiftDB.Schema>: _opaque_DatabaseContainer, ObservableObject
+public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendable, _opaque_DatabaseContainer, ObservableObject
 {
     public let cancellables = Cancellables()
     
