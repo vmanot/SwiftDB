@@ -83,7 +83,9 @@ extension _CoreData {
         
         private func setupPersistentStoreDescription() throws {
             if let sqliteStoreURL = sqliteStoreURL {
-                nsPersistentContainer.persistentStoreDescriptions = [.init(url: sqliteStoreURL)]
+                let storeDescription = NSPersistentStoreDescription(url: sqliteStoreURL)
+                
+                nsPersistentContainer.persistentStoreDescriptions = [storeDescription]
             }
             
             let description = try nsPersistentContainer.persistentStoreDescriptions.first.unwrap()

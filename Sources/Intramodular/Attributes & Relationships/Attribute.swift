@@ -8,10 +8,14 @@ import Runtime
 import Swallow
 import SwiftUI
 
+public enum AttributeTrait {
+    case guranteedUnique
+    case typeDiscriminator
+}
+
 /// A property accessor for entity attributes.
 @propertyWrapper
 public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPropertyAccessor, ObservableObject, PropertyWrapper {
-
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
@@ -167,7 +171,8 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
     // MARK: - Initializers -
 
     public convenience init(
-        wrappedValue: Value
+        wrappedValue: Value,
+        _ traits: [AttributeTrait] = []
     ) {
         self.init(
             initialValue: wrappedValue,

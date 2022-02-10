@@ -17,11 +17,3 @@ extension Model {
         return nil
     }
 }
-
-// MARK: - Auxiliary Implementation -
-
-extension Never: Model {
-    public static var version: Version? {
-        nil
-    }
-}

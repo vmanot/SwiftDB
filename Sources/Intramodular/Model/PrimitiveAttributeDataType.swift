@@ -4,7 +4,7 @@
 
 import Swift
 
-public protocol PrimitiveAttributeDataType {
+public protocol PrimitiveAttributeDataType: Codable, Hashable {
     
 }
 
