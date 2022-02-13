@@ -28,17 +28,7 @@ public struct DatabaseSchema: Codable, Hashable {
             entityToTypeMap[entity] = .init(entityType)
         }
     }
-    
-    func entity<Model>(forModelType modelType: Model.Type) -> Entity? {
-        guard let type = modelType as? _opaque_Entity.Type else {
-            return nil
-        }
-        
-        return entityToTypeMap[Metatype(type)]
-    }
-}
 
-extension DatabaseSchema {
     public init(_ schema: Schema) throws {
         self.init(
             entities: Dictionary(
@@ -50,6 +40,14 @@ extension DatabaseSchema {
                     .map({ (key: $0.0, value: $0.1) })
             )
         )
+    }
+
+    func entity<Model>(forModelType modelType: Model.Type) -> Entity? {
+        guard let type = modelType as? _opaque_Entity.Type else {
+            return nil
+        }
+
+        return entityToTypeMap[Metatype(type)]
     }
 }
 
