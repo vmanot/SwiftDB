@@ -11,7 +11,7 @@ import Merge
 /// A property wrapper type that makes fetch requests and retrieves the results from a Core Data store.
 @propertyWrapper
 public struct QueryModels<Model: Entity>: DynamicProperty {
-    fileprivate class RequestOutputCoordinator: ObservableObject {
+    fileprivate class RequestOutputCoordinator: ObservableObject, @unchecked Sendable {
         private lazy var cancellables = Cancellables()
         private lazy var logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "QueryModels.RequestOutputCoordinator<\(String(describing: Model.self))>")
         
@@ -41,12 +41,16 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
             
             queryTask.start()
             
-            queryTask
-                .successPublisher
-                .receiveOnMainQueue()
-                .sinkResult(in: cancellables) { result in
-                    self.output = try? result.get()
+            Task {
+               let result = try await queryTask
+                    .successPublisher
+                    .receiveOnMainQueue()
+                    .output()
+                
+                await MainActor.run {
+                    self.output = result
                 }
+            }
         }
     }
     

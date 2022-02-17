@@ -29,13 +29,22 @@ final class _CoreDataTestSuite: XCTestCase {
         
         try await database.mainContext.save()
     }
-    
+
     func testInstanceRetrieval() async throws {
         let retrievedFoo = try await database.mainContext.first(TestORMSchema.TestEntity.self).unwrap()
         
         XCTAssert(retrievedFoo.foo == 100)
         
         try await database.mainContext.delete(retrievedFoo)
+        try await database.mainContext.save()
+    }
+
+    func testInstanceDeletion() async throws {
+        let foo = try database.mainContext.create(TestORMSchema.TestEntity.self)
+
+        foo.foo += 100
+
+        try await database.mainContext.delete(foo)
         try await database.mainContext.save()
     }
 }

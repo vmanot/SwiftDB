@@ -8,7 +8,7 @@ import Swallow
 
 /// A description of search criteria used to retrieve data from a persistent store.
 public struct QueryRequest<Model> {
-    public struct Output {
+    public struct Output: Sendable {
         public typealias Results = [Model]
         
         public let results: [Model]
