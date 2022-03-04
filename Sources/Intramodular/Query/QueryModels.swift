@@ -41,15 +41,8 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
             
             queryTask.start()
             
-            Task {
-               let result = try await queryTask
-                    .successPublisher
-                    .receiveOnMainQueue()
-                    .output()
-                
-                await MainActor.run {
-                    self.output = result
-                }
+            Task { @MainActor in
+                self.output = try await queryTask.value
             }
         }
     }
