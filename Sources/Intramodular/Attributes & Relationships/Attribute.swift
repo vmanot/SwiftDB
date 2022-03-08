@@ -161,7 +161,7 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else if let type = _runtime_wrappedValueType as? NSCoding.Type {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
-        } else if let initialValue = initialValue, let type = (try? AnyCodableOrNSCodingValue(from: initialValue).cocoaObjectValue()).map({ type(of: $0) }) {
+        } else if let initialValue = initialValue, let type = (try? AnyCodableOrNSCodingValue(from: initialValue)?.cocoaObjectValue()).map({ type(of: $0) }) {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else {
             return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")

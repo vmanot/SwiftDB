@@ -18,6 +18,7 @@ public struct QueryRequest<Model> {
     public var sortDescriptors: [AnySortDescriptor]?
     public var fetchLimit: FetchLimit?
     
+    @_disfavoredOverload
     public init(
         predicate: AnyPredicate?,
         sortDescriptors: [AnySortDescriptor]?,
@@ -26,5 +27,17 @@ public struct QueryRequest<Model> {
         self.predicate = predicate
         self.sortDescriptors = sortDescriptors
         self.fetchLimit = fetchLimit
+    }
+    
+    public init(
+        predicate: Predicate<Model>?,
+        sortDescriptors: [AnySortDescriptor]?,
+        fetchLimit: FetchLimit?
+    ) {
+        self.init(
+            predicate: predicate.map(AnyPredicate.init),
+            sortDescriptors: sortDescriptors,
+            fetchLimit: nil
+        )
     }
 }

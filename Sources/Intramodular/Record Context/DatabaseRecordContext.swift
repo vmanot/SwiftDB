@@ -85,8 +85,14 @@ extension DatabaseRecordContext {
         }
     }
     
+    public func execute<Model: Entity>(
+        _ request: QueryRequest<Model>
+    ) async throws -> QueryRequest<Model>.Output {
+        try await execute(request).value
+    }
+    
     public func save() async throws {
-        try await save().successPublisher.output()
+        try await save().value
     }
 }
 

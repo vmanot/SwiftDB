@@ -5,7 +5,7 @@
 import Swallow
 import Merge
 
-public final class AnyDatabaseRecordContext: DatabaseRecordContext {
+public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
     public static var invalid: AnyDatabaseRecordContext {
         .init(baseBox: _InvalidDatabaseRecordContextBox())
     }
@@ -80,7 +80,7 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext {
 
 // MARK: - Underlying Implementation -
 
-class _AnyDatabaseRecordContextBoxBase {
+class _AnyDatabaseRecordContextBoxBase: @unchecked Sendable {
     var objectWillChange: AnyObjectWillChangePublisher {
         fatalError()
     }
@@ -233,7 +233,10 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
         base.save()
             .successPublisher
             .mapError { error in
-                AnyDatabaseRecordContext.SaveError(mergeConflicts: error.mergeConflicts?.map({ DatabaseRecordMergeConflict(source: AnyDatabaseRecord(base: $0.source)) }))
+                AnyDatabaseRecordContext.SaveError(
+                    description: error.description, 
+                    mergeConflicts: error.mergeConflicts?.map({ DatabaseRecordMergeConflict(source: AnyDatabaseRecord(base: $0.source)) })
+                )
             }
             .convertToTask()
     }
@@ -326,7 +329,7 @@ class _InvalidDatabaseRecordContextBox: _AnyDatabaseRecordContextBoxBase {
     }
     
     override func save() -> AnyTask<Void, AnyDatabaseRecordContext.SaveError> {
-        .failure(.init(mergeConflicts: nil))
+        .failure(.init(description: "", mergeConflicts: nil))
     }
 }
 

@@ -151,6 +151,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                     
                     attemptToFulfill(.failure(
                         SaveError(
+                            description: error.description,
                             mergeConflicts: (error.userInfo["conflictList"] as? [NSMergeConflict]).map({ $0.map(DatabaseRecordMergeConflict.init) })
                         )
                     ))

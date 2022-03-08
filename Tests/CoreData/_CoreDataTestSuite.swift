@@ -28,6 +28,10 @@ final class _CoreDataTestSuite: XCTestCase {
         foo.foo += 100
         
         try await database.mainContext.save()
+        
+        let bar = try database.mainContext.create(TestORMSchema.TestEntityWithOptionalProperties.self)
+        
+        try await database.mainContext.save()
     }
 
     func testInstanceRetrieval() async throws {

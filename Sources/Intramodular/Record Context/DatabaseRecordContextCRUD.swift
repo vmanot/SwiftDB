@@ -2,7 +2,9 @@
 // Copyright (c) Vatsal Manot
 //
 
+import API
 import Swallow
+import FoundationX
 
 extension DatabaseRecordContext {
     /// Create an entity instance.
@@ -16,35 +18,39 @@ extension DatabaseRecordContext {
             ),
             context: .init()
         )
-
+        
         return try instantiate(type, from: record)
     }
-
+    
     /// Fetch the first available entity instance.
     public func first<Instance: Entity>(
         _ type: Instance.Type
     ) async throws -> Instance? {
-        let result = try await execute(
-            DatabaseZoneQueryRequest(
-                filters: .init(
-                    zones: nil,
-                    recordTypes: [RecordType(type.name).unwrap()],
-                    includesSubentities: true
-                ),
+        try await execute(
+            QueryRequest<Instance>(
                 predicate: nil,
                 sortDescriptors: nil,
-                cursor: nil,
-                limit: .cursor(.offset(1))
+                fetchLimit: FetchLimit.max(1)
             )
         )
-
-        guard let record = result.records?.first else {
-            return nil
-        }
-
-        return try instantiate(type, from: record)
+        .results.first
     }
-
+    
+    /// Fetch the first available entity instance.
+    public func first<Instance: Entity>(
+        _ type: Instance.Type = Instance.self,
+        where predicate: Predicate<Instance>
+    ) async throws -> Instance? {
+        try await execute(
+            QueryRequest<Instance>(
+                predicate: predicate,
+                sortDescriptors: nil,
+                fetchLimit: FetchLimit.max(1)
+            )
+        )
+        .results.first
+    }
+    
     public func delete<Instance: Entity>(_ instance: Instance) async throws {
         try delete(getUnderlyingRecord(from: instance))
     }
