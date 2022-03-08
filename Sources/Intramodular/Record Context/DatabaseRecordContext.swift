@@ -27,7 +27,7 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
     typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
     typealias SaveError = DatabaseRecordContextSaveError<Self>
-
+    
     /// Create a database record associated with this context.
     func createRecord(
         withConfiguration _: DatabaseRecordConfiguration<Self>,
@@ -36,7 +36,7 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
     
     /// Instantiate a SwiftDB entity instance from a record.
     func instantiate<Instance: Entity>(_ type: Instance.Type, from record: Record) throws -> Instance
-        
+    
     /// Get the underlying database record from an entity instance.
     func getUnderlyingRecord<Instance: Entity>(from instance: Instance) throws -> Record
     
@@ -54,7 +54,7 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
     
     /// Save the changes made in this record context.
     func save() -> AnyTask<Void, SaveError>
-
+    
     /// Translate a `QueryRequest` into a zone query request for this record context.
     func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest
 }
