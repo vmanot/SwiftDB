@@ -131,7 +131,7 @@ extension _CoreData.Database: Database {
     public var capabilities: [DatabaseCapability] {
         []
     }
-    
+        
     @discardableResult
     public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
         if nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty {
