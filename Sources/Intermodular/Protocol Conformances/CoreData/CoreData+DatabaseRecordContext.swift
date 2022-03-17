@@ -10,7 +10,7 @@ import Swallow
 extension _CoreData {
     public final class DatabaseRecordContext: ObservableObject {
         weak var parent: Database?
-
+        
         let notificationCenter: NotificationCenter = .default
         let nsManagedObjectContext: NSManagedObjectContext
         let affectedStores: [NSPersistentStore]?
@@ -76,15 +76,15 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         
         return object
     }
-
+    
     public func instantiate<Model: Entity>(_ type: Model.Type, from record: Record) throws -> Model {
         let schema = try self.parent.unwrap().schema
-
+        
         if let entityType = schema.entityNameToTypeMap[record.base.entity.name]?.value {
             return try cast(entityType.init(_underlyingDatabaseRecord: record), to: Model.self)
         } else {
             assertionFailure()
-
+            
             return type.init()
         }
     }
@@ -94,7 +94,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     ) throws -> Record {
         try cast(instance._underlyingDatabaseRecord.unwrap(), to: Record.self)
     }
-
+    
     public func recordID(from record: Record) throws -> RecordID {
         .init(managedObjectID: record.base.objectID)
     }
@@ -168,10 +168,12 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         }
         .eraseToAnyTask()
     }
-
-    public func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest {
+    
+    public func zoneQueryRequest<Model>(
+        from queryRequest: QueryRequest<Model>
+    ) throws -> ZoneQueryRequest {
         let parent = try parent.unwrap()
-
+        
         return try ZoneQueryRequest(
             filters: .init(
                 zones: nil,

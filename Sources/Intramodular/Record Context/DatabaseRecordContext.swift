@@ -7,16 +7,13 @@ import Merge
 import Swallow
 import SwiftUI
 
-public struct DatabaseRecordRelationshipDereferenceRequest<Context: DatabaseRecordContext> {
-    public let recordID: Context.RecordID
-    public let key: AnyStringKey
-}
-
 public protocol _opaque_DatabaseRecordContext: _opaque_ObservableObject {
     func execute<Model: Entity>(_ request: QueryRequest<Model>) -> AnyTask<QueryRequest<Model>.Output, Error>
 }
 
 /// An object space to manipulate and track changes to managed objects.
+///
+/// `DatabaseRecordContext` is inspired from `NSManagedObjectContext`.
 public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, ObservableObject {
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord
@@ -50,12 +47,20 @@ public protocol DatabaseRecordContext: _opaque_DatabaseRecordContext, Observable
     func delete(_: Record) throws
     
     /// Execute a zone query request within the zones captured by this record context.
+    ///
+    /// - Parameters:
+    ///   - request: The query request to execute.
     func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error>
     
     /// Save the changes made in this record context.
+    ///
+    /// - Returns: A task representing the save operation.
     func save() -> AnyTask<Void, SaveError>
     
     /// Translate a `QueryRequest` into a zone query request for this record context.
+    ///
+    /// - Parameters:
+    ///   - queryRequest: The query request to translate.
     func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest
 }
 
@@ -103,6 +108,7 @@ extension EnvironmentValues {
         static let defaultValue: AnyDatabaseRecordContext = .invalid
     }
     
+    /// The database record context associated with this environment.
     public var databaseRecordContext: AnyDatabaseRecordContext {
         get {
             self[DatabaseRecordContextKey.self]
@@ -113,6 +119,10 @@ extension EnvironmentValues {
 }
 
 extension View {
+    /// Associates a database record context with this view hierarchy.
+    ///
+    /// - Parameters:
+    ///   - context: The database record context to associate with this view hierarchy.
     public func databaseRecordContext(_ context: AnyDatabaseRecordContext?) -> some View {
         environment(\.databaseRecordContext, context ?? .invalid)
     }
