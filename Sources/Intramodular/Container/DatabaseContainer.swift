@@ -139,12 +139,16 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
 }
 
 extension View {
+    /// Attaches a database container to this view.
+    ///
+    /// The view is disabled until the database container is initialized. This is intentionally done to prevent invalid access to an uninitialized database container.
+    ///
+    /// - Parameters:
+    ///   - container: The database container to attach.
     public func databaseContainer<Schema>(
         _ container: DatabaseContainer<Schema>
     ) -> some View {
-        self
-            .databaseRecordContext(try? container.mainContext)
-            .environmentObject(container)
+        modifier(AttachDatabaseContainer(container: container))
     }
 }
 
@@ -161,5 +165,40 @@ extension Dictionary where Key == CodingUserInfoKey, Value == Any {
         } set {
             self[._SwiftDB_PersistentContainer] = newValue
         }
+    }
+}
+
+struct AttachDatabaseContainer<Schema: SwiftDB.Schema>: ViewModifier {
+    @ObservedObject var container: DatabaseContainer<Schema>
+    
+    @State private var hasAttemptedInitialization: Bool = false
+    
+    func body(content: Content) -> some View {
+        if container.isLoaded {
+            content
+                .databaseRecordContext(try? container.mainContext)
+                .environmentObject(container)
+        } else {
+            ZeroSizeView().onAppear {
+                initializeContainerIfNecessary()
+            }
+            .background {
+                PerformAction {
+                    initializeContainerIfNecessary()
+                }
+            }
+        }
+    }
+    
+    private func initializeContainerIfNecessary() {
+        guard !hasAttemptedInitialization else {
+            return
+        }
+        
+        Task(priority: .userInitiated) {
+            try await container.load()
+        }
+        
+        hasAttemptedInitialization = true
     }
 }

@@ -8,7 +8,7 @@ import Swallow
 import SwiftUI
 
 /// A type-erased description of a `Schema`.
-public struct DatabaseSchema: Codable, Hashable {
+public struct DatabaseSchema: Codable, Hashable, Sendable {
     public enum CodingKeys: String, CodingKey {
         case entities
     }

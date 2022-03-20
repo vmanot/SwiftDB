@@ -6,7 +6,7 @@ import Merge
 import Runtime
 import Swallow
 
-public protocol _SwiftDB_Runtime {
+public protocol _SwiftDB_Runtime: Sendable {
     func metatype(forEntityNamed: String) -> Metatype<_opaque_Entity.Type>?
     
     func convertEntityKeyPathToString(_ keyPath: AnyKeyPath) throws -> String
@@ -14,14 +14,12 @@ public protocol _SwiftDB_Runtime {
 
 // MARK: - Conformances -
 
-public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime {
-    @usableFromInline
+public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendable {
     struct TypeCache: Hashable {
-        @usableFromInline
         var entity: [String: Metatype<_opaque_Entity.Type>] = [:]
     }
     
-    @usableFromInline
+    @MutexProtectedValue(mutex: OSUnfairLock())
     var typeCache = TypeCache()
     
     public init() {

@@ -37,6 +37,9 @@ public protocol Database: Named, Identifiable where ID: Codable {
     
     func recordContext(forZones _: [Zone]?) throws -> RecordContext
     
+    /// Erase all data in the database.
+    ///
+    /// This operation is always an atomic operation.
     func delete() -> AnyTask<Void, Error>
 }
 

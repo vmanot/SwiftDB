@@ -33,20 +33,27 @@ extension _CoreData {
             NotificationCenter.default.removeObserver(self)
         }
         
+        /// Check if the context needs to publish changes, publish if necessary.
         @objc private func managedObjectContextObjectsDidChange(notification: NSNotification) {
             guard let userInfo = notification.userInfo else {
                 return
             }
             
+            var triggerObjectWillChange: Bool = false
+            
             if let insertedObjects = userInfo[NSInsertedObjectsKey] as? Set<NSManagedObject>, !insertedObjects.isEmpty {
-                objectWillChange.send()
+                triggerObjectWillChange = true
             }
             
             if let updatedObjects = userInfo[NSUpdatedObjectsKey] as? Set<NSManagedObject>, !updatedObjects.isEmpty {
-                objectWillChange.send()
+                triggerObjectWillChange = true
             }
             
             if let deletedObjects = userInfo[NSDeletedObjectsKey] as? Set<NSManagedObject>, !deletedObjects.isEmpty {
+                triggerObjectWillChange = true
+            }
+            
+            if triggerObjectWillChange {
                 objectWillChange.send()
             }
         }
@@ -110,7 +117,16 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
         do {
             if request.sortDescriptors.isNil {
-                return .success(.init(records: try nsManagedObjectContext.fetch(try request.toNSFetchRequest(context: self)) .map({ Record(base: $0) })))
+                return Task {
+                    try await nsManagedObjectContext.perform { [nsManagedObjectContext] in
+                        try nsManagedObjectContext
+                            .fetch(try request.toNSFetchRequest(context: self))
+                            .map({ Record(base: $0) })
+                    }
+                }
+                .publisher()
+                .map({ ZoneQueryRequest.Result(records: $0) })
+                .convertToTask()
             }
             
             let fetchedResultsController = NSFetchedResultsController(

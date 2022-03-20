@@ -49,7 +49,7 @@ extension _CloudKit {
 }
 
 extension _CloudKit.Database {
-    public struct Configuration: Codable {
+    public struct Configuration: Codable, Sendable {
         public let containerIdentifier: String?
         public let scope: CKDatabase.Scope
 
@@ -62,7 +62,7 @@ extension _CloudKit.Database {
         }
     }
 
-    public struct State: Codable, ExpressibleByNilLiteral {
+    public struct State: Codable, ExpressibleByNilLiteral, @unchecked Sendable {
         @NSKeyedArchived
         public var serverChangeToken: CKServerChangeToken?
 

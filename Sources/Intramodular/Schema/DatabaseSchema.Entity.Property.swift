@@ -6,19 +6,19 @@ import FoundationX
 import Swift
 
 extension DatabaseSchema.Entity {
-    public struct PropertyConfiguration: Codable, Hashable {
+    public struct PropertyConfiguration: Codable, Hashable, Sendable {
         public var isOptional: Bool?
         public var isTransient: Bool = false
         public var renamingIdentifier: String?
     }
     
-    public class Property: Codable, Hashable, Model {
-        public static let version: Version? = "0.0.0"
-        
+    public class Property: Codable, Hashable, Model, @unchecked Sendable {
         fileprivate enum CodingKeys: String, CodingKey {
             case name
             case propertyConfiguration
         }
+        
+        public static let version: Version? = "0.0.0"
         
         public let name: String
         public let propertyConfiguration: PropertyConfiguration

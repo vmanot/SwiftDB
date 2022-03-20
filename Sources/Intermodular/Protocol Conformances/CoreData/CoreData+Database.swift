@@ -4,18 +4,19 @@
 
 import CoreData
 import Diagnostics
+@preconcurrency import Foundation
 import Merge
 import Swallow
 
 extension _CoreData {
-    public final class Database: CancellablesHolder, ObservableObject {
+    public final class Database: CancellablesHolder, SwiftDB.Database, ObservableObject {
         private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
         
         enum ConfigurationError: Error {
             case customLocationPathExtensionMissing
         }
         
-        public struct Configuration: Codable {
+        public struct Configuration: Codable, Sendable {
             public let name: String
             public let location: URL?
             public let applicationGroupID: String?
@@ -34,11 +35,13 @@ extension _CoreData {
             }
         }
         
-        public struct State: Codable, ExpressibleByNilLiteral {
+        public struct State: Codable, ExpressibleByNilLiteral, Sendable {
             public init(nilLiteral: Void) {
                 
             }
         }
+        
+        public typealias RecordContext = _CoreData.DatabaseRecordContext
         
         let runtime: _SwiftDB_Runtime
         let schema: DatabaseSchema
@@ -125,9 +128,7 @@ extension _CoreData {
 
 // MARK: - Conformances -
 
-extension _CoreData.Database: Database {
-    public typealias RecordContext = _CoreData.DatabaseRecordContext
-    
+extension _CoreData.Database {
     public var capabilities: [DatabaseCapability] {
         []
     }

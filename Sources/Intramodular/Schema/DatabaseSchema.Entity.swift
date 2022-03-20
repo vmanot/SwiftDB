@@ -6,7 +6,7 @@ import Foundation
 import Swallow
 
 extension DatabaseSchema {
-    public struct Entity: Codable, Hashable {
+    public struct Entity: Codable, Hashable, @unchecked Sendable {
         @Indirect
         public var parent: DatabaseSchema.Entity?
         public let name: String
