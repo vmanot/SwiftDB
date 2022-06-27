@@ -12,7 +12,19 @@ import Swallow
 public protocol EnclosedEvolutionModel: Model {
     associatedtype PreviousVersion: EnclosedEvolutionModel
     
-    static var version: Version { get }
+    static var version: Version? { get }
     
     func migrate(from previous: PreviousVersion) -> Self
+}
+
+extension Never: EnclosedEvolutionModel {
+    public typealias PreviousVersion = Never
+    
+    public static var version: Version? {
+        nil
+    }
+
+    public func migrate(from _: Never) -> Never {
+        
+    }
 }
