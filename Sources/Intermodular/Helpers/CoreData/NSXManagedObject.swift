@@ -51,7 +51,9 @@ open class NSXManagedObject: NSManagedObject {
     override public func willChangeValue(forKey key: String) {
         super.willChangeValue(forKey: key)
         
-        objectWillChange.send()
+        if managedObjectContext != nil {
+            objectWillChange.send()
+        }
     }
     
     /// Provide a fallback value for `primitiveValue(forKey:)`.

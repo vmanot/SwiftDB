@@ -12,7 +12,7 @@ extension DatabaseSchema.Entity {
         public var renamingIdentifier: String?
     }
     
-    public class Property: Codable, Hashable, Model, @unchecked Sendable {
+    public class Property: Codable, Hashable, Model, Sendable {
         fileprivate enum CodingKeys: String, CodingKey {
             case name
             case propertyConfiguration

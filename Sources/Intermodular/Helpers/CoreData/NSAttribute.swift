@@ -62,7 +62,7 @@ extension NSAttribute where Value: NSAttributeCoder {
 
 // MARK: - Auxiliary Implementation -
 
-struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
+struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Loggable {
     let value: T
     
     init(_ value: T) {
@@ -94,11 +94,15 @@ struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
     func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
         if let object = object as? NSManagedObject {
             guard object.managedObjectContext != nil else {
+                assertionFailure()
+                
                 return
             }
         }
         
-        object.setValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
+        let encodedValue = try ObjectEncoder().encode(value)
+        
+        object.setValue(encodedValue, forKey: key.stringValue)
     }
     
     func getNSAttributeType() -> NSAttributeType {

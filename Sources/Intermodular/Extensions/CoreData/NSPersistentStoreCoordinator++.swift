@@ -8,7 +8,7 @@ import Swallow
 extension NSPersistentStoreCoordinator {    
     func destroyAll() throws {
         for store in persistentStores {
-            try store.destroy()
+            try store.destroy(persistentStoreCoordinator: self)
         }
     }
 }

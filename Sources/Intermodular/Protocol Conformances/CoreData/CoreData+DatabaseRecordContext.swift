@@ -5,6 +5,7 @@
 import CoreData
 import FoundationX
 import Merge
+import Runtime
 import Swallow
 
 extension _CoreData {
@@ -152,37 +153,40 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func save() -> AnyTask<Void, SaveError> {
-        guard nsManagedObjectContext.hasChanges else {
-            return .just(.success(()))
-        }
-        
-        return PassthroughTask { attemptToFulfill -> () in
-            func save() {
+        return Task { @Sendable in
+            @Sendable
+            func save() -> Result<Void, SaveError> {
                 do {
-                    try self.nsManagedObjectContext.save()
+                    try catchExceptionAsError {
+                        try self.nsManagedObjectContext.save()
+                    }
                     
-                    attemptToFulfill(.success(()))
+                    return .success(())
                 } catch {
                     let error = error as NSError
                     
-                    attemptToFulfill(.failure(
+                    return .failure(
                         SaveError(
                             description: error.description,
                             mergeConflicts: (error.userInfo["conflictList"] as? [NSMergeConflict]).map({ $0.map(DatabaseRecordMergeConflict.init) })
                         )
-                    ))
+                    )
                 }
             }
             
-            if self.nsManagedObjectContext.concurrencyType == .mainQueueConcurrencyType {
-                save()
-            } else {
-                self.nsManagedObjectContext.perform {
+            guard nsManagedObjectContext.hasChanges else {
+                return .success(())
+            }
+
+            if nsManagedObjectContext.concurrencyType == .mainQueueConcurrencyType {
+                return await MainActor.run {
                     save()
                 }
+            } else {
+                return save()
             }
         }
-        .eraseToAnyTask()
+        .convertToObservableTask()
     }
     
     public func zoneQueryRequest<Model>(

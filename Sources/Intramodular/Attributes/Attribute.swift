@@ -3,6 +3,7 @@
 //
 
 import CoreData
+import Diagnostics
 import Merge
 import Runtime
 import Swallow
@@ -15,7 +16,7 @@ public enum AttributeTrait {
 
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPropertyAccessor, ObservableObject, PropertyWrapper {
+public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
@@ -40,14 +41,26 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
             _runtimeMetadata.wrappedValueAccessToken = UUID()
             
             do {
-                return try decodeImpl(self)
-            } catch {                
+                logger.debug("Decoding value")
+                
+                let result = try decodeImpl(self)
+                
+                logger.debug("Decoded value: \(result)")
+                
+                return result
+            } catch {
+                logger.error(error)
+                
                 if let initialValue = initialValue {
+                    assert(underlyingRecord == nil)
+
                     return initialValue
                 } else if let type = Value.self as? Initiable.Type {
+                    assert(underlyingRecord == nil)
+
                     return type.init() as! Value
                 } else {
-                    try! error.throw()
+                    fatalError(error)
                 }
             }
         } set {
@@ -60,8 +73,14 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
                     return
                 }
                 
+                logger.debug("Encoding value: \(newValue)")
+
                 try! encodeImpl(self, newValue)
+                
+                logger.debug("Encoded value")
             } else {
+                logger.debug("Underlying record has not been resolved. Storing assigned value as initial value.")
+                
                 initialValue = newValue
             }
         }
@@ -193,7 +212,8 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
     }
 
     public convenience init(
-        wrappedValue: Value
+        wrappedValue: Value,
+        _ traits: [AttributeTrait] = []
     ) where Value: NSAttributeCoder {
         self.init(
             initialValue: wrappedValue,

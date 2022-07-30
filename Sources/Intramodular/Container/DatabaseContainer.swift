@@ -27,26 +27,15 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
     fileprivate let name: String
     fileprivate let schema: DatabaseSchema
     fileprivate let location: URL?
+    fileprivate let stateLocation: URL?
     fileprivate let applicationGroupID: String?
     fileprivate let cloudKitContainerIdentifier: String?
     
     fileprivate var database: _CoreData.Database
-    
-    public var isLoaded: Bool {
-        !database.nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
-    }
-    
-    private var _mainContext: AnyDatabaseRecordContext?
-    
+            
     public var mainContext: AnyDatabaseRecordContext {
         get throws {
-            if let _mainContext = _mainContext {
-                return _mainContext
-            } else {
-                _mainContext = try AnyDatabaseRecordContext(database.viewContext.unwrap())
-                
-                return try _mainContext.unwrap()
-            }
+            try database.viewContext.map(AnyDatabaseRecordContext.init).unwrap()
         }
     }
     
@@ -60,8 +49,15 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
         self.name = name
         self.schema = try DatabaseSchema(schema)
         self.location = location
+        self.stateLocation = location?.appendingPathComponent(name, conformingTo: .fileURL).appendingPathExtension(DatabaseStateFileFormat.pathExtension)
         self.applicationGroupID = applicationGroupID
         self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
+        
+        var databaseState: _CoreData.Database.State?
+
+        if let stateLocation = stateLocation {
+            databaseState = try? JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
+        }
         
         self.database = try _CoreData.Database(
             schema: .init(schema),
@@ -71,7 +67,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
                 applicationGroupID: applicationGroupID,
                 cloudKitContainerIdentifier: cloudKitContainerIdentifier
             ),
-            state: nil
+            state: databaseState
         )
     }
     
@@ -96,6 +92,12 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
         try await database
             .recordContext(forZones: nil)
             .save()
+        
+        Task.detached(priority: .userInitiated) { @MainActor in
+            if let stateLocation = self.stateLocation {
+                try JSONEncoder().encode(self.database.state).write(to: stateLocation)
+            }
+        }
     }
     
     public func fetchAllInstances() throws -> [Any] {
@@ -116,12 +118,11 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
         return result
     }
     
+    @MainActor
     public func destroyAndRebuild() async throws {
-        try await database.delete()
+        objectWillChange.send()
         
-        await MainActor.run {
-            objectWillChange.send()
-        }
+        try await database.delete()
         
         database = try _CoreData.Database(
             schema: database.schema,
@@ -131,7 +132,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
                 applicationGroupID: applicationGroupID,
                 cloudKitContainerIdentifier: cloudKitContainerIdentifier
             ),
-            state: nil
+            state: .init()
         )
         
         try await load()
@@ -174,9 +175,9 @@ struct AttachDatabaseContainer<Schema: SwiftDB.Schema>: ViewModifier {
     @State private var hasAttemptedInitialization: Bool = false
     
     func body(content: Content) -> some View {
-        if container.isLoaded {
+        if let mainContext = try? container.mainContext {
             content
-                .databaseRecordContext(try? container.mainContext)
+                .databaseRecordContext(mainContext)
                 .environmentObject(container)
         } else {
             ZeroSizeView().onAppear {

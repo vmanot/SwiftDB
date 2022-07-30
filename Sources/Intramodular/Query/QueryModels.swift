@@ -24,6 +24,7 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
                 
                 context
                     ._opaque_objectWillChange
+                    .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main) // FIXME: Hack!!!
                     .sink(in: cancellables) { [unowned self] _ in
                         self.runQuery()
                     }
@@ -37,11 +38,13 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
         }
         
         func runQuery() {
-            let queryTask = _databaseRecordContext.execute(queryRequest)
-            
-            queryTask.start()
-            
             Task { @MainActor in
+                let queryTask = _databaseRecordContext.execute(queryRequest)
+                
+                try Task.checkCancellation()
+                
+                queryTask.start()
+
                 self.output = try await queryTask.value
             }
         }
@@ -64,7 +67,7 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
     }
     
     public mutating func update() {
-        if databaseRecordContext !== AnyDatabaseRecordContext.invalid, coordinator._databaseRecordContext == nil {
+        if databaseRecordContext != nil, coordinator._databaseRecordContext == nil {
             coordinator.queryRequest = queryRequest
             coordinator._databaseRecordContext = databaseRecordContext
             

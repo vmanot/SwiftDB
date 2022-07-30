@@ -40,7 +40,7 @@ public final class AnyDatabase: Database {
         runtime: _SwiftDB_Runtime,
         schema: DatabaseSchema?,
         configuration: Configuration,
-        state: State
+        state: State?
     ) throws {
         throw Never.Reason.unsupported
     }
@@ -90,7 +90,7 @@ extension AnyDatabase {
     }
 
 
-    public struct State: Codable, ExpressibleByNilLiteral {
+    public struct State: Codable, Equatable {
         let base: AnyCodable?
 
         init(base: Codable?) {

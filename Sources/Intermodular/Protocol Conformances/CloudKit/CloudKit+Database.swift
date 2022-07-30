@@ -2,7 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CloudKit
+@preconcurrency import CloudKit
 import Merge
 import Runtime
 import Swallow
@@ -21,12 +21,12 @@ extension _CloudKit {
             runtime: _SwiftDB_Runtime,
             schema: DatabaseSchema?,
             configuration: Configuration,
-            state: State
+            state: State?
         ) throws {
             self.runtime = runtime
             self.schema = schema
             self.configuration = configuration
-            self.state = state
+            self.state = state ?? .init()
 
             self.base = configuration.containerIdentifier.map({ CKContainer(identifier: $0) }) ?? .default()
 
@@ -40,7 +40,7 @@ extension _CloudKit {
                 containerIdentifier: container.containerIdentifier!,
                 scope: scope
             )
-            self.state = nil
+            self.state = .init()
 
             self.base = container
             self.ckDatabase = try base.database(for: scope)
@@ -62,13 +62,9 @@ extension _CloudKit.Database {
         }
     }
 
-    public struct State: Codable, ExpressibleByNilLiteral, @unchecked Sendable {
+    public struct State: Codable, Equatable, Sendable {
         @NSKeyedArchived
         public var serverChangeToken: CKServerChangeToken?
-
-        public init(nilLiteral: Void) {
-
-        }
     }
 }
 

@@ -151,7 +151,7 @@ fileprivate extension Decodable where Self: Encodable {
             from: object.base,
             forKey: AnyCodingKey(key)
         )
-            .value
+        .value
     }
     
     func encode(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {

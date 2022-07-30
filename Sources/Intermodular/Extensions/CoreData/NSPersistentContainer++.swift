@@ -8,20 +8,30 @@ import Runtime
 import Swallow
 
 extension NSPersistentContainer {
-    func loadPersistentStores() -> Future<Void, Error> {
-        .init { attemptToFulfill in
+    /// Create a container with the specified name and managed object model.
+    convenience init(name: String, managedObjectModel: NSManagedObjectModel?) {
+        if let managedObjectModel = managedObjectModel {
+            self.init(name: name, managedObjectModel: managedObjectModel)
+        } else {
+            self.init(name: name)
+        }
+    }
+    
+    /// Loads the persistent stores.
+    func loadPersistentStores() async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             do {
                 try catchExceptionAsError {
                     self.loadPersistentStores { storeDescription, error in
                         if let error = error {
-                            attemptToFulfill(.failure(error))
+                            continuation.resume(throwing: error)
                         } else {
-                            attemptToFulfill(.success(()))
+                            continuation.resume(returning: ())
                         }
                     }
                 }
             } catch {
-                attemptToFulfill(.failure(error))
+                continuation.resume(throwing: error)
             }
         }
     }

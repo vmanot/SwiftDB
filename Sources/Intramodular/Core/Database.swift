@@ -15,7 +15,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     typealias Runtime = _SwiftDB_Runtime
     
     associatedtype Configuration: Codable
-    associatedtype State: Codable & ExpressibleByNilLiteral
+    associatedtype State: Codable & Equatable
     associatedtype RecordContext: DatabaseRecordContext
     associatedtype Zone where Zone == RecordContext.Zone
     
@@ -27,7 +27,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
         runtime: _SwiftDB_Runtime,
         schema: DatabaseSchema?,
         configuration: Configuration,
-        state: State
+        state: State?
     ) throws
     
     @discardableResult
@@ -49,7 +49,7 @@ extension Database {
     public init(
         schema: DatabaseSchema?,
         configuration: Configuration,
-        state: State
+        state: State?
     ) throws {
         try self.init(
             runtime: _Default_SwiftDB_Runtime(),

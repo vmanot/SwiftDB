@@ -105,11 +105,11 @@ extension DatabaseRecordContext {
 
 extension EnvironmentValues {
     fileprivate struct DatabaseRecordContextKey: EnvironmentKey {
-        static let defaultValue: AnyDatabaseRecordContext = .invalid
+        static let defaultValue: AnyDatabaseRecordContext? = nil
     }
     
     /// The database record context associated with this environment.
-    public var databaseRecordContext: AnyDatabaseRecordContext {
+    public var databaseRecordContext: AnyDatabaseRecordContext? {
         get {
             self[DatabaseRecordContextKey.self]
         } set {
@@ -124,6 +124,6 @@ extension View {
     /// - Parameters:
     ///   - context: The database record context to associate with this view hierarchy.
     public func databaseRecordContext(_ context: AnyDatabaseRecordContext?) -> some View {
-        environment(\.databaseRecordContext, context ?? .invalid)
+        environment(\.databaseRecordContext, context)
     }
 }
