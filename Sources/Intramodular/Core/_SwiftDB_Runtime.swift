@@ -19,19 +19,22 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
         var entity: [String: Metatype<_opaque_Entity.Type>] = [:]
     }
     
-    @MutexProtectedValue(mutex: OSUnfairLock())
     var typeCache = TypeCache()
-    
-    public init() {
-        
+    var entityCacheMap: [Metatype<_opaque_Entity.Type>: EntityCache] = [:]
+
+    public init(schema: DatabaseSchema?) {
+        if let schema = schema {
+            for entity in schema.entityToTypeMap.values  {
+                _ = self.entityCache(for: entity.value)
+            }
+        }
     }
     
     public func metatype(forEntityNamed name: String) -> Metatype<_opaque_Entity.Type>? {
         typeCache.entity[name]
     }
     
-    var entityCacheMap: [Metatype<_opaque_Entity.Type>: EntityCache] = [:]
-    
+
     public final class EntityCache {
         let entityType: _opaque_Entity.Type
         var fieldNameToKeyPathMap: [String: AnyKeyPath] = [:]
@@ -77,6 +80,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
             let result = EntityCache(entityType: entityType)
             
             entityCacheMap[.init(entityType)] = result
+            typeCache.entity[String(describing: entityType)] = .init(entityType)
             
             return result
         }

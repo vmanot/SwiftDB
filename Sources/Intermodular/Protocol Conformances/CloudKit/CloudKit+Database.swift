@@ -34,7 +34,7 @@ extension _CloudKit {
         }
 
         public init(container: CKContainer, scope: CKDatabase.Scope) throws {
-            self.runtime = _Default_SwiftDB_Runtime()
+            self.runtime = _Default_SwiftDB_Runtime(schema: nil)
             self.schema = nil
             self.configuration = .init(
                 containerIdentifier: container.containerIdentifier!,

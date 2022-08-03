@@ -39,7 +39,9 @@ extension _opaque_Entity  {
         }
     }
     
-    mutating func _runtime_configurePropertyAccessors(underlyingRecord: _opaque_DatabaseRecord?) throws {
+    mutating func _runtime_configurePropertyAccessors(
+        underlyingRecord: _opaque_DatabaseRecord?
+    ) throws {
         var instance = AnyNominalOrTupleMirror(self)!
         
         for (key, value) in instance.allChildren {
@@ -50,8 +52,10 @@ extension _opaque_Entity  {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 }
                 
-                try property._runtime_initializePostNameResolution()
-                
+                if let underlyingRecord = underlyingRecord {
+                    try property.initialize(with: underlyingRecord)
+                }
+
                 instance[key] = property
             }
         }

@@ -66,8 +66,8 @@ public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject
         base.containsValue(forKey: key)
     }
     
-    public func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
-        try base.encodePrimitiveValue(value, forKey: key)
+    public func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
+        try base.primitivelyEncodeValue(value, forKey: key)
     }
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {

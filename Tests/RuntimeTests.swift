@@ -7,15 +7,17 @@ import XCTest
 @testable import SwiftDB
 
 final class RuntimeTests: XCTestCase {
-    let runtime = _Default_SwiftDB_Runtime()
-    
+    let runtime = try! _Default_SwiftDB_Runtime(schema: DatabaseSchema(TestORMSchema()))
+
+    func testEntityLookup() {
+        XCTAssert(runtime.metatype(forEntityNamed: "EntityWithSimpleRequiredProperty")?.value == TestORMSchema.EntityWithSimpleRequiredProperty.self)
+    }
+
     func testEntityKeyPathToStringConversion() async throws {
-        let fooKeyPath = try runtime.convertEntityKeyPathToString(\TestORMSchema.TestEntity.foo)
+        let fooKeyPath = try runtime.convertEntityKeyPathToString(\TestORMSchema.EntityWithSimpleRequiredProperty.foo)
         
         XCTAssert(fooKeyPath == "foo")
-        
-        let fooDescriptionKeyPath = try? runtime.convertEntityKeyPathToString(\TestORMSchema.TestEntity.foo.description)
-        
-        XCTAssert(fooDescriptionKeyPath == nil)
+
+        XCTAssertThrowsError(try runtime.convertEntityKeyPathToString(\TestORMSchema.EntityWithSimpleRequiredProperty.foo.description))
     }
 }

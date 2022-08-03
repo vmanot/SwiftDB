@@ -52,7 +52,7 @@ extension Database {
         state: State?
     ) throws {
         try self.init(
-            runtime: _Default_SwiftDB_Runtime(),
+            runtime: _Default_SwiftDB_Runtime(schema: schema),
             schema: schema,
             configuration: configuration,
             state: state

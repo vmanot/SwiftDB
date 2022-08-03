@@ -23,7 +23,7 @@ protocol _opaque_EntityPropertyAccessor: AnyObject, _opaque_ObservableObject, _o
     var name: String? { get set }
         
     func schema() throws -> DatabaseSchema.Entity.Property
-    func _runtime_initializePostNameResolution() throws
+    func initialize(with underlyingRecord: _opaque_DatabaseRecord) throws
     
     // MARK: - Decoding & Encoding
     

@@ -11,7 +11,7 @@ public protocol NSAttributeCoder {
     static func decodePrimitive<Key: CodingKey>(from _: NSManagedObject, forKey _: Key) throws -> Self
     static func decode<Key: CodingKey>(from _: KeyValueCoder, forKey _: Key) throws -> Self
     
-    func encodePrimitive<Key: CodingKey>(to _: NSManagedObject, forKey _: Key) throws
+    func primitivelyEncode<Key: CodingKey>(to _: NSManagedObject, forKey _: Key) throws
     func encode<Key: CodingKey>(to _: KeyValueCoder, forKey _: Key) throws
     
     func getNSAttributeType() -> NSAttributeType
@@ -30,7 +30,7 @@ extension NSAttributeCoder {
         guard object.primitiveValueExists(forKey: key.stringValue) else {
             let defaultValue = defaultValue()
             
-            try defaultValue.encodePrimitive(to: object, forKey: key)
+            try defaultValue.primitivelyEncode(to: object, forKey: key)
             
             return defaultValue
         }
@@ -78,9 +78,9 @@ extension Optional: NSAttributeCoder where Wrapped: NSAttributeCoder {
         }
     }
     
-    public func encodePrimitive<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+    public func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
         if let value = self {
-            try value.encodePrimitive(to: object, forKey: key)
+            try value.primitivelyEncode(to: object, forKey: key)
         } else {
             object.setPrimitiveValue(nil, forKey: key.stringValue)
         }
@@ -122,8 +122,8 @@ extension RawRepresentable where RawValue: NSAttributeCoder, Self: NSAttributeCo
         try Self(rawValue: try RawValue.decode(from: object, forKey: key)).unwrap()
     }
     
-    public func encodePrimitive<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
-        try rawValue.encodePrimitive(to: object, forKey: key)
+    public func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+        try rawValue.primitivelyEncode(to: object, forKey: key)
     }
     
     public func encode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
@@ -148,8 +148,8 @@ extension Wrapper where Value: NSAttributeCoder, Self: NSAttributeCoder {
         Self(try Value.decode(from: object, forKey: key))
     }
     
-    public func encodePrimitive<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
-        try value.encodePrimitive(to: object, forKey: key)
+    public func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+        try value.primitivelyEncode(to: object, forKey: key)
     }
     
     public func encode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
@@ -172,7 +172,7 @@ extension NSObject: NSAttributeCoder {
         try cast(object.value(forKey: key.stringValue), to: Self.self)
     }
     
-    public func encodePrimitive<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+    public func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
         object.setPrimitiveValue(self, forKey: key.stringValue)
     }
     

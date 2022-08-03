@@ -8,42 +8,60 @@ import XCTest
 
 struct TestORMSchema: Schema {
     var body: Body {
-        TestEntity.self
-        TestEntityWithOptionalProperties.self
-        TestEntityWithComplexProperties.self
+        EmptyEntity.self
+        EntityWithSimpleRequiredProperty.self
+        EntityWithOptionalProperties.self
+        EntityWithComplexProperties.self
+        EntityWithDynamicProperties.self
     }
 }
 
 extension TestORMSchema {
-    class TestEntity: Entity, Codable {
-        @Attribute var foo: Int = 0
-        
+    class EmptyEntity: Entity {
         required init() {
-            
+
         }
     }
-    
-    class TestEntityWithOptionalProperties: Entity, Codable {
+
+    class EntityWithSimpleRequiredProperty: Entity, Codable {
+        @Attribute var foo: Int = 0
+
+        required init() {
+
+        }
+    }
+
+    class EntityWithOptionalProperties: Entity, Codable {
         @Attribute var foo: Int? = nil
         @Attribute var bar: Date? = nil
         @Attribute var baz: String? = nil
 
         required init() {
-            
+
         }
     }
-    
-    class TestEntityWithComplexProperties: Entity, Codable {
+
+    class EntityWithComplexProperties: Entity, Codable {
         enum Animal: String, Codable, Hashable {
             case cat
             case dog
             case lion
         }
-        
+
         @Attribute var animal: Animal = .cat
-        
+
         required init() {
-            
+
+        }
+    }
+
+    class EntityWithDynamicProperties: Entity, Codable {
+        @Attribute var id: UUID = UUID()
+
+        @Attribute(defaultValue: UUID()) var defaultValueID: UUID
+
+        required init() {
+
         }
     }
 }

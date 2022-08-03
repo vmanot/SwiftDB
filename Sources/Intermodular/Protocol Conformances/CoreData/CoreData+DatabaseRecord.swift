@@ -47,7 +47,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         base.primitiveValueExists(forKey: key.stringValue)
     }
     
-    public func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
+    public func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }
     
@@ -64,9 +64,9 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         forKey key: CodingKey
     ) throws -> Value {
         if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
-            return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value
+            return try valueType.decode(from: base, forKey: key) as! Value
         } else if let valueType = valueType as? NSAttributeCoder.Type {
-            return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value
+            return try valueType.decode(from: base, forKey: key) as! Value
         } else if let valueType = valueType as? Codable.Type {
             return try valueType.decode(from: self, forKey: key) as! Value
         } else {
@@ -82,9 +82,11 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
             let value = value()
             
             if let value = value as? NSAttributeCoder {
-                try value.encodePrimitive(to: base, forKey: AnyCodingKey(key))
+                try value.primitivelyEncode(to: base, forKey: key)
             } else if let value = value as? Codable {
-                try value.encodePrimitive(to: self, forKey: AnyCodingKey(key))
+                try value.primitivelyEncode(to: self, forKey: key)
+            } else {
+                assertionFailure()
             }
         }
     }
@@ -161,8 +163,8 @@ fileprivate extension Decodable where Self: Encodable {
         )
     }
     
-    func encodePrimitive(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {
-        try _CodableToNSAttributeCoder<Self>(self).encodePrimitive(
+    func primitivelyEncode(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {
+        try _CodableToNSAttributeCoder<Self>(self).primitivelyEncode(
             to: object.base,
             forKey: AnyCodingKey(key)
         )

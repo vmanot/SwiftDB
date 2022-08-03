@@ -16,10 +16,12 @@ public protocol _opaque_DatabaseRecord: _opaque_Identifiable, _opaque_Observable
     func contains(_ key: CodingKey) -> Bool
     func containsValue(forKey key: CodingKey) -> Bool
     
-    func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws
+    func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws
     
     func encode<Value>(_ value: Value, forKey key: CodingKey) throws
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
+    
+    func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws 
 }
 
 /// A database record.
@@ -38,7 +40,7 @@ public protocol DatabaseRecord: _opaque_DatabaseRecord, Identifiable {
     func containsValue(forKey key: CodingKey) -> Bool
     
     /// Encode a primitive value for a given key.
-    func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey: CodingKey) throws
+    func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey: CodingKey) throws
     
     /// Encodes a value for the given key.
     ///

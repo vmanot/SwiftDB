@@ -53,7 +53,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         base.object(forKey: key.stringValue) != nil
     }
     
-    public func encodePrimitiveValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
+    public func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }
     

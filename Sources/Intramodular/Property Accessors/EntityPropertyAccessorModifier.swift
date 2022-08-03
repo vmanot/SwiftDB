@@ -64,8 +64,8 @@ extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _opaq
         try base.schema()
     }
     
-    func _runtime_initializePostNameResolution() throws {
-        try base._runtime_initializePostNameResolution()
+    func initialize(with underlyingRecord: _opaque_DatabaseRecord) throws {
+        try base.initialize(with: underlyingRecord)
     }
 }
 

@@ -157,10 +157,8 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
             @Sendable
             func save() -> Result<Void, SaveError> {
                 do {
-                    try catchExceptionAsError {
-                        try self.nsManagedObjectContext.save()
-                    }
-                    
+                    try self.nsManagedObjectContext.save()
+
                     return .success(())
                 } catch {
                     let error = error as NSError

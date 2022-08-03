@@ -20,9 +20,9 @@ extension Attribute {
     
     public func decode(from decoder: Decoder) throws {
         if let valueType = Value.self as? Decodable.Type {
-            initialValue = try cast(try valueType.init(from: decoder), to: Value.self)
+            assignedInitialValue = try cast(try valueType.init(from: decoder), to: Value.self)
         } else if let valueType = Value.self as? NSCoding.Type {
-            initialValue = try cast(try valueType.decode(from: decoder), to: Value.self)
+            assignedInitialValue = try cast(try valueType.decode(from: decoder), to: Value.self)
         } else {
             assertionFailure()
         }

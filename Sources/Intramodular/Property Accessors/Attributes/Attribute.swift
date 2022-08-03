@@ -17,18 +17,21 @@ public enum AttributeTrait {
 /// A property accessor for entity attributes.
 @propertyWrapper
 public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
+    enum AccessError: Error {
+        case failedToResolveInitialValue
+    }
+
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
-
+    
     var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     var name: String?
     var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
     var typeDescriptionHint: DatabaseSchema.Entity.AttributeType?
     
-    var initialValue: Value?
-    let decodeImpl: (Attribute) throws -> Value
-    let encodeImpl: (Attribute, Value) throws -> Void
+    var makeInitialValue: (() -> Value?)?
+    var assignedInitialValue: Value?
     
     var underlyingRecord: _opaque_DatabaseRecord?
     
@@ -40,10 +43,24 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
         get {
             _runtimeMetadata.wrappedValueAccessToken = UUID()
             
+            guard let underlyingRecord = underlyingRecord, underlyingRecord.isInitialized else {
+                if let value = assignedInitialValue {
+                    return value
+                } else if let makeInitialValue = makeInitialValue {
+                    let value = makeInitialValue()
+
+                    assignedInitialValue = value
+
+                    return value!
+                } else {
+                    fatalError(AccessError.failedToResolveInitialValue)
+                }
+            }
+            
             do {
                 logger.debug("Decoding value")
                 
-                let result = try decodeImpl(self)
+                let result = try underlyingRecord.decode(Value.self, forKey: key.unwrap())
                 
                 logger.debug("Decoded value: \(result)")
                 
@@ -51,13 +68,9 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
             } catch {
                 logger.error(error)
                 
-                if let initialValue = initialValue {
-                    assert(underlyingRecord == nil)
-
+                if let initialValue = assignedInitialValue {
                     return initialValue
                 } else if let type = Value.self as? Initiable.Type {
-                    assert(underlyingRecord == nil)
-
                     return type.init() as! Value
                 } else {
                     fatalError(error)
@@ -74,14 +87,14 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
                 }
                 
                 logger.debug("Encoding value: \(newValue)")
-
-                try! encodeImpl(self, newValue)
+                
+                try! underlyingRecord.encode(newValue, forKey: key.forceUnwrap())
                 
                 logger.debug("Encoded value")
             } else {
                 logger.debug("Underlying record has not been resolved. Storing assigned value as initial value.")
                 
-                initialValue = newValue
+                assignedInitialValue = newValue
             }
         }
     }
@@ -95,15 +108,13 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
     }
     
     init(
-        initialValue: Value?,
-        decodeImpl: @escaping (Attribute) throws -> Value,
-        encodeImpl: @escaping (Attribute, Value) throws -> Void,
+        makeInitialValue: (() -> Value?)?,
         propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
     ) {
-        self.initialValue = initialValue
-        self.decodeImpl = decodeImpl
-        self.encodeImpl = encodeImpl
+        self.makeInitialValue = makeInitialValue
         self.propertyConfiguration = propertyConfiguration
+
+        self.propertyConfiguration.isOptional = isOptional // FIXME: Move to some place better?
     }
     
     public static subscript<EnclosingSelf: Entity>(
@@ -132,7 +143,7 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
             propertyConfiguration: propertyConfiguration,
             attributeConfiguration: .init(
                 type: determineSchemaAttributeType(),
-                defaultValue: initialValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
+                defaultValue: assignedInitialValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
                     do {
                         return try AnyCodableOrNSCodingValue(from: value)
                     } catch {
@@ -147,32 +158,34 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
         )
     }
     
-    func _runtime_initializePostNameResolution() throws {
-        self.propertyConfiguration.isOptional = isOptional
-        
-        try _runtime_encodeDefaultValueIfNecessary()
+    func initialize(with underlyingRecord: _opaque_DatabaseRecord) throws {
+        try encodeDefaultValueIfNecessary(into: underlyingRecord)
     }
     
     /// Encode the `defaultValue` if necessary.
     /// Needed for required attributes, otherwise the underlying object crashes on save.
-    func _runtime_encodeDefaultValueIfNecessary() throws {
-        guard let underlyingRecord = underlyingRecord else {
-            return
+    func encodeDefaultValueIfNecessary(into underlyingRecord: _opaque_DatabaseRecord) throws {
+        guard let key = key else {
+            return assertionFailure()
+        }
+
+        if let assignedInitialValue = assignedInitialValue {
+            try underlyingRecord.setInitialValue(assignedInitialValue, forKey: key)
+        } else if let makeInitialValue = makeInitialValue {
+            try underlyingRecord.setInitialValue(makeInitialValue(), forKey: key)
         }
         
-        let name = try self.name.unwrap()
-        
-        if isOptional && !underlyingRecord.containsValue(forKey: AnyStringKey(stringValue: name)) {
+        if !isOptional && !underlyingRecord.containsValue(forKey: key) {
             _ = self.wrappedValue // force an evaluation
         }
     }
     
     private func determineSchemaAttributeType() -> DatabaseSchema.Entity.AttributeType {
         TODO.whole(.refactor, note: "Make less dependent on CoreData")
-
+        
         if let type = _runtime_wrappedValueType as? NSPrimitiveAttributeCoder.Type, let result = DatabaseSchema.Entity.AttributeType(type.toNSAttributeType()) {
             return result
-        } else if let wrappedValue = initialValue as? NSAttributeCoder, let result = DatabaseSchema.Entity.AttributeType(wrappedValue.getNSAttributeType()) {
+        } else if let wrappedValue = assignedInitialValue as? NSAttributeCoder, let result = DatabaseSchema.Entity.AttributeType(wrappedValue.getNSAttributeType()) {
             return result
         } else if let typeDescriptionHint = typeDescriptionHint {
             return typeDescriptionHint
@@ -180,56 +193,32 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else if let type = _runtime_wrappedValueType as? NSCoding.Type {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
-        } else if let initialValue = initialValue, let type = (try? AnyCodableOrNSCodingValue(from: initialValue)?.cocoaObjectValue()).map({ type(of: $0) }) {
+        } else if let initialValue = (assignedInitialValue ?? makeInitialValue?()), let type = (try? AnyCodableOrNSCodingValue(from: initialValue)?.cocoaObjectValue()).map({ type(of: $0) }) {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else {
             return .transformable(class: NSDictionary.self, transformerName: "NSSecureUnarchiveFromData")
         }
     }
-
+    
     // MARK: - Initializers -
-
+    
     public convenience init(
-        wrappedValue: Value,
+        wrappedValue: @autoclosure @escaping () -> Value,
         _ traits: [AttributeTrait] = []
     ) {
         self.init(
-            initialValue: wrappedValue,
-            decodeImpl: { attribute in
-                try attribute
-                    .underlyingRecord
-                    .unwrap()
-                    .decode(Value.self, forKey: attribute.key.unwrap())
-            },
-            encodeImpl: { attribute, newValue in
-                try attribute
-                    .underlyingRecord
-                    .unwrap()
-                    .encode(newValue, forKey: attribute.key.unwrap())
-            },
+            makeInitialValue: wrappedValue,
             propertyConfiguration: .init()
         )
     }
 
-    public convenience init(
-        wrappedValue: Value,
-        _ traits: [AttributeTrait] = []
-    ) where Value: NSAttributeCoder {
+    @_disfavoredOverload
+    public convenience init(defaultValue: Value) {
         self.init(
-            initialValue: wrappedValue,
-            decodeImpl: { attribute in
-                try attribute
-                    .underlyingRecord
-                    .unwrap()
-                    .decode(Value.self, forKey: attribute.key.unwrap())
-            },
-            encodeImpl: { attribute, newValue in
-                try attribute
-                    .underlyingRecord
-                    .unwrap()
-                    .encode(newValue, forKey: attribute.key.unwrap())
-            },
+            makeInitialValue: nil,
             propertyConfiguration: .init()
         )
+
+        assignedInitialValue = defaultValue
     }
 }

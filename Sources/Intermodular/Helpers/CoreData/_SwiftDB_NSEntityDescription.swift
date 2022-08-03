@@ -30,7 +30,7 @@ class _SwiftDB_NSEntityDescription: NSEntityDescription, NSSecureCoding {
         
         name = description.name
         managedObjectClassName = description.className
-        properties = try description.properties.map({ try NSPropertyDescription(from: $0) })
+        properties = try description.properties.map({ try $0.toNSPropertyDescription() })
         
         for property in description.properties {
             _SwiftDB_propertyDescriptions[property.name] = property

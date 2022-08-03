@@ -8,8 +8,14 @@ import Foundation
 import Merge
 import Swallow
 
-class EnclosedEvolutionMigrationPolicy: NSEntityMigrationPolicy {
-    
+public class EnclosedEvolutionMigrationPolicy: NSEntityMigrationPolicy {
+    public override func createDestinationInstances(
+        forSource sInstance: NSManagedObject,
+        in mapping: NSEntityMapping,
+        manager: NSMigrationManager
+    ) throws {
+        
+    }
 }
 
 extension _CoreData {
@@ -150,7 +156,7 @@ extension _CoreData.Database {
     
     @discardableResult
     public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
-        return Task {
+        Task {
             try await loadPersistentStoresIfNeeded()
             
             return nsPersistentContainer

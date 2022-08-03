@@ -73,6 +73,7 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
         try baseBox.delete(record)
     }
     
+    @discardableResult
     public func save() -> AnyTask<Void, SaveError> {
         baseBox.save()
     }

@@ -13,11 +13,11 @@ public protocol NSPrimitiveAttributeCoder: NSAttributeCoder {
 // MARK: - Implementation -
 
 extension NSPrimitiveAttributeCoder {
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) -> Self {
-        object.primitiveValue(forKey: key.stringValue) as! Self
+    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+        try cast(object.primitiveValue(forKey: key.stringValue), to: Self.self)
     }
     
-    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
         let key = key.stringValue
         
         if let object = object as? NSManagedObject {
@@ -27,13 +27,13 @@ extension NSPrimitiveAttributeCoder {
                 object.didAccessValue(forKey: key)
             }
             
-            return object.primitiveValue(forKey: key) as! Self
+            return try cast(object.primitiveValue(forKey: key), to: Self.self)
         } else {
             return object.value(forKey: key) as! Self
         }
     }
     
-    public func encodePrimitive<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) {
+    public func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) {
         guard object.managedObjectContext != nil else {
             return
         }
@@ -97,18 +97,18 @@ extension Character: NSPrimitiveAttributeCoder {
         String.toNSAttributeType()
     }
     
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) -> Self {
-        .init(String.decodePrimitive(from: object, forKey: key))
+    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+        try .init(String.decodePrimitive(from: object, forKey: key))
     }
-    
-    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) -> Self {
-        .init(String.decode(from: object, forKey: key))
+
+    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+        try .init(String.decode(from: object, forKey: key))
     }
-    
-    public func encodePrimitive<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
-        try stringValue.encodePrimitive(to: object, forKey: key)
+
+    public func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+        try stringValue.primitivelyEncode(to: object, forKey: key)
     }
-    
+
     public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) {
         stringValue.encode(to: object, forKey: key)
     }

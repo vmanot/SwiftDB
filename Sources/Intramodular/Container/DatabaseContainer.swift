@@ -15,12 +15,38 @@ protocol _opaque_DatabaseContainer: _opaque_ObservableObject {
     func save() async throws
     
     func fetchAllInstances() async throws -> [Any]
-    func destroyAndRebuild() async throws
+    func wipeAndReset() async throws
+}
+
+/// A type-erased database container.
+///
+/// Use this type to propagate a reference to your database container in your SwiftUI hierarchy.
+public class AnyDatabaseContainer: _opaque_DatabaseContainer, ObservableObject, @unchecked Sendable {
+    public var mainContext: AnyDatabaseRecordContext {
+        get throws {
+            fatalError(reason: .abstract)
+        }
+    }
+    
+    public func load() async throws {
+        fatalError(reason: .abstract)
+    }
+    
+    public func save() async throws {
+        fatalError(reason: .abstract)
+    }
+    
+    public func fetchAllInstances() async throws -> [Any] {
+        fatalError(reason: .abstract)
+    }
+    
+    public func wipeAndReset() async throws {
+        fatalError(reason: .abstract)
+    }
 }
 
 /// A container that encapsulates a database stack in your app.
-public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendable, _opaque_DatabaseContainer, ObservableObject
-{
+public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer {
     public let cancellables = Cancellables()
     
     fileprivate let fileManager = FileManager.default
@@ -32,8 +58,8 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
     fileprivate let cloudKitContainerIdentifier: String?
     
     fileprivate var database: _CoreData.Database
-            
-    public var mainContext: AnyDatabaseRecordContext {
+    
+    override public var mainContext: AnyDatabaseRecordContext {
         get throws {
             try database.viewContext.map(AnyDatabaseRecordContext.init).unwrap()
         }
@@ -54,8 +80,8 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
         self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
         
         var databaseState: _CoreData.Database.State?
-
-        if let stateLocation = stateLocation {
+        
+        if let stateLocation = stateLocation, FileManager.default.fileExists(at: stateLocation) {
             databaseState = try? JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
         }
         
@@ -80,7 +106,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
         )
     }
     
-    public func load() async throws {
+    override public func load() async throws {
         _ = try await database.fetchAllAvailableZones()
         
         await MainActor.run {
@@ -88,7 +114,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
         }
     }
     
-    public func save() async throws {
+    override public func save() async throws {
         try await database
             .recordContext(forZones: nil)
             .save()
@@ -100,7 +126,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
         }
     }
     
-    public func fetchAllInstances() throws -> [Any] {
+    override public func fetchAllInstances() async throws -> [Any] {
         var result: [_opaque_Entity] = []
         
         for (name, type) in schema.entityNameToTypeMap {
@@ -119,7 +145,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: @unchecked Sendabl
     }
     
     @MainActor
-    public func destroyAndRebuild() async throws {
+    override public func wipeAndReset() async throws {
         objectWillChange.send()
         
         try await database.delete()
@@ -146,8 +172,8 @@ extension View {
     ///
     /// - Parameters:
     ///   - container: The database container to attach.
-    public func databaseContainer<Schema>(
-        _ container: DatabaseContainer<Schema>
+    public func databaseContainer(
+        _ container: AnyDatabaseContainer
     ) -> some View {
         modifier(AttachDatabaseContainer(container: container))
     }
@@ -166,40 +192,5 @@ extension Dictionary where Key == CodingUserInfoKey, Value == Any {
         } set {
             self[._SwiftDB_PersistentContainer] = newValue
         }
-    }
-}
-
-struct AttachDatabaseContainer<Schema: SwiftDB.Schema>: ViewModifier {
-    @ObservedObject var container: DatabaseContainer<Schema>
-    
-    @State private var hasAttemptedInitialization: Bool = false
-    
-    func body(content: Content) -> some View {
-        if let mainContext = try? container.mainContext {
-            content
-                .databaseRecordContext(mainContext)
-                .environmentObject(container)
-        } else {
-            ZeroSizeView().onAppear {
-                initializeContainerIfNecessary()
-            }
-            .background {
-                PerformAction {
-                    initializeContainerIfNecessary()
-                }
-            }
-        }
-    }
-    
-    private func initializeContainerIfNecessary() {
-        guard !hasAttemptedInitialization else {
-            return
-        }
-        
-        Task(priority: .userInitiated) {
-            try await container.load()
-        }
-        
-        hasAttemptedInitialization = true
     }
 }

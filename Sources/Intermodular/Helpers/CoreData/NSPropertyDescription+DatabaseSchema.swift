@@ -7,13 +7,13 @@ import FoundationX
 import Runtime
 import Swallow
 
-extension AnyProtocol where Self: NSPropertyDescription {
-    public init(from property: DatabaseSchema.Entity.Property) throws {
-        switch property {
+extension DatabaseSchema.Entity.Property {
+    public func toNSPropertyDescription() throws -> NSPropertyDescription {
+        switch self {
             case let attribute as DatabaseSchema.Entity.Attribute:
-                self = try cast(NSAttributeDescription(attribute), to: Self.self)
+                return try NSAttributeDescription(attribute)
             case let relationship as DatabaseSchema.Entity.Relationship:
-                self = try cast(NSRelationshipDescription(relationship), to: Self.self)
+                return try NSRelationshipDescription(relationship)
             default:
                 throw EmptyError()
         }
