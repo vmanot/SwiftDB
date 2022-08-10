@@ -76,14 +76,14 @@ extension _CoreData {
             }
             
             try createFoldersIfNecessary()
-                        
+            
             self.nsPersistentContainer = .init(
                 name: configuration.name,
                 managedObjectModel: try schema.map({ try .init($0) })
             )
             
-            Task { @MainActor in
-                try await loadPersistentStoresIfNeeded()
+            if configuration.location != nil {
+                self.nsPersistentContainer.persistentStoreDescriptions = []
             }
         }
         
@@ -107,9 +107,9 @@ extension _CoreData {
             guard nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty else {
                 return
             }
-
+            
             try createFoldersIfNecessary()
-
+            
             try await nsPersistentContainer.loadPersistentStores()
             
             nsPersistentContainer.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
@@ -132,6 +132,10 @@ extension _CoreData {
             if let sqliteStoreURL = sqliteStoreURL {
                 let storeDescription = NSPersistentStoreDescription(url: sqliteStoreURL)
                 
+                storeDescription.shouldInferMappingModelAutomatically = true
+                storeDescription.shouldMigrateStoreAutomatically = true
+                storeDescription.type = NSSQLiteStoreType
+
                 nsPersistentContainer.persistentStoreDescriptions = [storeDescription]
             }
             
@@ -156,7 +160,7 @@ extension _CoreData.Database {
     
     @discardableResult
     public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
-        Task {
+        Task { @MainActor in
             try await loadPersistentStoresIfNeeded()
             
             return nsPersistentContainer
@@ -202,7 +206,7 @@ extension _CoreData.Database {
             }
             
             try nsPersistentContainer.persistentStoreCoordinator.destroyAll()
-                        
+            
             try deleteAllStoreFiles()
             
             self.nsPersistentContainer = NSPersistentContainer(

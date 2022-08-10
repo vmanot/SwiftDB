@@ -39,6 +39,8 @@ final class _CoreDataTestSuite: XCTestCase {
     }
 
     func testInstanceCreation() async throws {
+        try await database.load()
+        
         let foo = try database.mainContext.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
         
         foo.foo += 100
@@ -51,6 +53,8 @@ final class _CoreDataTestSuite: XCTestCase {
     }
 
     func testEntityWithComplexProperties() async throws {
+        try await database.load()
+
         let noPreviousInstancesExist = try await database.mainContext.first(TestORMSchema.EntityWithComplexProperties.self) == nil
 
         XCTAssert(noPreviousInstancesExist)
@@ -71,6 +75,8 @@ final class _CoreDataTestSuite: XCTestCase {
     }
 
     func testEntityWithDynamicProperties() async throws {
+        try await database.load()
+
         let foo = try database.mainContext.create(TestORMSchema.EntityWithDynamicProperties.self)
         let newFoo = try database.mainContext.create(TestORMSchema.EntityWithDynamicProperties.self)
 
@@ -79,6 +85,8 @@ final class _CoreDataTestSuite: XCTestCase {
     }
 
     func testInstanceRetrieval() async throws {
+        try await database.load()
+
         let foo = try database.mainContext.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
 
         foo.foo += 100
@@ -114,6 +122,8 @@ final class _CoreDataTestSuite: XCTestCase {
     }
     
     func testInstanceDeletion() async throws {
+        try await database.load()
+
         let foo = try database.mainContext.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
         
         foo.foo += 100

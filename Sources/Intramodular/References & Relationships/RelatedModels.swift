@@ -33,7 +33,10 @@ extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
     
     @inlinable
-    public static func decode(from base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws -> Self {
+    public static func decode(
+        from base: _opaque_DatabaseRecord,
+        forKey key: AnyStringKey
+    ) throws -> Self {
         fatalError()
     }
     

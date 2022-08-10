@@ -52,10 +52,14 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
     }
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
-        if let value = value as? NSAttributeCoder {
-            try value.encode(to: base, forKey: AnyCodingKey(key))
+        if let value = value as? _opaque_Entity {
+            let record = try cast(value._underlyingDatabaseRecord.unwrap(), to: _CoreData.DatabaseRecord.self)
+            
+            base.setValue(record.base, forKey: key.stringValue)
+        } else if let value = value as? NSAttributeCoder {
+            try value.encode(to: base, forKey: key)
         } else if let value = value as? Codable {
-            try value.encode(to: self, forKey: AnyCodingKey(key))
+            try value.encode(to: self, forKey: key)
         }
     }
         
@@ -106,6 +110,10 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         } else {
             base.setValue(nil, forKey: key.stringValue)
         }
+    }
+
+    public func relatedRecords(forKey key: CodingKey) async throws -> [_opaque_DatabaseRecord] {
+        try (base.value(forKey: key.stringValue) as? Set<NSManagedObject>).unwrap().map({ _CoreData.DatabaseRecord(base: $0) })
     }
 }
 

@@ -21,7 +21,9 @@ public protocol _opaque_DatabaseRecord: _opaque_Identifiable, _opaque_Observable
     func encode<Value>(_ value: Value, forKey key: CodingKey) throws
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
     
-    func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws 
+    func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws
+
+    func relatedRecords(forKey key: CodingKey) async throws -> [_opaque_DatabaseRecord]
 }
 
 /// A database record.

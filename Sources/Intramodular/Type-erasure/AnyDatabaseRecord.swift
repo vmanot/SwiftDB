@@ -77,4 +77,8 @@ public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject
     public func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
         try base.decode(type, forKey: key)
     }
+
+    public func relatedRecords(forKey key: CodingKey) async throws -> [_opaque_DatabaseRecord] {
+        try await base.relatedRecords(forKey: key)
+    }
 }

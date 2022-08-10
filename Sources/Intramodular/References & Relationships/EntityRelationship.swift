@@ -23,19 +23,24 @@ public final class EntityRelationship<
         case toOne(WritableKeyPath<ValueEntity, InverseValue>)
         case oneToMany(WritableKeyPath<ValueEntity, InverseValue>)
         case manyToMany(WritableKeyPath<ValueEntity, RelatedModels<Parent>>)
+        
+        var entityRelationshipCardinality: DatabaseSchema.Entity.Relationship.Cardinality {
+            switch self {
+                case .toOne:
+                    return .oneToOne
+                case .oneToMany:
+                    return .manyToOne
+                case .manyToMany:
+                    return .manyToMany
+            }
+        }
     }
     
     var underlyingRecord: _opaque_DatabaseRecord?
     
     var name: String?
-    var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration = .init(isOptional: false)
-    var relationshipConfiguration: DatabaseSchema.Entity.RelationshipConfiguration = .init(
-        destinationEntityName: "",
-        inverseRelationshipName: nil,
-        cardinality: .oneToOne,
-        deleteRule: nil,
-        isOrdered: false
-    )
+    var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration = .init(isOptional: true)
+    var relationshipConfiguration: DatabaseSchema.Entity.RelationshipConfiguration
     
     let inverse: InverseKeyPath
     let deleteRule: NSDeleteRule?
@@ -46,13 +51,17 @@ public final class EntityRelationship<
         Value.self is _opaque_Optional.Type
     }
     
+    var isInitialized: Bool {
+        underlyingRecord != nil
+    }
+    
     public var wrappedValue: Value {
         get {
-            do {
-                return try Value.decode(from: underlyingRecord.unwrap(), forKey: .init(stringValue: name.unwrap()))
-            } catch {
+            guard isInitialized else {
                 return .init(noRelatedModels: ())
             }
+            
+            return try! Value.decode(from: underlyingRecord.unwrap(), forKey: .init(stringValue: name.unwrap()))
         } set {
             defer {
                 _runtimeMetadata.wrappedValue_didSet_token = UUID()
@@ -70,10 +79,18 @@ public final class EntityRelationship<
     ) {
         self.inverse = inverse
         self.deleteRule = deleteRule
+        
+        self.relationshipConfiguration = DatabaseSchema.Entity.RelationshipConfiguration(
+            destinationEntityName: ValueEntity.name,
+            inverseRelationshipName: InverseValueEntity.name,
+            cardinality: inverse.entityRelationshipCardinality,
+            deleteRule: nil,
+            isOrdered: false
+        )
     }
     
     func initialize(with underlyingRecord: _opaque_DatabaseRecord) {
-        
+        self.underlyingRecord = underlyingRecord
     }
 }
 

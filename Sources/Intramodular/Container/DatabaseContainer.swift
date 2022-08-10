@@ -15,7 +15,7 @@ protocol _opaque_DatabaseContainer: _opaque_ObservableObject {
     func save() async throws
     
     func fetchAllInstances() async throws -> [Any]
-    func wipeAndReset() async throws
+    func reset() async throws
 }
 
 /// A type-erased database container.
@@ -40,7 +40,7 @@ public class AnyDatabaseContainer: _opaque_DatabaseContainer, ObservableObject, 
         fatalError(reason: .abstract)
     }
     
-    public func wipeAndReset() async throws {
+    public func reset() async throws {
         fatalError(reason: .abstract)
     }
 }
@@ -109,6 +109,10 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     override public func load() async throws {
         _ = try await database.fetchAllAvailableZones()
         
+        let mainContext = try? self.mainContext
+        
+        assert(mainContext != nil)
+        
         await MainActor.run {
             objectWillChange.send()
         }
@@ -145,7 +149,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     }
     
     @MainActor
-    override public func wipeAndReset() async throws {
+    override public func reset() async throws {
         objectWillChange.send()
         
         try await database.delete()
@@ -160,8 +164,6 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             ),
             state: .init()
         )
-        
-        try await load()
     }
 }
 

@@ -101,6 +101,10 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     public func setReference(_ reference: Reference?, forKey key: CodingKey) throws  {
         base.setValue(reference?.ckReference, forKey: key.stringValue)
     }
+
+    public func relatedRecords(forKey key: CodingKey) async throws -> [_opaque_DatabaseRecord] {
+        TODO.unimplemented
+    }
 }
 
 extension _CloudKit.DatabaseRecord: Identifiable {
