@@ -189,6 +189,8 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
             return result
         } else if let typeDescriptionHint = typeDescriptionHint {
             return typeDescriptionHint
+        } else if let type = _runtime_wrappedValueType as? TransformableDatabaseEntityAttributeType.Type {
+            return type.toSchemaAttributeType()
         } else if let type = _runtime_wrappedValueType as? NSSecureCoding.Type {
             return .transformable(class: type, transformerName: "NSSecureUnarchiveFromData")
         } else if let type = _runtime_wrappedValueType as? NSCoding.Type {
@@ -220,5 +222,15 @@ public final class Attribute<Value>: _opaque_EntityPropertyAccessor, EntityPrope
         )
 
         assignedInitialValue = defaultValue
+    }
+}
+
+protocol TransformableDatabaseEntityAttributeType {
+    static func toSchemaAttributeType() -> DatabaseSchema.Entity.AttributeType
+}
+ 
+extension Array: TransformableDatabaseEntityAttributeType {
+    static func toSchemaAttributeType() -> DatabaseSchema.Entity.AttributeType {
+        .transformable(className: "NSArray", transformerName: "NSSecureUnarchiveFromData")
     }
 }
