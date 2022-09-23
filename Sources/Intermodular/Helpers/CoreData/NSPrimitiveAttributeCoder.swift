@@ -13,7 +13,7 @@ public protocol NSPrimitiveAttributeCoder: NSAttributeCoder {
 // MARK: - Implementation -
 
 extension NSPrimitiveAttributeCoder {
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
         try cast(object.primitiveValue(forKey: key.stringValue), to: Self.self)
     }
     
@@ -97,8 +97,8 @@ extension Character: NSPrimitiveAttributeCoder {
         String.toNSAttributeType()
     }
     
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
-        try .init(String.decodePrimitive(from: object, forKey: key))
+    public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+        try .init(String.primitivelyDecode(from: object, forKey: key))
     }
 
     public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {

@@ -8,7 +8,7 @@ import Swallow
 
 /// A CoreData attribute coder.
 public protocol NSAttributeCoder {
-    static func decodePrimitive<Key: CodingKey>(from _: NSManagedObject, forKey _: Key) throws -> Self
+    static func primitivelyDecode<Key: CodingKey>(from _: NSManagedObject, forKey _: Key) throws -> Self
     static func decode<Key: CodingKey>(from _: KeyValueCoder, forKey _: Key) throws -> Self
     
     func primitivelyEncode<Key: CodingKey>(to _: NSManagedObject, forKey _: Key) throws
@@ -22,7 +22,7 @@ public protocol NSAttributeCoder {
 // MARK: - Implementation -
 
 extension NSAttributeCoder {
-    public static func decodePrimitive<Key: CodingKey>(
+    public static func primitivelyDecode<Key: CodingKey>(
         from object: NSManagedObject,
         forKey key: Key,
         defaultValue: @autoclosure () -> Self
@@ -35,7 +35,7 @@ extension NSAttributeCoder {
             return defaultValue
         }
         
-        return try decodePrimitive(from: object, forKey: key)
+        return try primitivelyDecode(from: object, forKey: key)
     }
     
     public static func decode<Key: CodingKey>(
@@ -62,11 +62,11 @@ extension NSAttributeCoder {
 // MARK: - Conditional Conformance -
 
 extension Optional: NSAttributeCoder where Wrapped: NSAttributeCoder {
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
         if object.primitiveValue(forKey: key.stringValue) == nil {
             return .none
         } else {
-            return try Wrapped.decodePrimitive(from: object, forKey: key)
+            return try Wrapped.primitivelyDecode(from: object, forKey: key)
         }
     }
     
@@ -114,8 +114,8 @@ extension Optional: NSAttributeCoder where Wrapped: NSAttributeCoder {
 }
 
 extension RawRepresentable where RawValue: NSAttributeCoder, Self: NSAttributeCoder {
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
-        try Self(rawValue: try RawValue.decodePrimitive(from: object, forKey: key)).unwrap()
+    public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+        try Self(rawValue: try RawValue.primitivelyDecode(from: object, forKey: key)).unwrap()
     }
     
     public static func decode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
@@ -140,8 +140,8 @@ extension RawRepresentable where RawValue: NSAttributeCoder, Self: NSAttributeCo
 }
 
 extension Wrapper where Value: NSAttributeCoder, Self: NSAttributeCoder {
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
-        Self(try Value.decodePrimitive(from: object, forKey: key))
+    public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+        Self(try Value.primitivelyDecode(from: object, forKey: key))
     }
     
     public static func decode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
@@ -164,7 +164,7 @@ extension Wrapper where Value: NSAttributeCoder, Self: NSAttributeCoder {
 // MARK: - Conformances -
 
 extension NSObject: NSAttributeCoder {
-    public static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
         try cast(object.primitiveValue(forKey: key.stringValue), to: Self.self)
     }
     

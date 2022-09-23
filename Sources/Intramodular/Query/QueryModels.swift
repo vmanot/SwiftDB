@@ -11,7 +11,9 @@ import Merge
 /// A property wrapper type that makes fetch requests and retrieves the results from a database.
 @propertyWrapper
 public struct QueryModels<Model: Entity>: DynamicProperty {
-    @Environment(\.databaseRecordContext) var databaseRecordContext: AnyDatabaseRecordContext!
+    public typealias WrappedValue = QueryRequest<Model>.Output.Results
+    
+    @Environment(\.databaseRecordContext) var databaseRecordContext
     
     private let queryRequest: QueryRequest<Model>
     private let transaction: Transaction?
@@ -19,7 +21,7 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
     
     @StateObject private var coordinator = RequestOutputCoordinator()
     
-    public var wrappedValue: QueryRequest<Model>.Output.Results {
+    public var wrappedValue: WrappedValue {
         guard let output = coordinator.output else {
             return []
         }
@@ -31,20 +33,8 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
         self
     }
     
-    public func remove(atOffsets offsets: IndexSet) {
-        TODO.whole(.optimize)
-        
-        Task { @MainActor in
-            for item in offsets.map({ wrappedValue[$0] }) {
-                try await databaseRecordContext.delete(item)
-            }
-            
-            try await databaseRecordContext.save()
-        }
-    }
-    
     public mutating func update() {
-        if databaseRecordContext != nil, coordinator._databaseRecordContext == nil {
+        if databaseRecordContext !== AnyDatabaseRecordContext.invalid, coordinator._databaseRecordContext == nil {
             coordinator.queryRequest = queryRequest
             coordinator._databaseRecordContext = databaseRecordContext
             
@@ -91,9 +81,24 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
 }
 
 extension QueryModels {
-    fileprivate class RequestOutputCoordinator: ObservableObject, @unchecked Sendable {
+    public func remove(atOffsets offsets: IndexSet) {
+        TODO.whole(.optimize)
+        
+        Task { @MainActor in
+            for item in offsets.map({ wrappedValue[$0] }) {
+                try databaseRecordContext.delete(item)
+            }
+            
+            try await databaseRecordContext.save()
+        }
+    }
+}
+
+// MARK: - Auxiliary Implementation -
+
+extension QueryModels {
+    fileprivate class RequestOutputCoordinator: Loggable, ObservableObject, @unchecked Sendable {
         private lazy var cancellables = Cancellables()
-        private lazy var logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "QueryModels.RequestOutputCoordinator<\(String(describing: Model.self))>")
         
         var queryRequest: QueryRequest<Model>!
         var _databaseRecordContext: _opaque_DatabaseRecordContext! {
@@ -114,18 +119,22 @@ extension QueryModels {
         @Published var output: QueryRequest<Model>.Output?
         
         init() {
-            
+            logger.dumpToConsole = true
         }
         
         func runQuery() {
             Task { @MainActor in
-                let queryTask = _databaseRecordContext.execute(queryRequest)
-                
-                try Task.checkCancellation()
-                
-                queryTask.start()
-                
-                self.output = try await queryTask.value
+                do {
+                    let queryTask = _databaseRecordContext.execute(queryRequest)
+                    
+                    try Task.checkCancellation()
+                    
+                    queryTask.start()
+                    
+                    self.output = try await queryTask.value
+                } catch {
+                    logger.error(error)
+                }
             }
         }
     }

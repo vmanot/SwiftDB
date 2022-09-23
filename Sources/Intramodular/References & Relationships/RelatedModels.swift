@@ -14,33 +14,43 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     }
     
     @usableFromInline
-    var base: [_opaque_DatabaseRecord]
+    var base: AnyDatabaseRecordRelationship
     
-    public init(base: [_opaque_DatabaseRecord]) {
+    public init(base: AnyDatabaseRecordRelationship) {
         self.base = base
     }
     
     public init(noRelatedModels: Void) {
-        self.base = .init()
+        self.base = .init(base: NoDatabaseRecordRelationship<AnyDatabaseRecord>())
     }
     
     public func makeIterator() -> AnyIterator<Model> {
-        AnyIterator(base.lazy.map({ try! Model(_underlyingDatabaseRecord: $0) }).makeIterator()) // FIXME!!!
+        do {
+            return AnyIterator(try base.all().map({ try Model(from: $0) }).makeIterator())
+        } catch {
+            assertionFailure()
+            
+            return AnyIterator<Model>(EmptyCollection<Element>.Iterator())
+        }
+    }
+}
+
+extension RelatedModels: CustomStringConvertible {
+    public var description: String {
+        Array(self).description
     }
 }
 
 extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
     
-    @inlinable
     public static func decode(
         from base: _opaque_DatabaseRecord,
         forKey key: AnyStringKey
     ) throws -> Self {
-        fatalError()
+        self.init(base: AnyDatabaseRecordRelationship(base: try base._opaque_relationship(forKey: key)))
     }
     
-    @inlinable
     public func encode(to base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws {
         fatalError()
     }
@@ -51,17 +61,42 @@ extension RelatedModels: EntityRelatable {
 }
 
 extension RelatedModels {
-    public mutating func insert(_ model: Model) {
-        base.insert(try! model._underlyingDatabaseRecord.unwrap())
+    public func insert(_ model: Model) {
+        do {
+            try base.insert(AnyDatabaseRecord(base: model._underlyingDatabaseRecord!))
+        } catch {
+            assertionFailure()
+        }
     }
     
-    public mutating func remove(_ model: Model) {
-        base.removeAll(where: {
-            try! $0._opaque_id == model._underlyingDatabaseRecord.unwrap()._opaque_id
-        })
+    public func remove(_ model: Model) {
+        do {
+            try base.remove(AnyDatabaseRecord(base: model._underlyingDatabaseRecord.unwrap()))
+        } catch {
+            assertionFailure()
+        }
+    }
+        
+    @discardableResult
+    public func remove(at offsets: IndexSet) -> AnySequence<Model> {
+        let models = self.models(at: offsets)
+        
+        for model in models {
+            do {
+                try base.remove(AnyDatabaseRecord(from: model))
+            } catch {
+                assertionFailure()
+            }
+        }
+        
+        return models
     }
     
-    public mutating func set<S: Sequence>(_ models: S) where S.Element == Model {
-        base = models.map({ try! $0._underlyingDatabaseRecord.unwrap() })
+    // MARK: Internal
+    
+    private func models(at offsets: IndexSet) -> AnySequence<Model> {
+        let models = Array(self)
+        
+        return AnySequence(offsets.map({ models[$0] }))
     }
 }

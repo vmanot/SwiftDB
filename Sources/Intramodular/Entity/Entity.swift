@@ -25,6 +25,6 @@ extension Entity {
 
 extension Entity {
     public func toPredicateExpressionPrimitive() -> PredicateExpressionPrimitive {
-        (_underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base
+        (_underlyingDatabaseRecord as! _CoreData.DatabaseRecord).rawObject
     }
 }

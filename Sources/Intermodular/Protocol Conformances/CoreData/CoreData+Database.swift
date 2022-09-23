@@ -8,19 +8,10 @@ import Foundation
 import Merge
 import Swallow
 
-public class EnclosedEvolutionMigrationPolicy: NSEntityMigrationPolicy {
-    public override func createDestinationInstances(
-        forSource sInstance: NSManagedObject,
-        in mapping: NSEntityMapping,
-        manager: NSMigrationManager
-    ) throws {
-        
-    }
-}
-
 extension _CoreData {
     public final class Database: CancellablesHolder, SwiftDB.Database, ObservableObject {
         private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
+        private let setupTasksQueue = AsyncTaskQueue()
         
         enum ConfigurationError: Error {
             case customLocationPathExtensionMissing
@@ -82,9 +73,7 @@ extension _CoreData {
                 managedObjectModel: try schema.map({ try .init($0) })
             )
             
-            if configuration.location != nil {
-                self.nsPersistentContainer.persistentStoreDescriptions = []
-            }
+            try setupPersistentStoreDescription()
         }
         
         private func createFoldersIfNecessary() throws {
@@ -102,7 +91,7 @@ extension _CoreData {
         }
         
         private func loadPersistentStoresIfNeeded() async throws {
-            try await setupPersistentStoreDescription()
+            try setupPersistentStoreDescription()
             
             guard nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty else {
                 return
@@ -124,7 +113,12 @@ extension _CoreData {
             objectWillChange.send()
         }
         
-        private func setupPersistentStoreDescription() async throws {
+        private func setupPersistentStoreDescription() throws {
+            // Clear default store descriptions if an explicit location has been provided.
+            if configuration.location != nil {
+                nsPersistentContainer.persistentStoreDescriptions = []
+            }
+            
             guard nsPersistentContainer.persistentStoreDescriptions.isEmpty else {
                 return
             }
@@ -161,7 +155,9 @@ extension _CoreData.Database {
     @discardableResult
     public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
         Task { @MainActor in
-            try await loadPersistentStoresIfNeeded()
+            try await setupTasksQueue.perform {
+                try await self.loadPersistentStoresIfNeeded()
+            }
             
             return nsPersistentContainer
                 .persistentStoreCoordinator

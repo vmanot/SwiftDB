@@ -17,7 +17,7 @@ extension _CoreData.DatabaseRecord {
         }
         
         public var zoneID: RecordContext.Zone.ID {
-            nsManagedObject.objectID.persistentStore!.identifier
+            _CoreData.Database.Zone(persistentStore: nsManagedObject.objectID.persistentStore!).id
         }
         
         init(managedObject: NSManagedObject) {

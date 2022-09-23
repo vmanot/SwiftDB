@@ -24,14 +24,14 @@ public final class EntityRelationship<
         case oneToMany(WritableKeyPath<ValueEntity, InverseValue>)
         case manyToMany(WritableKeyPath<ValueEntity, RelatedModels<Parent>>)
         
-        var entityRelationshipCardinality: DatabaseSchema.Entity.Relationship.Cardinality {
+        var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
             switch self {
                 case .toOne:
-                    return .oneToOne
+                    return .one
                 case .oneToMany:
-                    return .manyToOne
+                    return .many
                 case .manyToMany:
-                    return .manyToMany
+                    return .many
             }
         }
     }
@@ -57,6 +57,8 @@ public final class EntityRelationship<
     
     public var wrappedValue: Value {
         get {
+            _runtimeMetadata.wrappedValueAccessToken = UUID()
+
             guard isInitialized else {
                 return .init(noRelatedModels: ())
             }
@@ -82,8 +84,11 @@ public final class EntityRelationship<
         
         self.relationshipConfiguration = DatabaseSchema.Entity.RelationshipConfiguration(
             destinationEntityName: ValueEntity.name,
-            inverseRelationshipName: InverseValueEntity.name,
-            cardinality: inverse.entityRelationshipCardinality,
+            inverseRelationshipName: nil,
+            cardinality: .init(
+                source: inverse.entityCardinality,
+                destination: Value.entityCardinality
+            ),
             deleteRule: nil,
             isOrdered: false
         )
@@ -160,7 +165,11 @@ extension EntityRelationship {
     }
     
     public func schema() -> DatabaseSchema.Entity.Property {
-        DatabaseSchema.Entity.Relationship(
+        var relationshipConfiguration = self.relationshipConfiguration
+        
+        relationshipConfiguration.inverseRelationshipName = try! _runtime_findInverse()?.name
+
+        return DatabaseSchema.Entity.Relationship(
             name: name!,
             propertyConfiguration: propertyConfiguration,
             relationshipConfiguration: relationshipConfiguration

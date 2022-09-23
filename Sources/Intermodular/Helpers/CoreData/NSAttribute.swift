@@ -69,7 +69,7 @@ struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Loggable {
         self.value = value
     }
     
-    static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
         .init(try ObjectDecoder().decode(T.self, from: object.primitiveValue(forKey: key.stringValue).unwrap()))
     }
     
@@ -117,7 +117,7 @@ struct _OptionalCodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
         self.value = value
     }
     
-    static func decodePrimitive<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
         guard let primitiveValue = object.primitiveValue(forKey: key.stringValue) else {
             return .init(nil)
         }

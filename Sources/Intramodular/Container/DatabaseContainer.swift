@@ -2,6 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Diagnostics
 import CoreData
 import Merge
 import Swallow
@@ -21,12 +22,28 @@ protocol _opaque_DatabaseContainer: _opaque_ObservableObject {
 /// A type-erased database container.
 ///
 /// Use this type to propagate a reference to your database container in your SwiftUI hierarchy.
-public class AnyDatabaseContainer: _opaque_DatabaseContainer, ObservableObject, @unchecked Sendable {
+public class AnyDatabaseContainer: _opaque_DatabaseContainer, CustomReflectable, Loggable, ObservableObject, @unchecked Sendable {
+    public enum Status: String, CustomStringConvertible {
+        case uninitialized
+        case initialized
+        case migrationRequired
+        
+        public var description: String {
+            rawValue
+        }
+    }
+    
     public var mainContext: AnyDatabaseRecordContext {
         get throws {
             fatalError(reason: .abstract)
         }
     }
+    
+    public var customMirror: Mirror {
+        Mirror(self, children: [])
+    }
+    
+    @Published fileprivate(set) public var status: Status = .uninitialized
     
     public func load() async throws {
         fatalError(reason: .abstract)
@@ -49,20 +66,38 @@ public class AnyDatabaseContainer: _opaque_DatabaseContainer, ObservableObject, 
 public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer {
     public let cancellables = Cancellables()
     
+    public let name: String
+    public let schema: DatabaseSchema
+    
     fileprivate let fileManager = FileManager.default
-    fileprivate let name: String
-    fileprivate let schema: DatabaseSchema
+    
     fileprivate let location: URL?
     fileprivate let stateLocation: URL?
     fileprivate let applicationGroupID: String?
     fileprivate let cloudKitContainerIdentifier: String?
     
-    fileprivate var database: _CoreData.Database
+    fileprivate var database: _CoreData.Database!
     
     override public var mainContext: AnyDatabaseRecordContext {
         get throws {
             try database.viewContext.map(AnyDatabaseRecordContext.init).unwrap()
         }
+    }
+    
+    public override var customMirror: Mirror {
+        Mirror(self, children: [
+            "status": status,
+            "name": name,
+            "schema": schema,
+            "location": location as Any,
+            "stateLocation": stateLocation as Any,
+            "applicationGroupID": applicationGroupID as Any,
+            "cloudKitContainerIdentifier": cloudKitContainerIdentifier as Any
+        ])
+    }
+    
+    enum Ops: LoggableOperation {
+        case readAndRestoreDatabaseState
     }
     
     public init(
@@ -75,14 +110,20 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
         self.name = name
         self.schema = try DatabaseSchema(schema)
         self.location = location
-        self.stateLocation = location?.appendingPathComponent(name, conformingTo: .fileURL).appendingPathExtension(DatabaseStateFileFormat.pathExtension)
+        self.stateLocation = location?.deletingLastPathComponent().appendingPathComponent(name, conformingTo: .fileURL).appendingPathExtension(DatabaseStateFileFormat.pathExtension)
         self.applicationGroupID = applicationGroupID
         self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
         
-        var databaseState: _CoreData.Database.State?
+        var existingDBState: _CoreData.Database.State?
+        
+        super.init()
+        
+        logger.dumpToConsole = true
         
         if let stateLocation = stateLocation, FileManager.default.fileExists(at: stateLocation) {
-            databaseState = try? JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
+            _ = try? logger.log(Ops.readAndRestoreDatabaseState) {
+                existingDBState = try JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
+            }
         }
         
         self.database = try _CoreData.Database(
@@ -93,8 +134,12 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
                 applicationGroupID: applicationGroupID,
                 cloudKitContainerIdentifier: cloudKitContainerIdentifier
             ),
-            state: databaseState
+            state: existingDBState
         )
+        
+        if existingDBState == nil {
+            saveState()
+        }
     }
     
     public convenience init(name: String, schema: Schema) throws {
@@ -106,15 +151,43 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
         )
     }
     
+    @MainActor
     override public func load() async throws {
-        _ = try await database.fetchAllAvailableZones()
+        do {
+            guard status != .initialized else {
+                return
+            }
+            
+            do {
+                try await performMigrationCheck()
+                
+                saveState()
+            } catch {
+                print(error)
+            }
+            
+            _ = try await database.fetchAllAvailableZones()
+            
+            let mainContext = try? self.mainContext
+            
+            assert(mainContext != nil)
+            
+            status = .initialized
+        } catch {
+            logger.error(error)
+            
+            throw error
+        }
+    }
+    
+    @MainActor
+    private func performMigrationCheck() async throws {
+        let migrationCheck = try await database.performMigrationCheck()
         
-        let mainContext = try? self.mainContext
-        
-        assert(mainContext != nil)
-        
-        await MainActor.run {
-            objectWillChange.send()
+        guard migrationCheck.zonesToMigrate.isEmpty else {
+            status = .migrationRequired
+            
+            return
         }
     }
     
@@ -123,11 +196,16 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             .recordContext(forZones: nil)
             .save()
         
+        saveState()
+    }
+    
+    private func saveState() {
         Task.detached(priority: .userInitiated) { @MainActor in
             if let stateLocation = self.stateLocation {
                 try JSONEncoder().encode(self.database.state).write(to: stateLocation)
             }
         }
+        .logger(logger)
     }
     
     override public func fetchAllInstances() async throws -> [Any] {
@@ -138,7 +216,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
                 .fetch(NSFetchRequest<NSManagedObject>(entityName: name))
                 .map {
                     try type.value.init(
-                        _underlyingDatabaseRecord: _CoreData.DatabaseRecord(base: $0)
+                        _underlyingDatabaseRecord: _CoreData.DatabaseRecord(rawObject: $0)
                     )
                 }
             
@@ -167,19 +245,6 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     }
 }
 
-extension View {
-    /// Attaches a database container to this view.
-    ///
-    /// The view is disabled until the database container is initialized. This is intentionally done to prevent invalid access to an uninitialized database container.
-    ///
-    /// - Parameters:
-    ///   - container: The database container to attach.
-    public func databaseContainer(
-        _ container: AnyDatabaseContainer
-    ) -> some View {
-        modifier(AttachDatabaseContainer(container: container))
-    }
-}
 
 // MARK: - Auxiliary Implementation -
 

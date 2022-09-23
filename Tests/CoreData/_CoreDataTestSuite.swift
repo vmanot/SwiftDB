@@ -132,3 +132,30 @@ final class _CoreDataTestSuite: XCTestCase {
         try await database.mainContext.save()
     }
 }
+
+@available(iOS 15.0, *)
+extension _CoreDataTestSuite {
+    func testRelationships() async throws {
+        try await database.load()
+        
+        let schemaEntity = try database.schema.entity(forModelType: TestORMSchema.ChildParentEntity.self).unwrap()
+        
+        guard let property = schemaEntity.properties.first(where: { $0.name == "parent" }) as? DatabaseSchema.Entity.Relationship else {
+            XCTFail()
+            return
+        }
+        
+        print(property.relationshipConfiguration.cardinality)
+        XCTAssert(property.relationshipConfiguration.cardinality == .manyToOne)
+        
+        let parent = try database.mainContext.create(TestORMSchema.ChildParentEntity.self)
+        
+        for _ in 0..<10 {
+            let child = try database.mainContext.create(TestORMSchema.ChildParentEntity.self)
+            
+            parent.children.insert(child)
+        }
+        
+        XCTAssert(Array(parent.children).count == 10)
+    }
+}

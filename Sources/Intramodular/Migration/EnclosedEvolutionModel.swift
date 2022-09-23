@@ -20,7 +20,6 @@ public protocol EnclosedEvolutionMigratableModel: EnclosedEvolutionModel {
     static func migrate(from previous: PreviousVersion) -> Self
 }
 
-
 /// An enclosed evolution entity that establishes a migration step between a previous version of its model and itself.
 public protocol EnclosedEvolutionMigratableEntity {
     associatedtype PreviousVersion: EnclosedEvolutionModel

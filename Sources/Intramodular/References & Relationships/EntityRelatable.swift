@@ -67,8 +67,15 @@ extension Optional: _opaque_EntityRelatable where Wrapped: _opaque_EntityRelatab
 extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     public typealias RelatableEntityType = Wrapped.RelatableEntityType
     
-    public static func decode(from base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws -> Optional<Wrapped> {
-        fatalError()
+    public static func decode(
+        from base: _opaque_DatabaseRecord,
+        forKey key: AnyStringKey
+    ) throws -> Optional<Wrapped> {
+        if base.containsValue(forKey: key) {
+            return try base.decode(Wrapped.self, forKey: key)
+        } else {
+            return nil
+        }
     }
     
     public func encode(to base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws {

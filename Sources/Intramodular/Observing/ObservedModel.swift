@@ -20,7 +20,7 @@ public struct ObservedModel<Model: Entity>: DynamicProperty {
     }
     
     public init(wrappedValue: Model) {
-        self._underlyingDatabaseRecord = (wrappedValue._underlyingDatabaseRecord as! _CoreData.DatabaseRecord).base
+        self._underlyingDatabaseRecord = (wrappedValue._underlyingDatabaseRecord as! _CoreData.DatabaseRecord).rawObject
         self._wrappedValue = .init(wrappedValue: wrappedValue)
     }
 }

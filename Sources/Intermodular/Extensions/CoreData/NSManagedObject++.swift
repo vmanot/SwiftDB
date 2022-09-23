@@ -46,3 +46,10 @@ extension NSObjectProtocol where Self: NSManagedObject {
         }
     }
 }
+
+extension NSManagedObject {
+    @nonobjc
+    public func refreshAndMerge() {
+        self.managedObjectContext?.refresh(self, mergeChanges: true)
+    }
+}

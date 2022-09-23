@@ -6,9 +6,9 @@ import Swallow
 import Merge
 
 public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
-    public static var invalid: AnyDatabaseRecordContext {
-        .init(baseBox: _InvalidDatabaseRecordContextBox())
-    }
+    public static let invalid: AnyDatabaseRecordContext = {
+        AnyDatabaseRecordContext(baseBox: _InvalidDatabaseRecordContextBox())
+    }()
     
     public typealias Zone = AnyDatabaseZone
     public typealias Record = AnyDatabaseRecord

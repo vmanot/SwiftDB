@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CloudKit
 import Swallow
 
 public protocol _opaque_DatabaseRecordReference: _opaque_Hashable {

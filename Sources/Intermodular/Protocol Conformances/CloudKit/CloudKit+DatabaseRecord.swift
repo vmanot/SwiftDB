@@ -57,6 +57,10 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         base.setValue(value, forKey: key.stringValue)
     }
     
+    public func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws {
+        base.setValue(value, forKey: key.stringValue)
+    }
+    
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         if let value = value as? NSAttributeCoder {
             try value.encode(to: base, forKey: AnyCodingKey(key))
@@ -80,6 +84,10 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
 
     fileprivate enum DecodingError: Error {
         case some
+    }
+    
+    public func unsafeDecodeValue(forKey key: CodingKey) -> Any? {
+        base.value(forKey: key.stringValue)
     }
     
     public func decode<Value>(_ valueType: Value.Type, forKey key: CodingKey) throws -> Value {

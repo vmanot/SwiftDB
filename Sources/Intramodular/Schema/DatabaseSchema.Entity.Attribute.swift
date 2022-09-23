@@ -28,6 +28,7 @@ extension DatabaseSchema.Entity {
             self.attributeConfiguration = attributeConfiguration
             
             super.init(
+                type: .attribute,
                 name: name,
                 propertyConfiguration: propertyConfiguration
             )
@@ -42,6 +43,8 @@ extension DatabaseSchema.Entity {
         }
         
         public override func encode(to encoder: Encoder) throws {
+            try super.encode(to: encoder)
+
             var container = encoder.container(keyedBy: CodingKeys.self)
             
             try container.encode(attributeConfiguration, forKey: .attributeConfiguration)

@@ -13,6 +13,7 @@ struct TestORMSchema: Schema {
         EntityWithOptionalProperties.self
         EntityWithComplexProperties.self
         EntityWithDynamicProperties.self
+        ChildParentEntity.self
     }
 }
 
@@ -62,6 +63,17 @@ extension TestORMSchema {
 
         required init() {
 
+        }
+    }
+    
+    struct ChildParentEntity: Identifiable, Entity {
+        @Attribute var id: UUID = UUID()
+        
+        @Relationship(inverse: \ChildParentEntity.children) var parent: ChildParentEntity?
+        @Relationship(inverse: \ChildParentEntity.parent) var children: RelatedModels<ChildParentEntity>
+        
+        init() {
+            
         }
     }
 }

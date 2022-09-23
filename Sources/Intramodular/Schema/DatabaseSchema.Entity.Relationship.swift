@@ -9,11 +9,11 @@ import Swift
 
 extension DatabaseSchema.Entity {
     public struct RelationshipConfiguration: Codable, Hashable {
-        let destinationEntityName: String?
-        let inverseRelationshipName: String?
-        let cardinality: DatabaseSchema.Entity.Relationship.Cardinality
-        let deleteRule: NSDeleteRule?
-        let isOrdered: Bool
+        public var destinationEntityName: String?
+        public var inverseRelationshipName: String?
+        public var cardinality: DatabaseSchema.Entity.Relationship.Cardinality
+        public var deleteRule: NSDeleteRule?
+        public var isOrdered: Bool
     }
     
     public final class Relationship: DatabaseSchema.Entity.Property {
@@ -31,6 +31,7 @@ extension DatabaseSchema.Entity {
             self.relationshipConfiguration = relationshipConfiguration
             
             super.init(
+                type: .relationship,
                 name: name,
                 propertyConfiguration: propertyConfiguration
             )
@@ -45,6 +46,8 @@ extension DatabaseSchema.Entity {
         }
         
         public override func encode(to encoder: Encoder) throws {
+            try super.encode(to: encoder)
+            
             var container = encoder.container(keyedBy: CodingKeys.self)
             
             try container.encode(relationshipConfiguration, forKey: .relationshipConfiguration)
@@ -64,7 +67,7 @@ extension DatabaseSchema.Entity.Relationship {
         case many
     }
     
-    public enum Cardinality: Codable, CustomStringConvertible {
+    public enum Cardinality: String, Codable, CustomStringConvertible {
         case oneToOne
         case oneToMany
         case manyToOne
@@ -90,7 +93,7 @@ extension DatabaseSchema.Entity.Relationship {
                 case (.one, .many):
                     self = .oneToMany
                 case (.many, .one):
-                    self = .oneToMany
+                    self = .manyToOne
                 case (.many, .many):
                     self = .manyToMany
             }

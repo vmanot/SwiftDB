@@ -71,6 +71,7 @@ extension NSRelationshipDescription {
         name = description.name
         isOptional = try description.propertyConfiguration.isOptional.unwrap()
         isTransient = description.propertyConfiguration.isTransient
+        isOrdered = true
         
         destinationEntityName = description.relationshipConfiguration.destinationEntityName
         inverseRelationshipName = description.relationshipConfiguration.inverseRelationshipName

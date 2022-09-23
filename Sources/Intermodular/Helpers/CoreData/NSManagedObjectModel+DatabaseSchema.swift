@@ -35,7 +35,7 @@ extension NSManagedObjectModel {
         for (name, entity) in nameToEntityMap {
             if let children = parentNameToChildrenMap[name] {
                 entity.subentities = children.map {
-                    $0.then {
+                    $0.withMutableScope {
                         $0.parent = entity
                     }
                 }

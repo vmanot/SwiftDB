@@ -72,14 +72,14 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         context: RecordCreateContext
     ) throws -> Record {
         let object = Record(
-            base: NSEntityDescription.insertNewObject(
+            rawObject: NSEntityDescription.insertNewObject(
                 forEntityName: configuration.recordType.rawValue,
                 into: nsManagedObjectContext
             )
         )
         
         if let zone = configuration.zone {
-            nsManagedObjectContext.assign(object.base, to: zone.persistentStore)
+            nsManagedObjectContext.assign(object.rawObject, to: zone.persistentStore)
         }
         
         return object
@@ -88,7 +88,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public func instantiate<Model: Entity>(_ type: Model.Type, from record: Record) throws -> Model {
         let schema = try self.parent.unwrap().schema
         
-        if let entityType = schema.entityNameToTypeMap[record.base.entity.name]?.value {
+        if let entityType = schema.entityNameToTypeMap[record.rawObject.entity.name]?.value {
             return try cast(entityType.init(_underlyingDatabaseRecord: record), to: Model.self)
         } else {
             assertionFailure()
@@ -104,15 +104,15 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func recordID(from record: Record) throws -> RecordID {
-        .init(managedObjectID: record.base.objectID)
+        .init(managedObjectID: record.rawObject.objectID)
     }
     
     public func zone(for object: Record) throws -> Zone? {
-        object.base.objectID.persistentStore.map({ Zone(persistentStore: $0) })
+        object.rawObject.objectID.persistentStore.map({ Zone(persistentStore: $0) })
     }
     
     public func delete(_ object: Record) throws {
-        nsManagedObjectContext.delete(object.base)
+        nsManagedObjectContext.delete(object.rawObject)
     }
     
     public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
@@ -122,7 +122,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                     try await nsManagedObjectContext.perform { [nsManagedObjectContext] in
                         try nsManagedObjectContext
                             .fetch(try request.toNSFetchRequest(context: self))
-                            .map({ Record(base: $0) })
+                            .map({ Record(rawObject: $0) })
                     }
                 }
                 .publisher()
@@ -141,7 +141,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                 do {
                     try fetchedResultsController.performFetch()
                     
-                    attemptToFulfill(.success(ZoneQueryRequest.Result(records: fetchedResultsController.fetchedObjects?.map({ Record(base: $0) }))))
+                    attemptToFulfill(.success(ZoneQueryRequest.Result(records: fetchedResultsController.fetchedObjects?.map({ Record(rawObject: $0) }))))
                 } catch {
                     attemptToFulfill(.failure(error))
                 }
@@ -221,7 +221,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
 
 fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.DatabaseRecordContext {
     init(conflict: NSMergeConflict) {
-        self.source = .init(base: conflict.sourceObject)
+        self.source = .init(rawObject: conflict.sourceObject)
     }
 }
 
@@ -248,7 +248,7 @@ fileprivate extension DatabaseZoneQueryRequest where Context == _CoreData.Databa
         }
         
         result.sortDescriptors = self.sortDescriptors.map({ $0.map({ $0 as NSSortDescriptor }) })
-        result.affectedStores = context.affectedStores?.filter({ (self.filters.zones?.contains($0.identifier) ?? false) })
+        result.affectedStores = context.affectedStores?.filter({ (self.filters.zones?.contains(_CoreData.Database.Zone(persistentStore: $0).id) ?? false) })
         result.includesSubentities = filters.includesSubentities
         
         if let cursor = cursor {
