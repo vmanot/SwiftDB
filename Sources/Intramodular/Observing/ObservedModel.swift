@@ -11,7 +11,7 @@ import SwiftUIX
 @propertyWrapper
 public struct ObservedModel<Model: Entity>: DynamicProperty {
     @usableFromInline
-    @ObservedObject var _underlyingDatabaseRecord: NSManagedObject
+    @ObservedObject var _underlyingDatabaseRecord: AnyDatabaseRecord
     
     @State public var wrappedValue: Model
     
@@ -20,7 +20,7 @@ public struct ObservedModel<Model: Entity>: DynamicProperty {
     }
     
     public init(wrappedValue: Model) {
-        self._underlyingDatabaseRecord = (wrappedValue._underlyingDatabaseRecord as! _CoreData.DatabaseRecord).rawObject
+        self._underlyingDatabaseRecord = wrappedValue._underlyingDatabaseRecord!
         self._wrappedValue = .init(wrappedValue: wrappedValue)
     }
 }

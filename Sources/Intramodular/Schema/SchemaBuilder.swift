@@ -7,7 +7,7 @@ import Swift
 
 @resultBuilder
 public final class SchemaBuilder {
-    public typealias Element = _opaque_Entity.Type
+    public typealias Element = any Entity.Type
     
     public static func buildBlock() -> [Element] {
         []

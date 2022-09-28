@@ -19,6 +19,10 @@ extension _CoreData {
 }
 
 extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
+    public var recordType: _CoreData.DatabaseRecord.RecordType {
+        .init(rawValue: rawObject.entity.name!) // FIXME
+    }
+    
     public var id: ID {
         ID(managedObjectID: rawObject.objectID)
     }
@@ -58,13 +62,13 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         
         rawObject.setPrimitiveValue(value, forKey: key)
     }
-
+    
     public func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
         rawObject.setValue(value, forKey: key.stringValue)
     }
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
-        if let value = value as? _opaque_Entity {
+        if let value = value as? any Entity {
             let record = try cast(value._underlyingDatabaseRecord.unwrap(), to: _CoreData.DatabaseRecord.self)
             
             try unsafeEncodeValue(record.rawObject, forKey: key)
@@ -74,7 +78,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
             try value.encode(to: self, forKey: key)
         }
     }
-        
+    
     public func unsafeDecodeValue(forKey key: CodingKey) throws -> Any? {
         let key = key.stringValue
         
@@ -91,8 +95,10 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         _ valueType: Value.Type,
         forKey key: CodingKey
     ) throws -> Value {
-        if let valueType = valueType as? _opaque_Entity.Type {
-            return try cast(valueType.init(_underlyingDatabaseRecord: _CoreData.DatabaseRecord(rawObject: try cast(unsafeDecodeValue(forKey: key), to: NSManagedObject.self))), to: Value.self)
+        if let valueType = valueType as? any SwiftDB.Entity.Type {
+            let value = _CoreData.DatabaseRecord(rawObject: try cast(unsafeDecodeValue(forKey: key), to: NSManagedObject.self))
+            
+            return try cast(valueType.init(from: .init(erasing: value)), to: Value.self)
         } else if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
             return try valueType.decode(from: rawObject, forKey: key) as! Value
         } else if let valueType = valueType as? NSAttributeCoder.Type {
@@ -139,11 +145,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
             rawObject.setValue(nil, forKey: key.stringValue)
         }
     }
-
-    public func relatedRecords(forKey key: CodingKey) async throws -> [_opaque_DatabaseRecord] {
-        try (rawObject.value(forKey: key.stringValue) as? Set<NSManagedObject>).unwrap().map({ _CoreData.DatabaseRecord(rawObject: $0) })
-    }
-    
+        
     public func relationship(for key: CodingKey) throws -> Relationship {
         Relationship(record: self, key: key)
     }

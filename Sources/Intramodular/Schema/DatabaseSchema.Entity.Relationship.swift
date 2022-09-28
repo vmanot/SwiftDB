@@ -9,7 +9,7 @@ import Swift
 
 extension DatabaseSchema.Entity {
     public struct RelationshipConfiguration: Codable, Hashable {
-        public var destinationEntityName: String?
+        public var destinationEntity: DatabaseSchema.Entity.ID?
         public var inverseRelationshipName: String?
         public var cardinality: DatabaseSchema.Entity.Relationship.Cardinality
         public var deleteRule: NSDeleteRule?

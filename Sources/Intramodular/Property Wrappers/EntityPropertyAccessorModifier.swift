@@ -27,8 +27,8 @@ extension EntityPropertyAccessorModifier {
     }
 }
 
-extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _opaque_EntityPropertyAccessor {
-    var _runtimeMetadata: _opaque_EntityPropertyAccessorRuntimeMetadata {
+extension EntityPropertyAccessorModifier  {
+    public var _runtimeMetadata: _opaque_EntityPropertyAccessorRuntimeMetadata {
         get {
             base._runtimeMetadata
         } set {
@@ -36,7 +36,7 @@ extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _opaq
         }
     }
 
-    var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration {
+    public var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration {
         get {
             base.propertyConfiguration
         } set {
@@ -44,7 +44,7 @@ extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _opaq
         }
     }
     
-    var underlyingRecord: _opaque_DatabaseRecord? {
+    public var underlyingRecord: AnyDatabaseRecord? {
         get {
             base.underlyingRecord
         } set {
@@ -52,7 +52,7 @@ extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _opaq
         }
     }
     
-    var name: String? {
+    public var name: String? {
         get {
             base.name
         } set {
@@ -60,11 +60,11 @@ extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _opaq
         }
     }
         
-    func schema() throws -> DatabaseSchema.Entity.Property {
+    public func schema() throws -> DatabaseSchema.Entity.Property {
         try base.schema()
     }
     
-    func initialize(with underlyingRecord: _opaque_DatabaseRecord) throws {
+    public func initialize(with underlyingRecord: AnyDatabaseRecord) throws {
         try base.initialize(with: underlyingRecord)
     }
 }
@@ -112,6 +112,3 @@ public final class RenamingIdentifier<EntityPropertyAccessorType: EntityProperty
     }
 }
 
-extension RenamingIdentifier: _opaque_EntityPropertyAccessor where EntityPropertyAccessorType: _opaque_EntityPropertyAccessor {
-    
-}

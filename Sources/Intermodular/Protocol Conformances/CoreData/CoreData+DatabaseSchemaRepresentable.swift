@@ -11,9 +11,3 @@ extension NSManagedObjectModel: DatabaseSchemaRepresentable {
         fatalError()
     }
 }
-
-extension NSManagedObject {
-    var _SwiftDB_databaseSchema: DatabaseSchema? {
-        managedObjectContext?.persistentStoreCoordinator?._SwiftDB_databaseSchema
-    }
-}

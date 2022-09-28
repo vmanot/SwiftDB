@@ -7,76 +7,70 @@ import Runtime
 import Swallow
 import SwiftUI
 
-public protocol KeyPathIterable {
-    static var keyPaths: [PartialKeyPath<Self>] { get }
-}
-
-public struct EntityID: KeyPathIterable {
-    public let name: String
-    public let className: String?
-    public let persistentTypeIdentifier: String
-    
-    public static var keyPaths: [PartialKeyPath<Self>] {
-        [\.name, \.className, \.persistentTypeIdentifier]
-    }
-}
-
 /// A type-erased description of a `Schema`.
-public struct DatabaseSchema:  Hashable, Sendable, Versioned {
+public struct DatabaseSchema: Hashable, Sendable, Versioned {
     public var version: Version? = "0.0.1"
     
     public let entities: IdentifierIndexedArray<Entity, Entity.ID>
     
-    var entityNameToTypeMap = BidirectionalMap<String,  Metatype<_opaque_Entity.Type>>()
-    var entityToTypeMap = BidirectionalMap<Entity, Metatype<_opaque_Entity.Type>>()
+    private var entityTypesByName = BidirectionalMap<String,  Metatype<any SwiftDB.Entity.Type>>()
+    private var entityTypesByEntityID = BidirectionalMap<Entity.ID, Metatype<any SwiftDB.Entity.Type>>()
     
-    public init(entities: [Entity: Metatype<_opaque_Entity.Type>]) {
-        self.entities = .init(entities.keys.sorted())
+    public init(entities: [DatabaseSchema.Entity]) throws {
+        self.entities = .init(entities.sorted(by: \.name))
         
-        for (entity, entityType) in entities {
-            entityNameToTypeMap[entity.name] = .init(entityType)
-            entityToTypeMap[entity] = .init(entityType)
+        for entity in entities {
+            let metatype = Metatype(try cast(entity.typeIdentity.resolveType(), to: any SwiftDB.Entity.Type.self))
+            
+            entityTypesByName[entity.name] = metatype
+            entityTypesByEntityID[entity.id] = metatype
         }
     }
     
     public init(_ schema: Schema) throws {
-        let metatypesByEntity = Dictionary(
-            try schema
-                .body
-                .map({ try Entity(from: $0) })
-                .zip(schema.body.lazy.map({ Metatype($0) }))
-                .lazy
-                .map({ (key: $0.0, value: $0.1) })
-        )
+        let partialEntitiesByID = Dictionary(try schema.body.map({ (key: try Entity.ID(from: $0), value: try KeyedValuesOf<Entity>(from: $0)) }), uniquingKeysWith: { lhs, rhs in lhs })
         
-        let entitiesByID: [DatabaseSchema.Entity.ID: [DatabaseSchema.Entity]] = metatypesByEntity.keys.group(by: \.id)
         var entitySubentityRelationshipsByID: [DatabaseSchema.Entity.ID: Set<DatabaseSchema.Entity.ID>] = [:]
         
-        for (id, possiblyDuplicatedEntities) in entitiesByID {
+        for (id, entity) in partialEntitiesByID {
             entitySubentityRelationshipsByID[id] ??= []
             
-            for entity in possiblyDuplicatedEntities {
-                if let parentEntityID = entity.parent?.id {
-                    entitySubentityRelationshipsByID[parentEntityID, default: []].insert(entity.id)
-                }
+            if let parentEntityID = try entity.value(for: \.parent) {
+                entitySubentityRelationshipsByID[parentEntityID, default: []].insert(id)
             }
         }
         
-        self.init(entities: metatypesByEntity)
+        // FIXME: Subentities are discarded. Need to create a directed graph from `entitySubentityRelationshipsByID` and traverse it (see https://stackoverflow.com/questions/45460653/given-a-flat-list-of-parent-child-create-a-hierarchical-dictionary-tree).
+        
+        let entities = try partialEntitiesByID.values.map({ partial in
+            var partial = partial
+            
+            partial.subentities = [] // FIXME
+            
+            return try Entity(from: partial)
+        })
+        
+        try self.init(entities: entities)
     }
     
-    func entity<Model>(forModelType modelType: Model.Type) -> Entity? {
-        guard let type = modelType as? _opaque_Entity.Type else {
+    public subscript(_ entityID: DatabaseSchema.Entity.ID) -> DatabaseSchema.Entity? {
+        entities[id: entityID]
+    }
+    
+    func entity(forModelType modelType: Any.Type) -> Entity? {
+        guard let type = modelType as? any SwiftDB.Entity.Type else {
             return nil
         }
         
-        return entityToTypeMap[Metatype(type)]
+        return entityTypesByEntityID[Metatype(type)].flatMap({ self[$0] })
     }
-}
-
-public struct TreeParentChildRelationshipsByID<ID> {
-    public init(ids: [ID]) {
-        
+    
+    func entityType(for entity: Entity.ID) throws -> any (SwiftDB.Entity).Type {
+        do {
+            return try cast(try entityTypesByEntityID[entity].unwrap().value)
+        } catch {
+            throw Error.failedToResolveEntityTypeForID(entity)
+        }
     }
 }
 
@@ -103,20 +97,26 @@ extension DatabaseSchema: Codable {
     }
 }
 
-// MARK: - Helpers -
 
-extension DatabaseSchema.Entity {
-    fileprivate init(from type: _opaque_Entity.Type) throws {
-        let instance = try type.init(_underlyingDatabaseRecord: nil)
+// MARK: - Auxiliary Implementation -
+
+extension DatabaseSchema {
+    private enum Error: Swift.Error {
+        case failedToResolveEntityTypeForID(Entity.ID)
+    }
+}
+
+fileprivate extension KeyedValuesOf where Wrapped == DatabaseSchema.Entity {
+    /// Extracts values required to construct an entity schema from an entity type.
+    init(from type: _opaque_Entity.Type) throws {
+        // Create an uninitialized instance.
+        let instance = try type.init(from: nil)
         
-        self.init(
-            parent: try type._opaque_ParentEntity.map { parentType in
-                try DatabaseSchema.Entity(from: parentType)
-            },
-            name: type.name,
-            className: type.underlyingDatabaseRecordClass.name,
-            subentities: .unknown,
-            properties: try instance._runtime_propertyAccessors.map({ try $0.schema() })
-        )
+        self.init()
+        
+        self.parent = try type._opaque_ParentEntity.map({ parentType in try DatabaseSchema.Entity.ID(from: parentType) })
+        self.name = String(describing: type)
+        self.typeIdentity = .init(from: type)
+        self.properties = try instance._runtime_propertyAccessors.map({ try $0.schema() })
     }
 }

@@ -7,6 +7,7 @@ import Swift
 
 /// A type-erased database.
 public final class AnyDatabase: Database {
+    public typealias SchemaAdaptor = AnyDatabaseSchemaAdaptor
     public typealias RecordContext = AnyDatabaseRecordContext
     public typealias Zone = AnyDatabaseZone
 
@@ -20,6 +21,10 @@ public final class AnyDatabase: Database {
         baseBox.id
     }
 
+    public var capabilities: [DatabaseCapability] {
+        baseBox.capabilities
+    }
+
     public var configuration: Configuration {
         baseBox.configuration
     }
@@ -28,10 +33,10 @@ public final class AnyDatabase: Database {
         baseBox.state
     }
 
-    public var capabilities: [DatabaseCapability] {
-        baseBox.capabilities
+    public var context: Context {
+        baseBox.context
     }
-
+    
     public init<D: Database>(_ database: D) {
         self.baseBox = _AnyDatabaseBox(database)
     }
@@ -89,7 +94,6 @@ extension AnyDatabase {
         }
     }
 
-
     public struct State: Codable, Equatable {
         let base: AnyCodable?
 
@@ -118,6 +122,10 @@ class _AnyDatabaseBoxBase {
         fatalError()
     }
 
+    var capabilities: [DatabaseCapability] {
+        fatalError()
+    }
+    
     var configuration: AnyDatabase.Configuration {
         fatalError()
     }
@@ -126,10 +134,10 @@ class _AnyDatabaseBoxBase {
         fatalError()
     }
 
-    var capabilities: [DatabaseCapability] {
+    var context: AnyDatabase.Context {
         fatalError()
     }
-
+    
     func fetchAllAvailableZones() -> AnyTask<[AnyDatabaseZone], Error> {
         fatalError()
     }
@@ -158,6 +166,10 @@ final class _AnyDatabaseBox<Base: Database>: _AnyDatabaseBoxBase {
         .init(base: base.id)
     }
 
+    override var capabilities: [DatabaseCapability] {
+        base.capabilities
+    }
+
     override var configuration: AnyDatabase.Configuration {
         .init(base: base.configuration)
     }
@@ -166,8 +178,8 @@ final class _AnyDatabaseBox<Base: Database>: _AnyDatabaseBoxBase {
         .init(base: base.state)
     }
 
-    override var capabilities: [DatabaseCapability] {
-        base.capabilities
+    override var context: AnyDatabase.Context {
+        base.context.eraseToAnyDatabaseContext()
     }
 
     init(_ base: Base) {

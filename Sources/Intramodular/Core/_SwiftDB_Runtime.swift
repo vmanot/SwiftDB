@@ -7,7 +7,7 @@ import Runtime
 import Swallow
 
 public protocol _SwiftDB_Runtime: Sendable {
-    func metatype(forEntityNamed: String) -> Metatype<_opaque_Entity.Type>?
+    func metatype(forEntityNamed: String) -> Metatype<any Entity.Type>?
     
     func convertEntityKeyPathToString(_ keyPath: AnyKeyPath) throws -> String
 }
@@ -16,21 +16,21 @@ public protocol _SwiftDB_Runtime: Sendable {
 
 public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendable {
     struct TypeCache: Hashable {
-        var entity: [String: Metatype<_opaque_Entity.Type>] = [:]
+        var entity: [String: Metatype<any Entity.Type>] = [:]
     }
     
     var typeCache = TypeCache()
-    var entityCacheMap: [Metatype<_opaque_Entity.Type>: EntityCache] = [:]
+    var entityCacheMap: [Metatype<any Entity.Type>: EntityCache] = [:]
 
-    public init(schema: DatabaseSchema?) {
+    public init(schema: DatabaseSchema?) throws {
         if let schema = schema {
-            for entity in schema.entityToTypeMap.values  {
-                _ = self.entityCache(for: entity.value)
+            for entity in schema.entities {
+                _ = try self.entityCache(for: schema.entityType(for: entity.id))
             }
         }
     }
     
-    public func metatype(forEntityNamed name: String) -> Metatype<_opaque_Entity.Type>? {
+    public func metatype(forEntityNamed name: String) -> Metatype<any Entity.Type>? {
         typeCache.entity[name]
     }
     
@@ -39,7 +39,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
         let entityType: _opaque_Entity.Type
         var fieldNameToKeyPathMap: [String: AnyKeyPath] = [:]
         
-        lazy var prototype: _opaque_Entity = try! entityType.init(_underlyingDatabaseRecord: nil)
+        lazy var prototype: _opaque_Entity = try! entityType.init(from: nil)
         
         init(entityType: _opaque_Entity.Type) {
             self.entityType = entityType
@@ -51,7 +51,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
             }
             
             let valueType = try type(of: cast(keyPath, to: _opaque_KeyPathType.self))._opaque_ValueType
-            let prototype = try entityType.init(_underlyingDatabaseRecord: nil)
+            let prototype = try entityType.init(from: nil)
             
             func _accessKeyPath<T>(_ instance: T) throws  {
                 let keyPath = try cast(keyPath, to: PartialKeyPath<T>.self)
@@ -73,7 +73,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
         }
     }
     
-    public func entityCache(for entityType: _opaque_Entity.Type) -> EntityCache {
+    public func entityCache(for entityType: any Entity.Type) -> EntityCache {
         if let result = entityCacheMap[.init(entityType)] {
             return result
         } else {
@@ -88,7 +88,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
     
     public func convertEntityKeyPathToString(_ keyPath: AnyKeyPath) throws -> String {
         let rootType = try type(of: cast(keyPath, to: _opaque_PartialKeyPathType.self))._opaque_RootType
-        let entityType = try cast(rootType, to: _opaque_Entity.Type.self)
+        let entityType = try cast(rootType, to: any Entity.Type.self)
         
         return try entityCache(for: entityType)._getFieldNameForKeyPath(keyPath)
     }

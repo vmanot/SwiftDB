@@ -12,41 +12,16 @@ extension _CoreData {
     public final class Database: CancellablesHolder, SwiftDB.Database, ObservableObject {
         private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
         private let setupTasksQueue = AsyncTaskQueue()
-        
-        enum ConfigurationError: Error {
-            case customLocationPathExtensionMissing
-        }
-        
-        public struct Configuration: Codable, Sendable {
-            public let name: String
-            public let location: URL?
-            public let applicationGroupID: String?
-            public let cloudKitContainerIdentifier: String?
-            
-            public init(
-                name: String,
-                location: URL?,
-                applicationGroupID: String?,
-                cloudKitContainerIdentifier: String?
-            ) {
-                self.name = name
-                self.location = location
-                self.applicationGroupID = applicationGroupID
-                self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
-            }
-        }
-        
-        public struct State: Codable, Equatable, Sendable {
-            var lastKnownSchema: DatabaseSchema?
-        }
-        
+                        
+        public typealias SchemaAdaptor = DatabaseSchemaAdaptor
         public typealias RecordContext = _CoreData.DatabaseRecordContext
         
-        let runtime: _SwiftDB_Runtime
         let schema: DatabaseSchema
         
         public let configuration: Configuration
         public var state: State
+        public let context: Context
+         
         public var viewContext: DatabaseRecordContext?
         
         public var nsPersistentContainer: NSPersistentContainer!
@@ -57,14 +32,10 @@ extension _CoreData {
             configuration: Configuration,
             state: State?
         ) throws {
-            self.runtime = runtime
             self.schema = try schema.unwrap()
             self.configuration = configuration
             self.state = state ?? .init()
-            
-            if self.state.lastKnownSchema == nil {
-                self.state.lastKnownSchema = schema
-            }
+            self.context = .init(runtime: runtime, schema: self.schema, schemaAdaptor: .init(schema: self.schema))
             
             try createFoldersIfNecessary()
             
@@ -101,7 +72,6 @@ extension _CoreData {
             
             try await nsPersistentContainer.loadPersistentStores()
             
-            nsPersistentContainer.persistentStoreCoordinator._SwiftDB_databaseSchema = self.schema
             nsPersistentContainer.viewContext.automaticallyMergesChangesFromParent = true
             
             viewContext = DatabaseRecordContext(
@@ -129,7 +99,7 @@ extension _CoreData {
                 storeDescription.shouldInferMappingModelAutomatically = true
                 storeDescription.shouldMigrateStoreAutomatically = true
                 storeDescription.type = NSSQLiteStoreType
-
+                
                 nsPersistentContainer.persistentStoreDescriptions = [storeDescription]
             }
             
@@ -148,6 +118,37 @@ extension _CoreData {
 // MARK: - Conformances -
 
 extension _CoreData.Database {
+    enum ConfigurationError: Error {
+        case customLocationPathExtensionMissing
+    }
+    
+    public struct Configuration: Codable, Sendable {
+        public let name: String
+        public let location: URL?
+        public let applicationGroupID: String?
+        public let cloudKitContainerIdentifier: String?
+        
+        public init(
+            name: String,
+            location: URL?,
+            applicationGroupID: String?,
+            cloudKitContainerIdentifier: String?
+        ) {
+            self.name = name
+            self.location = location
+            self.applicationGroupID = applicationGroupID
+            self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
+        }
+    }
+
+    public struct State: Codable, Equatable, Sendable {
+        public var schemaHistory: DatabaseSchemaHistory
+        
+        public init() {
+            self.schemaHistory = .init()
+        }
+    }
+
     public var capabilities: [DatabaseCapability] {
         []
     }

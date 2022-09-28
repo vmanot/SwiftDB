@@ -63,7 +63,7 @@ extension _CoreData.DatabaseRecord {
             } else {
                 throw Error.unrecognizedRelationshipContainer(setOrArray)
             }
-                        
+            
             record.objectWillChange.send()
         }
         

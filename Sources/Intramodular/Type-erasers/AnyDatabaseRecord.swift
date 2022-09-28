@@ -3,9 +3,9 @@
 //
 
 import Merge
-import Swift
+import Swallow
 
-public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject, DatabaseRecord, Identifiable, ObservableObject {
+public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
     public struct ID: Hashable {
         public let base: AnyHashable
     
@@ -13,41 +13,29 @@ public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject
             self.base = base
         }
     }
-    
-    public struct RecordType: Codable, Hashable, LosslessStringConvertible {
-        public let rawValue: String
         
-        public var description: String {
-            rawValue
-        }
-        
-        public init<T: LosslessStringConvertible>(from value: T) {
-            self.rawValue = value.description
-        }
-        
-        public init(_ description: String) {
-            self.rawValue = description
-        }
-    }
-    
     public typealias Reference = NoDatabaseRecordReference<ID> // FIXME!!!
 
-    let base: _opaque_DatabaseRecord
+    let base: any DatabaseRecord
     
-    public init(base: _opaque_DatabaseRecord) {
+    private init(base: any DatabaseRecord) {
         self.base = base
     }
     
+    public convenience init<Record: DatabaseRecord>(erasing record: Record) {
+        self.init(base: record)
+    }
+    
     public var id: ID {
-        .init(base: base._opaque_id)
+        .init(base: base.id.eraseToAnyHashable())
     }
     
     public var objectWillChange: AnyObjectWillChangePublisher {
-        base._opaque_objectWillChange
+        base.eraseObjectWillChangePublisher()
     }
     
-    public var isInitialized: Bool {
-        base.isInitialized
+    public var recordType: RecordType {
+        .init(erasing: base.recordType)
     }
     
     public var allReservedKeys: [CodingKey] {
@@ -85,26 +73,24 @@ public class AnyDatabaseRecord: _opaque_DatabaseRecord, _opaque_ObservableObject
     public func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
         try base.decode(type, forKey: key)
     }
-
-    public func relatedRecords(forKey key: CodingKey) async throws -> [_opaque_DatabaseRecord] {
-        try await base.relatedRecords(forKey: key)
+    
+    public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
+        try base.setInitialValue(value(), forKey: key)
     }
     
     public func relationship(for key: CodingKey) throws -> AnyDatabaseRecordRelationship {
-        .init(base: try base._opaque_relationship(forKey: key))
+        try base.relationship(for: key).eraseToAnyDatabaseRelationship()
     }
 }
 
 // MARK: - Supplementary API -
 
-extension Entity {
-    public init(from record: AnyDatabaseRecord) throws {
-        try self.init(_underlyingDatabaseRecord: record.base)
-    }
-}
-
 extension AnyDatabaseRecord {
     public convenience init<E: Entity>(from entity: E) throws {
-        try self.init(base: entity._underlyingDatabaseRecord.unwrap())
+        try self.init(base: entity._underlyingDatabaseRecord.unwrap().base)
+    }
+    
+    public func _cast<Record: DatabaseRecord>(to recordType: Record.Type) throws -> Record {
+        try cast(base, to: recordType)
     }
 }

@@ -6,14 +6,14 @@ import XCTest
 
 @testable import SwiftDB
 
-import Filesystem
 import FoundationX
 import Merge
+import System
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 final class _CoreDataTestSuite: XCTestCase {
     public var database: DatabaseContainer<TestORMSchema> = {
-        let tempDir = FilePath.temporaryDirectory()
+        let tempDir = FilePath(URL.temporaryDirectory)!
 
         if FileManager.default.directoryExists(at: tempDir) {
             for suburl in try! FileManager.default.contentsOfDirectory(at: tempDir) {
@@ -133,7 +133,7 @@ final class _CoreDataTestSuite: XCTestCase {
     }
 }
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 extension _CoreDataTestSuite {
     func testRelationships() async throws {
         try await database.load()

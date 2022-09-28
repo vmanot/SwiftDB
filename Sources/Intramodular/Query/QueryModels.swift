@@ -13,7 +13,7 @@ import Merge
 public struct QueryModels<Model: Entity>: DynamicProperty {
     public typealias WrappedValue = QueryRequest<Model>.Output.Results
     
-    @Environment(\.databaseRecordContext) var databaseRecordContext
+    @Environment(\.database) var database
     
     private let queryRequest: QueryRequest<Model>
     private let transaction: Transaction?
@@ -34,9 +34,9 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
     }
     
     public mutating func update() {
-        if databaseRecordContext !== AnyDatabaseRecordContext.invalid, coordinator._databaseRecordContext == nil {
+        if database.isInitialized && coordinator.database == nil {
             coordinator.queryRequest = queryRequest
-            coordinator._databaseRecordContext = databaseRecordContext
+            coordinator.database = database
             
             coordinator.runQuery()
         }
@@ -82,14 +82,10 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
 
 extension QueryModels {
     public func remove(atOffsets offsets: IndexSet) {
-        TODO.whole(.optimize)
-        
-        Task { @MainActor in
+        try! database.transact {
             for item in offsets.map({ wrappedValue[$0] }) {
-                try databaseRecordContext.delete(item)
+                try database.delete(item)
             }
-            
-            try await databaseRecordContext.save()
         }
     }
 }
@@ -101,14 +97,10 @@ extension QueryModels {
         private lazy var cancellables = Cancellables()
         
         var queryRequest: QueryRequest<Model>!
-        var _databaseRecordContext: _opaque_DatabaseRecordContext! {
+        var database: AnyDatabaseAccess! {
             didSet {
-                guard let context = _databaseRecordContext else {
-                    return
-                }
-                
-                context
-                    ._opaque_objectWillChange
+                database
+                    .willChangePublisher()
                     .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main) // FIXME: Hack!!!
                     .sink(in: cancellables) { [unowned self] _ in
                         self.runQuery()
@@ -125,7 +117,7 @@ extension QueryModels {
         func runQuery() {
             Task { @MainActor in
                 do {
-                    let queryTask = _databaseRecordContext.execute(queryRequest)
+                    let queryTask = database.queryExecutionTask(for: queryRequest)
                     
                     try Task.checkCancellation()
                     
@@ -134,6 +126,8 @@ extension QueryModels {
                     self.output = try await queryTask.value
                 } catch {
                     logger.error(error)
+                    
+                    assertionFailure()
                 }
             }
         }

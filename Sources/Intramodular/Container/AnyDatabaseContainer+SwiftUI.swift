@@ -13,19 +13,21 @@ struct AttachDatabaseContainer: ViewModifier {
     @State private var hasAttemptedFirstLoad: Bool = false
     
     func body(content: Content) -> some View {
-        if let mainContext = try? container.mainContext {
-            content
-                .databaseRecordContext(mainContext)
-                .environmentObject(container)
-        } else {
-            if !hasAttemptedFirstLoad {
-                firstLoadView
+        Group {
+            if container.status == .initialized {
+                content
+                    .environmentObject(container)
+                    .environment(\.database, container.mainAccess)
             } else {
-                #if DEBUG
-                if #available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *) {
-                    DiagnosticView(container: container)
+                if !hasAttemptedFirstLoad {
+                    firstLoadView
+                } else {
+                    #if DEBUG
+                    if #available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *) {
+                        DiagnosticView(container: container)
+                    }
+                    #endif
                 }
-                #endif
             }
         }
     }
@@ -67,6 +69,23 @@ extension View {
         _ container: AnyDatabaseContainer
     ) -> some View {
         modifier(AttachDatabaseContainer(container: container))
+    }
+}
+
+// MARK: - Auxiliary Implementation -
+
+extension EnvironmentValues {
+    fileprivate struct AnyDatabaseAccessEnvironmentKey: EnvironmentKey {
+        static let defaultValue: AnyDatabaseAccess = .init(databaseContext: nil, recordContext: nil)
+    }
+    
+    /// The database record context associated with this environment.
+    public fileprivate(set) var database: AnyDatabaseAccess {
+        get {
+            self[AnyDatabaseAccessEnvironmentKey.self]
+        } set {
+            self[AnyDatabaseAccessEnvironmentKey.self] = newValue
+        }
     }
 }
 

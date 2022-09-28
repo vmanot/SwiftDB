@@ -174,6 +174,7 @@ extension _CoreData.Database {
                 entityMapping.entityMigrationPolicyClassName = NSStringFromClass(CustomEntityMigrationPolicy.self)
                 
                 var migrationPolicyConfiguration = CustomEntityMigrationPolicy.Configuration(
+                    schemaMappingModel: mappingModel,
                     sourceEntity: sourceSchemaEntity,
                     destinationEntity: destinationSchemaEntity,
                     transformer: transformer
@@ -236,6 +237,7 @@ extension _CoreData.Database {
 extension _CoreData.Database {
     final class CustomEntityMigrationPolicy: NSEntityMigrationPolicy {
         struct Configuration {
+            let schemaMappingModel: CustomSchemaMappingModel
             let sourceEntity: DatabaseSchema.Entity
             let destinationEntity: DatabaseSchema.Entity
             let transformer: CustomEntityMapping.Transformer
@@ -256,7 +258,7 @@ extension _CoreData.Database {
             
             try configuration.transformer(
                 .init(
-                    source: AnyDatabaseRecord(base: _CoreData.DatabaseRecord(rawObject: sInstance)),
+                    source: AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: sInstance)),
                     createDestination: {
                         if let destinationObject = destinationObject {
                             return destinationObject
@@ -268,9 +270,10 @@ extension _CoreData.Database {
                         )
                         
                         destinationObject = UnsafeRecordMigrationDestination(
+                            schemaMappingModel: configuration.schemaMappingModel,
                             sourceEntity: configuration.sourceEntity,
                             destinationEntity: configuration.destinationEntity,
-                            destination: AnyDatabaseRecord(base: _CoreData.DatabaseRecord(rawObject: nsManagedObject))
+                            destination: AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: nsManagedObject))
                         )
 
                         return destinationObject!

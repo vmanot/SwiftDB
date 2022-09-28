@@ -6,9 +6,9 @@ let package = Package(
     name: "SwiftDB",
     platforms: [
         .iOS(.v14),
-        .macOS(.v11),
-        .tvOS(.v14),
-        .watchOS(.v7)
+        .macOS(.v12),
+        .tvOS(.v15),
+        .watchOS(.v8)
     ],
     products: [
         .library(name: "SwiftDB", targets: ["SwiftDB"])
@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/vmanot/API.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Compute.git", .branch("master")),
-        .package(url: "https://github.com/vmanot/Filesystem.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/CorePersistence.git", .branch("master")),
         .package(url: "https://github.com/vmanot/FoundationX.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Runtime.git", .branch("master")),
@@ -30,7 +30,7 @@ let package = Package(
             dependencies: [
                 "API",
                 "Compute",
-                "Filesystem",
+                "CorePersistence",
                 "FoundationX",
                 "Merge",
                 "Runtime",

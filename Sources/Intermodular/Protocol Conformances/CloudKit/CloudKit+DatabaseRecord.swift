@@ -20,6 +20,8 @@ extension _CloudKit {
             }
         }
         
+        public typealias RecordType = _CloudKit.DatabaseRecordContext.RecordType
+        
         let base: CKRecord
         
         init(ckRecord: CKRecord) {
@@ -33,8 +35,8 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         .init()
     }
 
-    public var isInitialized: Bool {
-        true
+    public var recordType: RecordType {
+        base.recordType
     }
     
     public var allReservedKeys: [CodingKey] {
@@ -108,10 +110,6 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     
     public func setReference(_ reference: Reference?, forKey key: CodingKey) throws  {
         base.setValue(reference?.ckReference, forKey: key.stringValue)
-    }
-
-    public func relatedRecords(forKey key: CodingKey) async throws -> [_opaque_DatabaseRecord] {
-        TODO.unimplemented
     }
 }
 

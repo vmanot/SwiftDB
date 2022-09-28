@@ -97,9 +97,9 @@ extension CustomEntityMapping {
     private static func inferredTransformer(_ args: CustomEntityTransformerArguments) throws -> Void {
         let destinationObject = args.createDestination()
         
-        try destinationObject.enumerateAttributes { (attribute, sourceAttribute) in
-            if let sourceAttribute = sourceAttribute {
-                destinationObject[attribute] = try args.source.unsafeDecodeValue(forKey: AnyStringKey(stringValue: sourceAttribute.name))
+        try destinationObject.enumerateAttributes { attributes in
+            if let sourceAttribute = attributes.sourceAttribute {
+                destinationObject[attributes.attribute] = try args.source.unsafeDecodeValue(forKey: AnyStringKey(stringValue: sourceAttribute.name))
             }
         }
     }

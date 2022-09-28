@@ -6,10 +6,6 @@ import CoreData
 import Runtime
 import Swallow
 
-protocol _opaque_EntityRelationshipAccessor: _opaque_EntityPropertyAccessor {
-    
-}
-
 /// A property accessor for entity relationships.
 @propertyWrapper
 public final class EntityRelationship<
@@ -18,7 +14,7 @@ public final class EntityRelationship<
     ValueEntity: Entity & Identifiable,
     InverseValue: EntityRelatable,
     InverseValueEntity: Entity & Identifiable
->: _opaque_EntityRelationshipAccessor, ObservableObject, PropertyWrapper {
+>: EntityPropertyAccessor, ObservableObject, PropertyWrapper {
     enum InverseKeyPath {
         case toOne(WritableKeyPath<ValueEntity, InverseValue>)
         case oneToMany(WritableKeyPath<ValueEntity, InverseValue>)
@@ -36,16 +32,16 @@ public final class EntityRelationship<
         }
     }
     
-    var underlyingRecord: _opaque_DatabaseRecord?
+    public var underlyingRecord: AnyDatabaseRecord?
     
-    var name: String?
-    var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration = .init(isOptional: true)
-    var relationshipConfiguration: DatabaseSchema.Entity.RelationshipConfiguration
+    public var name: String?
+    public var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration = .init(isOptional: true)
+    public var relationshipConfiguration: DatabaseSchema.Entity.RelationshipConfiguration
     
     let inverse: InverseKeyPath
     let deleteRule: NSDeleteRule?
     
-    var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
+    public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     
     var isOptional: Bool {
         Value.self is _opaque_Optional.Type
@@ -83,7 +79,7 @@ public final class EntityRelationship<
         self.deleteRule = deleteRule
         
         self.relationshipConfiguration = DatabaseSchema.Entity.RelationshipConfiguration(
-            destinationEntityName: ValueEntity.name,
+            destinationEntity: try! DatabaseSchema.Entity.ID(from: ValueEntity.self),
             inverseRelationshipName: nil,
             cardinality: .init(
                 source: inverse.entityCardinality,
@@ -94,7 +90,7 @@ public final class EntityRelationship<
         )
     }
     
-    func initialize(with underlyingRecord: _opaque_DatabaseRecord) {
+    public func initialize(with underlyingRecord: AnyDatabaseRecord) {
         self.underlyingRecord = underlyingRecord
     }
 }
@@ -111,7 +107,7 @@ extension EntityRelationship {
     }
     
     /// This is a hack to get a `String` representation of the `inverse` key path.
-    func _runtime_findInverse() throws -> _opaque_EntityRelationshipAccessor? {
+    func _runtime_findInverse() throws -> (any EntityPropertyAccessor)? {
         let emptyInverseEntity: AnyNominalOrTupleMirror
         
         switch inverse {
@@ -149,7 +145,7 @@ extension EntityRelationship {
         
         // Walk through all properties of the empty inverse instance.
         for (key, value) in emptyInverseEntity.children {
-            if let value = value as? _opaque_EntityRelationshipAccessor {
+            if let value = value as? any EntityPropertyAccessor {
                 // Find the inverse relationship accessor that was "touched".
                 if value._runtimeMetadata.wrappedValue_didSet_token != nil {
                     if value.name == nil {

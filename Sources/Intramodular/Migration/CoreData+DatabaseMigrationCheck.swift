@@ -8,7 +8,7 @@ import Swallow
 
 extension _CoreData.Database {
     public func performMigrationCheck() async throws -> DatabaseMigrationCheck<_CoreData.Database> {
-        let lastKnownSchema = try state.lastKnownSchema.unwrap()
+        let lastUsedSchema = try state.schemaHistory.schemas.last.unwrap()
         
         let configurationName: String? = nil
         let fileURL = try configuration.location.unwrap()
@@ -21,7 +21,7 @@ extension _CoreData.Database {
             ofType: NSSQLiteStoreType,
             at: fileURL,
             withConfigurationName: configurationName,
-            compatibleWithModel: try NSManagedObjectModel(lastKnownSchema)
+            compatibleWithModel: try NSManagedObjectModel(lastUsedSchema)
         ) {
             return .init(zonesToMigrate: [])
         } else {
@@ -37,7 +37,7 @@ extension _CoreData.Database {
     public func migrateOnlyKnownStore(
         strategy: MigrationStrategy
     ) throws {
-        let lastKnownModel = try state.lastKnownSchema.unwrap()
+        let lastUsedSchema = try state.schemaHistory.schemas.last.unwrap()
         let configurationName: String? = nil
         let fileURL = try configuration.location.unwrap()
         
@@ -49,7 +49,7 @@ extension _CoreData.Database {
                     ofType: NSSQLiteStoreType,
                     at: fileURL,
                     withConfigurationName: configurationName,
-                    sourceSchema: lastKnownModel,
+                    sourceSchema: lastUsedSchema,
                     destinationSchema: schema
                 )
         }

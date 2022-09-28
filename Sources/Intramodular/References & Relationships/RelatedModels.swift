@@ -21,7 +21,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     }
     
     public init(noRelatedModels: Void) {
-        self.base = .init(base: NoDatabaseRecordRelationship<AnyDatabaseRecord>())
+        self.base = .init(erasing: NoDatabaseRecordRelationship<AnyDatabaseRecord>())
     }
     
     public func makeIterator() -> AnyIterator<Model> {
@@ -45,13 +45,13 @@ extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
     
     public static func decode(
-        from base: _opaque_DatabaseRecord,
+        from record: AnyDatabaseRecord,
         forKey key: AnyStringKey
     ) throws -> Self {
-        self.init(base: AnyDatabaseRecordRelationship(base: try base._opaque_relationship(forKey: key)))
+        self.init(base: try record.relationship(for: key))
     }
     
-    public func encode(to base: _opaque_DatabaseRecord, forKey key: AnyStringKey) throws {
+    public func encode(to record: AnyDatabaseRecord, forKey key: AnyStringKey) throws {
         fatalError()
     }
     
@@ -63,7 +63,7 @@ extension RelatedModels: EntityRelatable {
 extension RelatedModels {
     public func insert(_ model: Model) {
         do {
-            try base.insert(AnyDatabaseRecord(base: model._underlyingDatabaseRecord!))
+            try base.insert(model._underlyingDatabaseRecord!)
         } catch {
             assertionFailure()
         }
@@ -71,7 +71,7 @@ extension RelatedModels {
     
     public func remove(_ model: Model) {
         do {
-            try base.remove(AnyDatabaseRecord(base: model._underlyingDatabaseRecord.unwrap()))
+            try base.remove(model._underlyingDatabaseRecord!)
         } catch {
             assertionFailure()
         }

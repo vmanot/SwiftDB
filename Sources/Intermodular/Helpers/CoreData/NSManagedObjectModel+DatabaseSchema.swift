@@ -17,11 +17,11 @@ extension NSManagedObjectModel {
         var nameToEntityMap: [String: _SwiftDB_NSEntityDescription] = [:]
         
         for entity in schema.entities {
-            let description = try _SwiftDB_NSEntityDescription(entity)
+            let description = try _SwiftDB_NSEntityDescription(from: entity, in: schema)
             
             nameToEntityMap[entity.name] = description
             
-            if let parent = entity.parent {
+            if let parentID = entity.parent, let parent = schema[parentID] {
                 parentNameToChildrenMap[parent.name, default: []].insert(description)
             }
             
@@ -45,35 +45,25 @@ extension NSManagedObjectModel {
         for entity in nameToEntityMap.values {
             for property in entity.properties {
                 if let property = property as? NSRelationshipDescription {
-                    if let destinationEntityName = property.destinationEntityName {
-                        property.destinationEntity = nameToEntityMap[destinationEntityName]!
-                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
-                        property.destinationEntity = nameToEntityMap[_SwiftDB_propertyDescription.relationshipConfiguration.destinationEntityName]
+                    if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
+                        
+                        let destinationEntityID = try _SwiftDB_propertyDescription.relationshipConfiguration.destinationEntity.unwrap()
+                        let destinationEntity = try schema[destinationEntityID].unwrap()
+                        
+                        property.destinationEntity = nameToEntityMap[destinationEntity.name]
                     } else {
                         assertionFailure()
                     }
                     
-                    if let inverseRelationshipName = property.inverseRelationshipName {
-                        property.inverseRelationship = relationshipNameToRelationship[inverseRelationshipName]
-                    } else if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
+                    if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
                         property.inverseRelationship = _SwiftDB_propertyDescription.relationshipConfiguration.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
+                    } else {
+                        assertionFailure()
                     }
                 }
             }
         }
         
         self.entities = .init(nameToEntityMap.values.lazy.map({ $0 as NSEntityDescription }))
-    }
-}
-
-extension NSPersistentStoreCoordinator {
-    private static let _SwiftDB_databaseSchema_objcAssociationKey = ObjCAssociationKey<DatabaseSchema>()
-    
-    var _SwiftDB_databaseSchema: DatabaseSchema? {
-        get {
-            self[Self._SwiftDB_databaseSchema_objcAssociationKey]
-        } set {
-            self[Self._SwiftDB_databaseSchema_objcAssociationKey] = newValue
-        }
     }
 }

@@ -21,50 +21,33 @@ extension DatabaseSchema.Entity.Property {
 }
 
 extension NSAttributeDescription {
-    public convenience init(_ description: DatabaseSchema.Entity.Attribute) throws {
+    public convenience init(_ attribute: DatabaseSchema.Entity.Attribute) throws {
         self.init()
         
-        renamingIdentifier = description.propertyConfiguration.renamingIdentifier
-        name = description.name
-        isOptional = try description.propertyConfiguration.isOptional.unwrap()
-        isTransient = description.propertyConfiguration.isTransient
-        attributeType = .init(description.attributeConfiguration.type)
+        let nsAttributeType = _SwiftDB_NSAttributeType(from: attribute.attributeConfiguration.type)
         
-        if let attributeValueClassName = description.attributeConfiguration.type.className {
+        renamingIdentifier = attribute.propertyConfiguration.renamingIdentifier
+        name = attribute.name
+        isOptional = try attribute.propertyConfiguration.isOptional.unwrap()
+        isTransient = attribute.propertyConfiguration.isTransient
+        attributeType = nsAttributeType.attributeType
+        
+        if let attributeValueClassName = nsAttributeType.className {
             self.attributeValueClassName = attributeValueClassName
         }
         
-        if let valueTransformerName = description.attributeConfiguration.type.transformerName {
+        if let valueTransformerName = nsAttributeType.transformerName {
             self.valueTransformerName = valueTransformerName
         }
         
-        allowsExternalBinaryDataStorage = description.attributeConfiguration.allowsExternalBinaryDataStorage
-        preservesValueInHistoryOnDeletion = description.attributeConfiguration.preservesValueInHistoryOnDeletion
+        allowsExternalBinaryDataStorage = attribute.attributeConfiguration.allowsExternalBinaryDataStorage
+        preservesValueInHistoryOnDeletion = attribute.attributeConfiguration.preservesValueInHistoryOnDeletion
         
-        defaultValue = description.attributeConfiguration.defaultValue?.cocoaObjectValue()
+        defaultValue = attribute.attributeConfiguration.defaultValue?.cocoaObjectValue()
     }
 }
 
 extension NSRelationshipDescription {
-    private static let destinationEntityNameKey = ObjCAssociationKey<String>()
-    private static let inverseRelationshipName = ObjCAssociationKey<String>()
-    
-    var destinationEntityName: String? {
-        get {
-            self[Self.destinationEntityNameKey]
-        } set {
-            self[Self.destinationEntityNameKey] = newValue
-        }
-    }
-    
-    var inverseRelationshipName: String? {
-        get {
-            self[Self.inverseRelationshipName]
-        } set {
-            self[Self.inverseRelationshipName] = newValue
-        }
-    }
-    
     convenience init(_ description: DatabaseSchema.Entity.Relationship) throws {
         self.init()
         
@@ -72,9 +55,6 @@ extension NSRelationshipDescription {
         isOptional = try description.propertyConfiguration.isOptional.unwrap()
         isTransient = description.propertyConfiguration.isTransient
         isOrdered = true
-        
-        destinationEntityName = description.relationshipConfiguration.destinationEntityName
-        inverseRelationshipName = description.relationshipConfiguration.inverseRelationshipName
         
         switch description.relationshipConfiguration.cardinality {
             case .oneToOne:
@@ -97,8 +77,101 @@ extension NSRelationshipDescription {
     }
 }
 
-extension NSAttributeDescription {
-    convenience init(_ attribute: _opaque_EntityPropertyAccessor) throws {
-        try self.init(try cast(try attribute.schema(), to: DatabaseSchema.Entity.Attribute.self))
+// MARK: - Auxiliary Implementation -
+
+struct _SwiftDB_NSAttributeType {
+    let attributeType: NSAttributeType
+    let className: String?
+    let transformerName: String?
+    
+    init(from type: DatabaseSchema.Entity.AttributeType) {
+        switch type {
+            case .primitive(let type):
+                self.attributeType = NSAttributeType(type)
+                self.className = nil
+                self.transformerName = nil
+            case .array:
+                self.attributeType = .transformableAttributeType
+                self.className = NSStringFromClass(NSArray.self)
+                self.transformerName = "NSSecureUnarchiveFromData"
+            case .dictionary:
+                self.attributeType = .transformableAttributeType
+                self.className = NSStringFromClass(NSDictionary.self)
+                self.transformerName = "NSSecureUnarchiveFromData"
+            case .object:
+                self.attributeType = .transformableAttributeType
+                self.className = NSStringFromClass(NSDictionary.self)
+                self.transformerName = "NSSecureUnarchiveFromData"
+        }
+    }
+}
+
+private extension NSAttributeType {
+    init(_ description: DatabaseSchema.Entity.PrimitiveAttributeType) {
+        switch description {
+            case .integer16:
+                self = .integer16AttributeType
+            case .integer32:
+                self = .integer32AttributeType
+            case .integer64:
+                self = .integer64AttributeType
+            case .decimal:
+                self = .decimalAttributeType
+            case .double:
+                self = .doubleAttributeType
+            case .float:
+                self = .floatAttributeType
+            case .string:
+                self = .stringAttributeType
+            case .boolean:
+                self = .booleanAttributeType
+            case .date:
+                self = .dateAttributeType
+            case .binaryData:
+                self = .binaryDataAttributeType
+            case .UUID:
+                self = .UUIDAttributeType
+            case .URI:
+                self = .URIAttributeType
+        }
+    }
+}
+
+private extension DatabaseSchema.Entity.PrimitiveAttributeType {
+    init?(_ type: NSAttributeType) {
+        switch type {
+            case .undefinedAttributeType:
+                return nil
+            case .integer16AttributeType:
+                self = .integer16
+            case .integer32AttributeType:
+                self = .integer32
+            case .integer64AttributeType:
+                self = .integer64
+            case .decimalAttributeType:
+                self = .decimal
+            case .doubleAttributeType:
+                self = .double
+            case .floatAttributeType:
+                self = .float
+            case .stringAttributeType:
+                self = .string
+            case .booleanAttributeType:
+                self = .boolean
+            case .dateAttributeType:
+                self = .date
+            case .binaryDataAttributeType:
+                self = .binaryData
+            case .UUIDAttributeType:
+                self = .UUID
+            case .URIAttributeType:
+                self = .URI
+            case .transformableAttributeType:
+                return nil
+            case .objectIDAttributeType:
+                return nil
+            @unknown default:
+                return nil
+        }
     }
 }

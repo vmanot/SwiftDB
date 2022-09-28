@@ -9,12 +9,12 @@ import Swallow
 
 extension _CloudKit {
     public final class Database {
-        public let runtime: _SwiftDB_Runtime
         public let schema: DatabaseSchema?
         public let configuration: Configuration
         public let state: State
-
-        internal let base: CKContainer
+        public let context: Context
+        
+        internal let ckContainer: CKContainer
         internal var ckDatabase: CKDatabase
 
         public init(
@@ -23,27 +23,13 @@ extension _CloudKit {
             configuration: Configuration,
             state: State?
         ) throws {
-            self.runtime = runtime
             self.schema = schema
             self.configuration = configuration
             self.state = state ?? .init()
+            self.context = .init(runtime: runtime, schema: try schema.unwrap(), schemaAdaptor: .init())
 
-            self.base = configuration.containerIdentifier.map({ CKContainer(identifier: $0) }) ?? .default()
-
-            self.ckDatabase = try base.database(for: configuration.scope)
-        }
-
-        public init(container: CKContainer, scope: CKDatabase.Scope) throws {
-            self.runtime = _Default_SwiftDB_Runtime(schema: nil)
-            self.schema = nil
-            self.configuration = .init(
-                containerIdentifier: container.containerIdentifier!,
-                scope: scope
-            )
-            self.state = .init()
-
-            self.base = container
-            self.ckDatabase = try base.database(for: scope)
+            self.ckContainer = configuration.containerIdentifier.map({ CKContainer(identifier: $0) }) ?? .default()
+            self.ckDatabase = try ckContainer.database(for: configuration.scope)
         }
     }
 }
@@ -69,6 +55,7 @@ extension _CloudKit.Database {
 }
 
 extension _CloudKit.Database: Database {
+    public typealias SchemaAdaptor = _CloudKit.DatabaseSchemaAdaptor
     public typealias RecordContext = _CloudKit.DatabaseRecordContext
     public typealias Zone = _CloudKit.DatabaseZone
 
@@ -100,7 +87,7 @@ extension _CloudKit.Database: Database {
     }
 
     public func recordContext(forZones zones: [Zone]?) throws -> RecordContext {
-        .init(container: base, database: ckDatabase, zones: try zones.unwrap())
+        .init(parent: self, zones: try zones.unwrap())
     }
 
     public func delete() -> AnyTask<Void, Error> {

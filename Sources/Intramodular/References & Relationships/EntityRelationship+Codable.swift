@@ -23,7 +23,7 @@ extension EntityRelationship {
     }
     
     public func decode(from decoder: Decoder) throws {
-        /*guard let container = decoder.userInfo._SwiftDB_PersistentContainer else {
+        /*guard let container = decoder.userInfo._SwiftDB_DatabaseContainer else {
          fatalError()
          }
          

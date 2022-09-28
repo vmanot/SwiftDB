@@ -7,14 +7,10 @@ import Runtime
 import Swallow
 
 /// A shadow protocol for `Entity`.
-public protocol _opaque_Entity: _opaque_EntityRelatable, _opaque_ObservableObject, Initiable {
+public protocol _opaque_Entity: _opaque_ObservableObject, Initiable {
     static var _opaque_ParentEntity: _opaque_Entity.Type? { get }
-    static var _opaque_ID: Any.Type? { get }
     
-    var _opaque_id: AnyHashable? { get }
-    var _underlyingDatabaseRecord: _opaque_DatabaseRecord? { get }
-
-    static var name: String { get }
+    var _underlyingDatabaseRecord: AnyDatabaseRecord? { get }
 }
 
 extension _opaque_Entity where Self: Entity {
@@ -24,28 +20,19 @@ extension _opaque_Entity where Self: Entity {
 // MARK: - Implementation -
 
 extension _opaque_Entity  {
-    static var underlyingDatabaseRecordClass: ObjCClass {
-        ObjCClass(
-            name: "_SwiftDB_" + name,
-            superclass: nil
-            ?? _opaque_ParentEntity?.underlyingDatabaseRecordClass
-            ?? ObjCClass(NSXManagedObject.self)
-        )
-    }
-    
-    var _runtime_propertyAccessors: [_opaque_EntityPropertyAccessor] {
+    var _runtime_propertyAccessors: [any EntityPropertyAccessor] {
         AnyNominalOrTupleMirror(self)!.allChildren.compactMap { key, value in
-            (value as? _opaque_EntityPropertyAccessor)
+            (value as? any EntityPropertyAccessor)
         }
     }
     
     mutating func _runtime_configurePropertyAccessors(
-        underlyingRecord: _opaque_DatabaseRecord?
+        underlyingRecord: AnyDatabaseRecord?
     ) throws {
         var instance = AnyNominalOrTupleMirror(self)!
         
         for (key, value) in instance.allChildren {
-            if let property = value as? _opaque_EntityPropertyAccessor {
+            if let property = value as? any EntityPropertyAccessor {
                 property.underlyingRecord = underlyingRecord
                 
                 if property.name == nil {
@@ -55,22 +42,22 @@ extension _opaque_Entity  {
                 if let underlyingRecord = underlyingRecord {
                     try property.initialize(with: underlyingRecord)
                 }
-
+                
                 instance[key] = property
             }
         }
         
         self = try cast(instance.value, to: Self.self)
     }
-
-    init(_underlyingDatabaseRecord record: _opaque_DatabaseRecord?) throws {
+    
+    init(from record: AnyDatabaseRecord?) throws {
         self.init()
-
+        
         try _runtime_configurePropertyAccessors(underlyingRecord: record)
         
         if let record = record, type(of: self) is AnyObject.Type {
             record
-                ._opaque_objectWillChange
+                .objectWillChange
                 .publish(to: self)
                 .subscribe(in: record.cancellables)
         }
@@ -91,16 +78,16 @@ extension _opaque_Entity where Self: Entity {
     }
     
     public var _opaque_objectWillChange: AnyObjectWillChangePublisher {
-        _underlyingDatabaseRecord?._opaque_objectWillChange ?? .empty
+        _underlyingDatabaseRecord?.objectWillChange ?? .empty
     }
     
     public func _opaque_objectWillChange_send() throws {
         
     }
     
-    public var _underlyingDatabaseRecord: _opaque_DatabaseRecord? {
+    public var _underlyingDatabaseRecord: AnyDatabaseRecord? {
         for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
-            if let value = value as? _opaque_EntityPropertyAccessor {
+            if let value = value as? any EntityPropertyAccessor {
                 return value.underlyingRecord
             }
         }

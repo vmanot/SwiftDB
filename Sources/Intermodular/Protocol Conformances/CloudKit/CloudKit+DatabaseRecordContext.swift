@@ -14,15 +14,20 @@ extension _CloudKit {
         
         var records: [CKRecord.ID: CKRecord?] = [:]
         
-        init(container: CKContainer?, database: CKDatabase, zones: [Zone]) {
-            self.ckContainer = container
-            self.ckDatabase = database
+        public let databaseContext: DatabaseContext
+        
+        init(parent: _CloudKit.Database, zones: [Zone]) {
+            self.ckContainer = parent.ckContainer
+            self.ckDatabase = parent.ckDatabase
             self.zones = zones
+            self.databaseContext = parent.context
         }
     }
 }
 
 extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
+    public typealias Database = _CloudKit.Database
+    public typealias DatabaseContext = _CloudKit.Database.Context
     public typealias Record = _CloudKit.DatabaseRecord
     public typealias RecordType = String
     public typealias RecordID = _CloudKit.DatabaseRecord.ID
@@ -48,17 +53,7 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         
         return .init(ckRecord: record)
     }
-
-    public func instantiate<Model: Entity>(_ type: Model.Type, from record: Record) throws -> Model {
-        throw Never.Reason.unimplemented // FIXME!!!
-    }
-    
-    public func getUnderlyingRecord<Instance: Entity>(
-        from instance: Instance
-    ) throws -> Record {
-        try cast(instance._underlyingDatabaseRecord.unwrap(), to: Record.self)
-    }
-    
+        
     public func recordID(from record: Record) throws -> Record.ID {
         .init(rawValue: record.base.recordID.recordName)
     }
@@ -91,7 +86,7 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
             operation.isAtomic = true
             operation.database = ckDatabase
             
-            var conflicts: [DatabaseRecordMergeConflict<_CloudKit.DatabaseRecordContext>]? = []
+            /*var conflicts: [DatabaseRecordMergeConflict<_CloudKit.DatabaseRecordContext>]? = []
             
             operation.perRecordProgressBlock = { record, progress in
                 
@@ -112,15 +107,13 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
                 } else {
                     attemptToFullfill(.success(()))
                 }
-            }
-            
+            }*/
+                        
             ckDatabase.add(operation)
+            
+            TODO.unimplemented
         }
         .eraseToAnyTask()
-    }
-    
-    public func zoneQueryRequest<Model>(from queryRequest: QueryRequest<Model>) throws -> ZoneQueryRequest {
-        fatalError()
     }
 }
 
