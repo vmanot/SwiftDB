@@ -9,7 +9,7 @@ import CryptoKit
 
 extension NSManagedObjectModel {
     @usableFromInline
-    convenience init(_ schema: DatabaseSchema) throws {
+    convenience init(_ schema: _Schema) throws {
         self.init()
         
         var relationshipNameToRelationship: [String: NSRelationshipDescription] = [:]
@@ -45,7 +45,7 @@ extension NSManagedObjectModel {
         for entity in nameToEntityMap.values {
             for property in entity.properties {
                 if let property = property as? NSRelationshipDescription {
-                    if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
+                    if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? _Schema.Entity.Relationship {
                         
                         let destinationEntityID = try _SwiftDB_propertyDescription.relationshipConfiguration.destinationEntity.unwrap()
                         let destinationEntity = try schema[destinationEntityID].unwrap()
@@ -55,7 +55,7 @@ extension NSManagedObjectModel {
                         assertionFailure()
                     }
                     
-                    if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? DatabaseSchema.Entity.Relationship {
+                    if let _SwiftDB_propertyDescription = entity._SwiftDB_allPropertyDescriptions[property.name] as? _Schema.Entity.Relationship {
                         property.inverseRelationship = _SwiftDB_propertyDescription.relationshipConfiguration.inverseRelationshipName.flatMap({ relationshipNameToRelationship[$0] })
                     } else {
                         assertionFailure()

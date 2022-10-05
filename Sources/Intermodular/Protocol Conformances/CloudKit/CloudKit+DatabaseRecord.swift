@@ -54,11 +54,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     public func containsValue(forKey key: CodingKey) -> Bool {
         base.object(forKey: key.stringValue) != nil
     }
-    
-    public func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
-        base.setValue(value, forKey: key.stringValue)
-    }
-    
+        
     public func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }

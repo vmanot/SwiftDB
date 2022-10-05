@@ -23,7 +23,7 @@ public class AnyDatabaseContainer: CustomReflectable, Loggable, ObservableObject
         }
     }
     
-    public var mainAccess: AnyDatabaseAccess {
+    public var mainAccess: LiveDatabaseAccess {
         fatalError(reason: .abstract)
     }
     
@@ -55,7 +55,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     public let cancellables = Cancellables()
     
     public let name: String
-    public let schema: DatabaseSchema
+    public let schema: _Schema
     
     fileprivate let fileManager = FileManager.default
     
@@ -71,8 +71,10 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
         database?.viewContext.map(AnyDatabaseRecordContext.init)
     }
     
-    override public var mainAccess: AnyDatabaseAccess {
-        .init(databaseContext: database?.context.eraseToAnyDatabaseContext(), recordContext: mainContext)
+    private var _mainAccess = LiveDatabaseAccess(base: nil)
+    
+    override public var mainAccess: LiveDatabaseAccess {
+        _mainAccess
     }
     
     public override var customMirror: Mirror {
@@ -99,7 +101,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
         cloudKitContainerIdentifier: String? = nil
     ) throws {
         self.name = name
-        self.schema = try DatabaseSchema(schema)
+        self.schema = try _Schema(schema)
         self.location = location
         self.stateLocation = location?.deletingLastPathComponent().appendingPathComponent(name, conformingTo: .fileURL).appendingPathExtension(DatabaseStateFileFormat.pathExtension)
         self.applicationGroupID = applicationGroupID
@@ -183,7 +185,16 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             
             _ = try await database.fetchAllAvailableZones()
             
-            assert(mainContext != nil)
+            guard let mainContext = mainContext else {
+                status = .uninitialized
+                
+                return assertionFailure()
+            }
+            
+            _mainAccess.base = _AnyDatabaseRecordContextTransaction(
+                databaseContext: mainContext.databaseContext,
+                recordContext: mainContext
+            )
             
             status = .initialized
         } catch {

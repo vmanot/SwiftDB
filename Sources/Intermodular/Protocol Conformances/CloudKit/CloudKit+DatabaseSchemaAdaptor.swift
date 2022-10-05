@@ -11,12 +11,12 @@ extension _CloudKit {
         public typealias Database = _CloudKit.Database
         
         public func recordType(
-            for entity: DatabaseSchema.Entity.ID?
+            for entity: _Schema.Entity.ID?
         ) throws -> _CloudKit.DatabaseRecordContext.RecordType {
            fatalError()
         }
         
-        public func entity(forRecordType recordType: String) -> DatabaseSchema.Entity.ID? {
+        public func entity(forRecordType recordType: String) -> _Schema.Entity.ID? {
             fatalError()
         }
     }

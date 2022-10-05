@@ -15,12 +15,12 @@ public struct AnyDatabaseSchemaAdaptor: DatabaseSchemaAdaptor {
     }
     
     public func recordType(
-        for entity: DatabaseSchema.Entity.ID?
+        for entity: _Schema.Entity.ID?
     ) throws -> AnyDatabaseRecord.RecordType {
         try AnyDatabaseRecord.RecordType(erasing: base.recordType(for: entity))
     }
     
-    public func entity(forRecordType recordType: AnyDatabaseRecord.RecordType) throws -> DatabaseSchema.Entity.ID? {
+    public func entity(forRecordType recordType: AnyDatabaseRecord.RecordType) throws -> _Schema.Entity.ID? {
         try base._opaque_entity(forRecordType: recordType)
     }
 }
@@ -30,7 +30,7 @@ public struct AnyDatabaseSchemaAdaptor: DatabaseSchemaAdaptor {
 extension DatabaseSchemaAdaptor {
     public func _opaque_entity(
         forRecordType recordType: AnyDatabaseRecord.RecordType
-    ) throws -> DatabaseSchema.Entity.ID? {
+    ) throws -> _Schema.Entity.ID? {
         try entity(forRecordType: recordType._cast(to: Database.RecordContext.RecordType.self))
     }
 }

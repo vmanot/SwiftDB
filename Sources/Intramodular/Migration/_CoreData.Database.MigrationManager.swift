@@ -238,8 +238,8 @@ extension _CoreData.Database {
     final class CustomEntityMigrationPolicy: NSEntityMigrationPolicy {
         struct Configuration {
             let schemaMappingModel: CustomSchemaMappingModel
-            let sourceEntity: DatabaseSchema.Entity
-            let destinationEntity: DatabaseSchema.Entity
+            let sourceEntity: _Schema.Entity
+            let destinationEntity: _Schema.Entity
             let transformer: CustomEntityMapping.Transformer
             var sourceAttributesByDestinationKey: [String: NSAttributeDescription]?
         }
@@ -281,7 +281,7 @@ extension _CoreData.Database {
                 )
             )
             
-            if let dInstance = destinationObject.map({ $0.destination.base as! _CoreData.DatabaseRecord }) {
+            if let dInstance = try destinationObject.map({ try $0.destination._cast(to: _CoreData.DatabaseRecord.self) }) {
                 manager.associate(sourceInstance: sInstance, withDestinationInstance: dInstance.rawObject, for: mapping)
             }
         }

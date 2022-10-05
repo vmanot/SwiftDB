@@ -5,13 +5,13 @@
 import Swallow
 
 public struct CustomSchemaMappingModel {
-    public let source: DatabaseSchema
-    public let destination: DatabaseSchema
+    public let source: _Schema
+    public let destination: _Schema
     public let mappings: [CustomEntityMapping.MappingType: [CustomEntityMapping]]
     
     public init(
-        source: DatabaseSchema,
-        destination: DatabaseSchema,
+        source: _Schema,
+        destination: _Schema,
         mappings: [CustomEntityMapping]
     ) {
         self.source = source
@@ -24,8 +24,8 @@ public struct CustomSchemaMappingModel {
 
 extension CustomSchemaMappingModel {
     public static func createInferredMapping(
-        source: DatabaseSchema,
-        destination: DatabaseSchema
+        source: _Schema,
+        destination: _Schema
     ) -> Self {
         CustomSchemaMappingModel(
             source: source,
@@ -37,16 +37,16 @@ extension CustomSchemaMappingModel {
 
 extension CustomSchemaMappingModel {
     private static func resolveEntityMappings(
-        source: DatabaseSchema,
-        destination: DatabaseSchema,
+        source: _Schema,
+        destination: _Schema,
         entityMappings: [CustomEntityMapping] = []
     ) -> [CustomEntityMapping] {
         var deleteMappings: Set<CustomEntityMapping> = []
         var insertMappings: Set<CustomEntityMapping> = []
         var copyMappings: Set<CustomEntityMapping> = []
         var transformMappings: Set<CustomEntityMapping> = []
-        var allMappedSourceKeys: [DatabaseSchema.Entity.ID: DatabaseSchema.Entity.ID] = [:]
-        var allMappedDestinationKeys: [DatabaseSchema.Entity.ID: DatabaseSchema.Entity.ID] = [:]
+        var allMappedSourceKeys: [_Schema.Entity.ID: _Schema.Entity.ID] = [:]
+        var allMappedDestinationKeys: [_Schema.Entity.ID: _Schema.Entity.ID] = [:]
         
         let sourceIDs = source.entities.groupFirstOnly(by: \.id)
         let destinationIDs = destination.entities.groupFirstOnly(by: \.id)

@@ -140,7 +140,7 @@ extension _CoreDataTestSuite {
         
         let schemaEntity = try database.schema.entity(forModelType: TestORMSchema.ChildParentEntity.self).unwrap()
         
-        guard let property = schemaEntity.properties.first(where: { $0.name == "parent" }) as? DatabaseSchema.Entity.Relationship else {
+        guard let property = schemaEntity.properties.first(where: { $0.name == "parent" }) as? _Schema.Entity.Relationship else {
             XCTFail()
             return
         }

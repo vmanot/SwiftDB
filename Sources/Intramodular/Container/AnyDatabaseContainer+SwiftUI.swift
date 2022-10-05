@@ -75,16 +75,16 @@ extension View {
 // MARK: - Auxiliary Implementation -
 
 extension EnvironmentValues {
-    fileprivate struct AnyDatabaseAccessEnvironmentKey: EnvironmentKey {
-        static let defaultValue: AnyDatabaseAccess = .init(databaseContext: nil, recordContext: nil)
+    fileprivate struct _DatabaseEnvironmentKey: EnvironmentKey {
+        static let defaultValue = LiveDatabaseAccess(base: nil)
     }
     
     /// The database record context associated with this environment.
-    public fileprivate(set) var database: AnyDatabaseAccess {
+    public fileprivate(set) var database: LiveDatabaseAccess {
         get {
-            self[AnyDatabaseAccessEnvironmentKey.self]
+            self[_DatabaseEnvironmentKey.self]
         } set {
-            self[AnyDatabaseAccessEnvironmentKey.self] = newValue
+            self[_DatabaseEnvironmentKey.self] = newValue
         }
     }
 }

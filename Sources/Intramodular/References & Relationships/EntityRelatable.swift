@@ -11,15 +11,15 @@ public protocol EntityRelatable {
     associatedtype RelatableEntityType: Entity
     
     /// The cardinality of the number of models this type exports.
-    static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality { get }
+    static var entityCardinality: _Schema.Entity.Relationship.EntityCardinality { get }
 
     init(noRelatedModels: ())
 
     /// Creates a new instance by decoding from the given database reference.
-    static func decode(from _: AnyDatabaseRecord, forKey _: AnyStringKey) throws -> Self
+    static func decode(from _: AnyDatabaseRecord, forKey _: CodingKey) throws -> Self
     
     /// Encodes a relationship to this instance's related models into the given database reference.
-    func encode(to _: AnyDatabaseRecord, forKey _: AnyStringKey) throws
+    func encode(to _: AnyDatabaseRecord, forKey _: CodingKey) throws
     
     /// Exports all the models associated with this instance.
     func exportRelatableModels() throws -> [RelatableEntityType]
@@ -28,7 +28,7 @@ public protocol EntityRelatable {
 // MARK: - Implementation -
 
 extension EntityRelatable where Self: Entity {
-    public static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
+    public static var entityCardinality: _Schema.Entity.Relationship.EntityCardinality {
         .one
     }
     
@@ -36,11 +36,11 @@ extension EntityRelatable where Self: Entity {
         try! self.init(from: nil) // FIXME!!!
     }
     
-    public static func decode(from base: AnyDatabaseRecord, forKey key: AnyStringKey) throws -> Self {
+    public static func decode(from base: AnyDatabaseRecord, forKey key: CodingKey) throws -> Self {
         fatalError()
     }
     
-    public func encode(to base: AnyDatabaseRecord, forKey key: AnyStringKey) throws {
+    public func encode(to base: AnyDatabaseRecord, forKey key: CodingKey) throws {
         fatalError()
     }
     
@@ -52,7 +52,7 @@ extension EntityRelatable where Self: Entity {
 extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     public typealias RelatableEntityType = Wrapped.RelatableEntityType
     
-    public static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
+    public static var entityCardinality: _Schema.Entity.Relationship.EntityCardinality {
         Wrapped.entityCardinality
     }
 
@@ -62,7 +62,7 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
 
     public static func decode(
         from base: AnyDatabaseRecord,
-        forKey key: AnyStringKey
+        forKey key: CodingKey
     ) throws -> Optional<Wrapped> {
         if base.containsValue(forKey: key) {
             return try base.decode(Wrapped.self, forKey: key)
@@ -71,7 +71,7 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
         }
     }
     
-    public func encode(to base: AnyDatabaseRecord, forKey key: AnyStringKey) throws {
+    public func encode(to base: AnyDatabaseRecord, forKey key: CodingKey) throws {
         fatalError()
     }
     

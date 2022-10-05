@@ -9,7 +9,7 @@ import Swallow
 
 extension _CloudKit {
     public final class Database {
-        public let schema: DatabaseSchema?
+        public let schema: _Schema?
         public let configuration: Configuration
         public let state: State
         public let context: Context
@@ -19,7 +19,7 @@ extension _CloudKit {
 
         public init(
             runtime: _SwiftDB_Runtime,
-            schema: DatabaseSchema?,
+            schema: _Schema?,
             configuration: Configuration,
             state: State?
         ) throws {
@@ -58,10 +58,6 @@ extension _CloudKit.Database: Database {
     public typealias SchemaAdaptor = _CloudKit.DatabaseSchemaAdaptor
     public typealias RecordContext = _CloudKit.DatabaseRecordContext
     public typealias Zone = _CloudKit.DatabaseZone
-
-    public var capabilities: [DatabaseCapability] {
-        []
-    }
 
     public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
         let operation = CKFetchRecordZonesOperation()

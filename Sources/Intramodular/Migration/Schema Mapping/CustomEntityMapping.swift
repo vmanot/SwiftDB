@@ -14,12 +14,12 @@ public enum CustomEntityMapping: Hashable, TypeDiscriminable {
     
     public typealias Transformer = (CustomEntityTransformerArguments) throws -> Void
     
-    case deleteEntity(sourceEntity: DatabaseSchema.Entity.ID)
-    case insertEntity(destinationEntity: DatabaseSchema.Entity.ID)
-    case copyEntity(sourceEntity: DatabaseSchema.Entity.ID, destinationEntity: DatabaseSchema.Entity.ID)
+    case deleteEntity(sourceEntity: _Schema.Entity.ID)
+    case insertEntity(destinationEntity: _Schema.Entity.ID)
+    case copyEntity(sourceEntity: _Schema.Entity.ID, destinationEntity: _Schema.Entity.ID)
     case transformEntity(
-        sourceEntity: DatabaseSchema.Entity.ID,
-        destinationEntity: DatabaseSchema.Entity.ID,
+        sourceEntity: _Schema.Entity.ID,
+        destinationEntity: _Schema.Entity.ID,
         transformer: (CustomEntityTransformerArguments) throws -> Void
     )
     
@@ -61,7 +61,7 @@ public enum CustomEntityMapping: Hashable, TypeDiscriminable {
 }
 
 extension CustomEntityMapping {
-    fileprivate var sourceEntity: DatabaseSchema.Entity.ID? {
+    fileprivate var sourceEntity: _Schema.Entity.ID? {
         switch self {
             case .deleteEntity(let sourceEntity), .copyEntity(let sourceEntity, _), .transformEntity(let sourceEntity, _, _):
                 return sourceEntity
@@ -70,7 +70,7 @@ extension CustomEntityMapping {
         }
     }
     
-    fileprivate var destinationEntity: DatabaseSchema.Entity.ID? {
+    fileprivate var destinationEntity: _Schema.Entity.ID? {
         switch self {
             case .insertEntity(let destinationEntity), .copyEntity(_, let destinationEntity), .transformEntity(_, let destinationEntity, _):
                 return destinationEntity
@@ -84,8 +84,8 @@ extension CustomEntityMapping {
 
 extension CustomEntityMapping {
     public static func inferredTransformEntity(
-        sourceEntity: DatabaseSchema.Entity.ID,
-        destinationEntity: DatabaseSchema.Entity.ID
+        sourceEntity: _Schema.Entity.ID,
+        destinationEntity: _Schema.Entity.ID
     ) -> Self {
         .transformEntity(
             sourceEntity: sourceEntity,

@@ -6,7 +6,7 @@ import CorePersistence
 import FoundationX
 import Swallow
 
-extension DatabaseSchema.Entity {
+extension _Schema.Entity {
     public struct PropertyConfiguration: Codable, Hashable, Sendable {
         public var isOptional: Bool?
         public var isTransient: Bool = false
@@ -21,9 +21,9 @@ extension DatabaseSchema.Entity {
             public var typeValue: Decodable.Type {
                 switch self {
                     case .attribute:
-                        return DatabaseSchema.Entity.Attribute.self
+                        return _Schema.Entity.Attribute.self
                     case .relationship:
-                        return DatabaseSchema.Entity.Relationship.self
+                        return _Schema.Entity.Relationship.self
                 }
             }
         }
@@ -69,7 +69,7 @@ extension DatabaseSchema.Entity {
 
 // MARK: - Conformances -
 
-extension DatabaseSchema.Entity.Property: PolymorphicDecodable {
+extension _Schema.Entity.Property: PolymorphicDecodable {
     public typealias TypeDiscriminator = PropertyType
 
     fileprivate enum CodingKeys: String, CodingKey {
@@ -83,14 +83,14 @@ extension DatabaseSchema.Entity.Property: PolymorphicDecodable {
     }
 }
 
-extension DatabaseSchema.Entity.Property: Comparable {
-    public static func < (lhs: DatabaseSchema.Entity.Property, rhs: DatabaseSchema.Entity.Property) -> Bool {
+extension _Schema.Entity.Property: Comparable {
+    public static func < (lhs: _Schema.Entity.Property, rhs: _Schema.Entity.Property) -> Bool {
         (lhs.propertyConfiguration.renamingIdentifier ?? lhs.name) < (rhs.propertyConfiguration.renamingIdentifier ?? rhs.name)
     }
 }
 
-extension DatabaseSchema.Entity.Property: Equatable {
-    public static func == (lhs: DatabaseSchema.Entity.Property, rhs: DatabaseSchema.Entity.Property) -> Bool {
+extension _Schema.Entity.Property: Equatable {
+    public static func == (lhs: _Schema.Entity.Property, rhs: _Schema.Entity.Property) -> Bool {
         lhs.hashValue == rhs.hashValue
     }
 }

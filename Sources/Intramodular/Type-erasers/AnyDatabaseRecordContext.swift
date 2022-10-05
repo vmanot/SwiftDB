@@ -143,13 +143,13 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
     }
     
     override func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
-        let _record = try cast(record.base, to: Base.Record.self)
+        let _record = try record._cast(to: Base.Record.self)
         
         return AnyDatabaseRecord.ID(base: try base.recordID(from: _record))
     }
     
     override func zone(for record: AnyDatabaseRecord) throws -> AnyDatabaseZone? {
-        let _record = try cast(record.base, to: Base.Record.self)
+        let _record = try record._cast(to: Base.Record.self)
         
         return try base.zone(for: _record).map(AnyDatabaseZone.init)
     }
@@ -170,7 +170,7 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
     }
     
     override func delete(_ record: AnyDatabaseRecord) throws {
-        let _record = try cast(record.base, to: Base.Record.self)
+        let _record = try record._cast(to: Base.Record.self)
         
         return try base.delete(_record)
     }

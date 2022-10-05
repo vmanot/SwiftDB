@@ -2,7 +2,6 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
 import Diagnostics
 import Merge
 import Runtime
@@ -22,12 +21,12 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     
     public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     public var name: String?
-    public var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
+    public var propertyConfiguration: _Schema.Entity.PropertyConfiguration
     
     var makeInitialValue: (() -> Value?)?
     var assignedInitialValue: Value?
     
-    public var underlyingRecord: AnyDatabaseRecord?
+    public var _underlyingRecordContainer: _AnyDatabaseRecordContainer?
     
     public var isOptional: Bool {
         Value.self is _opaque_Optional.Type
@@ -37,7 +36,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         get {
             _runtimeMetadata.wrappedValueAccessToken = UUID()
             
-            guard let underlyingRecord = underlyingRecord else {
+            guard let recordContainer = _underlyingRecordContainer else {
                 if let value = assignedInitialValue {
                     return value
                 } else if let makeInitialValue = makeInitialValue {
@@ -52,13 +51,13 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
             }
             
             do {
-                logger.debug("Decoding value")
-                
-                let result = try underlyingRecord.decode(Value.self, forKey: key.unwrap())
-                
-                logger.debug("Decoded value: \(result)")
-                
-                return result
+                if try recordContainer.containsValue(forKey: key) || isOptional {
+                    let result = try recordContainer.decode(Value.self, forKey: key)
+                                        
+                    return result
+                } else {
+                    return try encodeDefaultValueIfNecessary(into: recordContainer).unwrap()
+                }
             } catch {
                 logger.error(error)
                 
@@ -75,15 +74,9 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
                 objectWillChange.send()
             }
             
-            if let underlyingRecord = underlyingRecord {
-                logger.debug("Encoding value: \(newValue)")
-                
-                try! underlyingRecord.encode(newValue, forKey: key.forceUnwrap())
-                
-                logger.debug("Encoded value")
+            if let recordContainer = _underlyingRecordContainer {
+                try! recordContainer.encode(newValue, forKey: key)
             } else {
-                logger.debug("Underlying record has not been resolved. Storing assigned value as initial value.")
-                
                 assignedInitialValue = newValue
             }
         }
@@ -95,7 +88,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     
     init(
         makeInitialValue: (() -> Value?)?,
-        propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration
+        propertyConfiguration: _Schema.Entity.PropertyConfiguration
     ) {
         self.makeInitialValue = makeInitialValue
         self.propertyConfiguration = propertyConfiguration
@@ -123,14 +116,14 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         }
     }
     
-    public func schema() throws -> DatabaseSchema.Entity.Property {
+    public func schema() throws -> _Schema.Entity.Property {
         let valueType = (Value.self as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? Value.self
         
-        return DatabaseSchema.Entity.Attribute(
+        return _Schema.Entity.Attribute(
             name: name!.stringValue,
             propertyConfiguration: propertyConfiguration,
             attributeConfiguration: .init(
-                type: DatabaseSchema.Entity.AttributeType(from: valueType),
+                type: _Schema.Entity.AttributeType(from: valueType),
                 defaultValue: assignedInitialValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
                     do {
                         return try AnyCodableOrNSCodingValue(from: value)
@@ -146,26 +139,36 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         )
     }
     
-    public func initialize(with underlyingRecord: AnyDatabaseRecord) throws {
-        try encodeDefaultValueIfNecessary(into: underlyingRecord)
+    public func initialize(with container: _AnyDatabaseRecordContainer) throws {
+        self._underlyingRecordContainer = container
+        
+        _ = try encodeDefaultValueIfNecessary(into: container)
     }
     
     /// Encode the `defaultValue` if necessary.
     /// Needed for required attributes, otherwise the underlying object crashes on save.
-    func encodeDefaultValueIfNecessary(into underlyingRecord: AnyDatabaseRecord) throws {
-        guard let key = key else {
-            return assertionFailure()
-        }
-        
+    func encodeDefaultValueIfNecessary(
+        into _underlyingRecordContainer: _AnyDatabaseRecordContainer
+    ) throws -> Value? {
         if let assignedInitialValue = assignedInitialValue {
-            try underlyingRecord.setInitialValue(assignedInitialValue, forKey: key)
+            let initialValue = assignedInitialValue
+            
+            try _underlyingRecordContainer.setInitialValue(initialValue, forKey: key)
+            
+            return initialValue
         } else if let makeInitialValue = makeInitialValue {
-            try underlyingRecord.setInitialValue(makeInitialValue(), forKey: key)
+            let initialValue = makeInitialValue()
+            
+            try _underlyingRecordContainer.setInitialValue(initialValue, forKey: key)
+            
+            return initialValue
         }
         
-        if !isOptional && !underlyingRecord.containsValue(forKey: key) {
+        if try !isOptional && (try _underlyingRecordContainer.containsValue(forKey: key)) {
             _ = self.wrappedValue // force an evaluation
         }
+        
+        return nil
     }
     
     // MARK: - Initializers -

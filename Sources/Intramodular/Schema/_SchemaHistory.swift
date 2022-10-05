@@ -5,9 +5,9 @@
 import FoundationX
 import Swift
 
-public struct DatabaseSchemaHistory: Codable, Hashable, Sendable {
+public struct _SchemaHistory: Codable, Hashable, Sendable {
     @LossyCoding
-    public var schemas: [DatabaseSchema] = []
+    public var schemas: [_Schema] = []
     
     public init() {
         

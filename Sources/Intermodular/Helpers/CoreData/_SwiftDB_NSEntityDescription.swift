@@ -11,14 +11,14 @@ import Swallow
 class _SwiftDB_NSEntityDescription: NSEntityDescription, NSSecureCoding {
     weak var parent: _SwiftDB_NSEntityDescription?
     
-    var _SwiftDB_propertyDescriptions: [String: DatabaseSchema.Entity.Property] = [:]
+    var _SwiftDB_propertyDescriptions: [String: _Schema.Entity.Property] = [:]
     
     @objc(supportsSecureCoding)
     static var supportsSecureCoding: Bool {
         true
     }
     
-    var _SwiftDB_allPropertyDescriptions: [String: DatabaseSchema.Entity.Property] {
+    var _SwiftDB_allPropertyDescriptions: [String: _Schema.Entity.Property] {
         guard let parent = parent else {
             return _SwiftDB_propertyDescriptions
         }
@@ -27,8 +27,8 @@ class _SwiftDB_NSEntityDescription: NSEntityDescription, NSSecureCoding {
     }
     
     public convenience init(
-        from entity: DatabaseSchema.Entity,
-        in schema: DatabaseSchema
+        from entity: _Schema.Entity,
+        in schema: _Schema
     ) throws {
         self.init()
         
@@ -51,9 +51,9 @@ class _SwiftDB_NSEntityDescription: NSEntityDescription, NSSecureCoding {
 }
 
 
-fileprivate extension DatabaseSchema {
+fileprivate extension _Schema {
     func generateNSManagedObjectClass(
-        for entityID: DatabaseSchema.Entity.ID
+        for entityID: _Schema.Entity.ID
     ) throws -> ObjCClass {
         let entity = try self[entityID].unwrap()
         

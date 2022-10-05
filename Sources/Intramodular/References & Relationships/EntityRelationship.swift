@@ -20,7 +20,7 @@ public final class EntityRelationship<
         case oneToMany(WritableKeyPath<ValueEntity, InverseValue>)
         case manyToMany(WritableKeyPath<ValueEntity, RelatedModels<Parent>>)
         
-        var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
+        var entityCardinality: _Schema.Entity.Relationship.EntityCardinality {
             switch self {
                 case .toOne:
                     return .one
@@ -32,11 +32,11 @@ public final class EntityRelationship<
         }
     }
     
-    public var underlyingRecord: AnyDatabaseRecord?
+    public var _underlyingRecordContainer: _AnyDatabaseRecordContainer?
     
     public var name: String?
-    public var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration = .init(isOptional: true)
-    public var relationshipConfiguration: DatabaseSchema.Entity.RelationshipConfiguration
+    public var propertyConfiguration: _Schema.Entity.PropertyConfiguration = .init(isOptional: true)
+    public var relationshipConfiguration: _Schema.Entity.RelationshipConfiguration
     
     let inverse: InverseKeyPath
     let deleteRule: NSDeleteRule?
@@ -48,7 +48,7 @@ public final class EntityRelationship<
     }
     
     var isInitialized: Bool {
-        underlyingRecord != nil
+        _underlyingRecordContainer != nil
     }
     
     public var wrappedValue: Value {
@@ -59,14 +59,14 @@ public final class EntityRelationship<
                 return .init(noRelatedModels: ())
             }
             
-            return try! Value.decode(from: underlyingRecord.unwrap(), forKey: .init(stringValue: name.unwrap()))
+            return try! _underlyingRecordContainer.unwrap().decode(Value.self, forKey: key)
         } set {
             defer {
                 _runtimeMetadata.wrappedValue_didSet_token = UUID()
             }
             
-            if let underlyingRecord = underlyingRecord {
-                try! underlyingRecord.encode(newValue, forKey: key.unwrap())
+            if let container = _underlyingRecordContainer {
+                try! container.encode(newValue, forKey: key)
             }
         }
     }
@@ -78,20 +78,20 @@ public final class EntityRelationship<
         self.inverse = inverse
         self.deleteRule = deleteRule
         
-        self.relationshipConfiguration = DatabaseSchema.Entity.RelationshipConfiguration(
-            destinationEntity: try! DatabaseSchema.Entity.ID(from: ValueEntity.self),
+        self.relationshipConfiguration = _Schema.Entity.RelationshipConfiguration(
+            destinationEntity: try! _Schema.Entity.ID(from: ValueEntity.self),
             inverseRelationshipName: nil,
             cardinality: .init(
                 source: inverse.entityCardinality,
                 destination: Value.entityCardinality
             ),
             deleteRule: nil,
-            isOrdered: false
+            isOrdered: true
         )
     }
     
-    public func initialize(with underlyingRecord: AnyDatabaseRecord) {
-        self.underlyingRecord = underlyingRecord
+    public func initialize(with container: _AnyDatabaseRecordContainer) {
+        self._underlyingRecordContainer = container
     }
 }
 
@@ -160,12 +160,12 @@ extension EntityRelationship {
         return nil
     }
     
-    public func schema() -> DatabaseSchema.Entity.Property {
+    public func schema() -> _Schema.Entity.Property {
         var relationshipConfiguration = self.relationshipConfiguration
         
         relationshipConfiguration.inverseRelationshipName = try! _runtime_findInverse()?.name
 
-        return DatabaseSchema.Entity.Relationship(
+        return _Schema.Entity.Relationship(
             name: name!,
             propertyConfiguration: propertyConfiguration,
             relationshipConfiguration: relationshipConfiguration

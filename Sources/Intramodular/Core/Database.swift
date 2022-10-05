@@ -7,12 +7,12 @@ import Swallow
 
 public struct DatabaseContext<Database: SwiftDB.Database> {
     public let runtime: _SwiftDB_Runtime
-    public let schema: DatabaseSchema
+    public let schema: _Schema
     public let schemaAdaptor: Database.SchemaAdaptor
     
     public init(
         runtime: _SwiftDB_Runtime,
-        schema: DatabaseSchema,
+        schema: _Schema,
         schemaAdaptor: Database.SchemaAdaptor
     ) {
         self.runtime = runtime
@@ -26,6 +26,16 @@ public struct DatabaseContext<Database: SwiftDB.Database> {
             schema: schema,
             schemaAdaptor: .init(erasing: schemaAdaptor)
         )
+    }
+    
+    public func recordSchema(
+        forRecordType recordType: Database.RecordContext.RecordType
+    ) throws -> _Schema.Record? {
+        guard let recordSchemaID = try schemaAdaptor.entity(forRecordType: recordType) else {
+            return nil
+        }
+        
+        return schema[recordSchemaID]
     }
 }
 
@@ -48,15 +58,12 @@ public protocol Database: Named, Identifiable where ID: Codable {
     
     associatedtype Configuration: Codable
     associatedtype State: Codable & Equatable
-    associatedtype SchemaAdaptor: DatabaseSchemaAdaptor
+    associatedtype SchemaAdaptor: DatabaseSchemaAdaptor where SchemaAdaptor.Database == Self
     associatedtype Zone where Zone == RecordContext.Zone
     associatedtype RecordContext: DatabaseRecordContext
     
     typealias Context = DatabaseContext<Self>
     
-    /// The capabilities of the database.
-    var capabilities: [DatabaseCapability] { get }
-
     /// The configuration used to initialize the database.
     var configuration: Configuration { get }
         
@@ -68,7 +75,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     
     init(
         runtime: _SwiftDB_Runtime,
-        schema: DatabaseSchema?,
+        schema: _Schema?,
         configuration: Configuration,
         state: State?
     ) async throws
@@ -90,7 +97,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
 
 extension Database {
     public init(
-        schema: DatabaseSchema?,
+        schema: _Schema?,
         configuration: Configuration,
         state: State?
     ) async throws {

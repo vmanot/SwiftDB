@@ -10,7 +10,7 @@ public protocol DatabaseRecordRelationship {
     
     func insert(_ record: Record) throws
     func remove(_ record: Record) throws
-
+    
     func all() throws -> [Record]
 }
 

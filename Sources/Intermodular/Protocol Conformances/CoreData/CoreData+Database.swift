@@ -11,12 +11,12 @@ import Swallow
 extension _CoreData {
     public final class Database: CancellablesHolder, SwiftDB.Database, ObservableObject {
         private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
-        private let setupTasksQueue = AsyncTaskQueue()
+        private let setupTasksQueue = TaskQueue()
                         
         public typealias SchemaAdaptor = DatabaseSchemaAdaptor
         public typealias RecordContext = _CoreData.DatabaseRecordContext
         
-        let schema: DatabaseSchema
+        let schema: _Schema
         
         public let configuration: Configuration
         public var state: State
@@ -28,7 +28,7 @@ extension _CoreData {
         
         public init(
             runtime: _SwiftDB_Runtime,
-            schema: DatabaseSchema?,
+            schema: _Schema?,
             configuration: Configuration,
             state: State?
         ) throws {
@@ -142,15 +142,11 @@ extension _CoreData.Database {
     }
 
     public struct State: Codable, Equatable, Sendable {
-        public var schemaHistory: DatabaseSchemaHistory
+        public var schemaHistory: _SchemaHistory
         
         public init() {
             self.schemaHistory = .init()
         }
-    }
-
-    public var capabilities: [DatabaseCapability] {
-        []
     }
     
     @discardableResult

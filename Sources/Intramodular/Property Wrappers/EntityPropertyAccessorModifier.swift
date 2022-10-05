@@ -36,7 +36,7 @@ extension EntityPropertyAccessorModifier  {
         }
     }
 
-    public var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration {
+    public var propertyConfiguration: _Schema.Entity.PropertyConfiguration {
         get {
             base.propertyConfiguration
         } set {
@@ -44,11 +44,11 @@ extension EntityPropertyAccessorModifier  {
         }
     }
     
-    public var underlyingRecord: AnyDatabaseRecord? {
+    public var _underlyingRecordContainer: _AnyDatabaseRecordContainer? {
         get {
-            base.underlyingRecord
+            base._underlyingRecordContainer
         } set {
-            base.underlyingRecord = newValue
+            base._underlyingRecordContainer = newValue
         }
     }
     
@@ -60,12 +60,12 @@ extension EntityPropertyAccessorModifier  {
         }
     }
         
-    public func schema() throws -> DatabaseSchema.Entity.Property {
+    public func schema() throws -> _Schema.Entity.Property {
         try base.schema()
     }
     
-    public func initialize(with underlyingRecord: AnyDatabaseRecord) throws {
-        try base.initialize(with: underlyingRecord)
+    public func initialize(with container: _AnyDatabaseRecordContainer) throws {
+        try base.initialize(with: container)
     }
 }
 

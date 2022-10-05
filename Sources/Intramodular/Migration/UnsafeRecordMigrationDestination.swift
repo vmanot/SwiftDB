@@ -6,14 +6,14 @@ import Swallow
 
 public struct UnsafeRecordMigrationDestination {
     let schemaMappingModel: CustomSchemaMappingModel
-    let sourceEntity: DatabaseSchema.Entity
-    let destinationEntity: DatabaseSchema.Entity
+    let sourceEntity: _Schema.Entity
+    let destinationEntity: _Schema.Entity
     let destination: AnyDatabaseRecord
     
     init(
         schemaMappingModel: CustomSchemaMappingModel,
-        sourceEntity: DatabaseSchema.Entity,
-        destinationEntity: DatabaseSchema.Entity,
+        sourceEntity: _Schema.Entity,
+        destinationEntity: _Schema.Entity,
         destination: AnyDatabaseRecord
     ) {
         self.schemaMappingModel = schemaMappingModel
@@ -30,7 +30,7 @@ public struct UnsafeRecordMigrationDestination {
         }
     }
     
-    public subscript(attribute: DatabaseSchema.Entity.Attribute) -> Any? {
+    public subscript(attribute: _Schema.Entity.Attribute) -> Any? {
         get {
             self[attribute.name]
         } nonmutating set {
@@ -39,8 +39,8 @@ public struct UnsafeRecordMigrationDestination {
     }
     
     public struct AttributeEnumerationArguments {
-        public let attribute: DatabaseSchema.Entity.Attribute
-        public let sourceAttribute: DatabaseSchema.Entity.Attribute?
+        public let attribute: _Schema.Entity.Attribute
+        public let sourceAttribute: _Schema.Entity.Attribute?
     }
     
     /**
@@ -51,7 +51,7 @@ public struct UnsafeRecordMigrationDestination {
         _ body: (AttributeEnumerationArguments) throws -> Void
     ) throws {
         func enumerate(
-            _ entity: DatabaseSchema.Entity,
+            _ entity: _Schema.Entity,
             _ body: (AttributeEnumerationArguments) throws -> Void
         ) throws {
             if
@@ -61,10 +61,10 @@ public struct UnsafeRecordMigrationDestination {
                 try enumerate(parentEntity, body)
             }
             
-            for case let attribute as DatabaseSchema.Entity.Attribute in entity.properties {
+            for case let attribute as _Schema.Entity.Attribute in entity.properties {
                 let sourceAttribute = try self.sourceEntity.properties
                     .first(where: { $0.name == attribute.name })
-                    .map({ try cast($0, to: DatabaseSchema.Entity.Attribute.self) })
+                    .map({ try cast($0, to: _Schema.Entity.Attribute.self) })
                 
                 try body(.init(attribute: attribute, sourceAttribute: sourceAttribute))
             }

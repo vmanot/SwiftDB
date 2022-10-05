@@ -11,13 +11,13 @@ extension _CoreData {
     public struct DatabaseSchemaAdaptor: SwiftDB.DatabaseSchemaAdaptor {
         public typealias Database = _CoreData.Database
         
-        private let schema: DatabaseSchema
-        private let recordTypesByEntityID: BidirectionalMap<DatabaseSchema.Entity.ID, Database.RecordContext.RecordType>
+        private let schema: _Schema
+        private let recordTypesByEntityID: BidirectionalMap<_Schema.Entity.ID, Database.RecordContext.RecordType>
         
-        init(schema: DatabaseSchema) {
+        init(schema: _Schema) {
             self.schema = schema
             
-            var recordTypesByEntityID = BidirectionalMap<DatabaseSchema.Entity.ID, Database.RecordContext.RecordType>()
+            var recordTypesByEntityID = BidirectionalMap<_Schema.Entity.ID, Database.RecordContext.RecordType>()
             
             for entity in schema.entities {
                 recordTypesByEntityID[entity.id] = Database.RecordContext.RecordType(rawValue: entity.name)
@@ -27,14 +27,14 @@ extension _CoreData {
         }
         
         public func recordType(
-            for entity: DatabaseSchema.Entity.ID?
+            for entity: _Schema.Entity.ID?
         ) throws -> _CoreData.DatabaseRecord.RecordType {
             try recordTypesByEntityID.value(forKey: entity.unwrap()).unwrap()
         }
         
         public func entity(
             forRecordType recordType: _CoreData.DatabaseRecord.RecordType
-        ) throws -> DatabaseSchema.Entity.ID? {
+        ) throws -> _Schema.Entity.ID? {
             try recordTypesByEntityID.key(forValue: recordType).unwrap()
         }
     }

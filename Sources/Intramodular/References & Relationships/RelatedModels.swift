@@ -7,26 +7,34 @@ import Swallow
 import SwiftUIX
 
 /// An collection of models related to an entity.
-public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
-    @inlinable
-    public static var entityCardinality: DatabaseSchema.Entity.Relationship.EntityCardinality {
+public struct RelatedModels<Model: Entity & Identifiable>: Sequence {     
+    public static var entityCardinality: _Schema.Entity.Relationship.EntityCardinality {
         .many
     }
     
-    @usableFromInline
-    var base: AnyDatabaseRecordRelationship
+    let transactionContext: DatabaseTransactionContext?
+    let relationship: AnyDatabaseRecordRelationship
     
-    public init(base: AnyDatabaseRecordRelationship) {
-        self.base = base
+    init(
+        transactionContext: DatabaseTransactionContext,
+        relationship: AnyDatabaseRecordRelationship
+    ) {
+        self.transactionContext = transactionContext
+        self.relationship = relationship
     }
     
     public init(noRelatedModels: Void) {
-        self.base = .init(erasing: NoDatabaseRecordRelationship<AnyDatabaseRecord>())
+        self.transactionContext = nil
+        self.relationship = .init(erasing: NoDatabaseRecordRelationship<AnyDatabaseRecord>())
     }
     
     public func makeIterator() -> AnyIterator<Model> {
         do {
-            return AnyIterator(try base.all().map({ try Model(from: $0) }).makeIterator())
+            let transactionContext = try transactionContext.unwrap()
+
+            return try transactionContext.scope {
+                AnyIterator(try relationship.all().map({ try Model(from: transactionContext._recordContainer(for: $0)) }).makeIterator())
+            }
         } catch {
             assertionFailure()
             
@@ -46,12 +54,15 @@ extension RelatedModels: EntityRelatable {
     
     public static func decode(
         from record: AnyDatabaseRecord,
-        forKey key: AnyStringKey
+        forKey key: CodingKey
     ) throws -> Self {
-        self.init(base: try record.relationship(for: key))
+        try self.init(
+            transactionContext: _SwiftDB_TaskLocalValues.transactionContext.unwrap(),
+            relationship: try record.relationship(for: key)
+        )
     }
     
-    public func encode(to record: AnyDatabaseRecord, forKey key: AnyStringKey) throws {
+    public func encode(to record: AnyDatabaseRecord, forKey key: CodingKey) throws {
         fatalError()
     }
     
@@ -63,7 +74,7 @@ extension RelatedModels: EntityRelatable {
 extension RelatedModels {
     public func insert(_ model: Model) {
         do {
-            try base.insert(model._underlyingDatabaseRecord!)
+            try relationship.insert(model._underlyingDatabaseRecordContainer.unwrap().record)
         } catch {
             assertionFailure()
         }
@@ -71,19 +82,19 @@ extension RelatedModels {
     
     public func remove(_ model: Model) {
         do {
-            try base.remove(model._underlyingDatabaseRecord!)
+            try relationship.remove(model._underlyingDatabaseRecordContainer.unwrap().record)
         } catch {
             assertionFailure()
         }
     }
-        
+    
     @discardableResult
     public func remove(at offsets: IndexSet) -> AnySequence<Model> {
         let models = self.models(at: offsets)
         
         for model in models {
             do {
-                try base.remove(AnyDatabaseRecord(from: model))
+                try relationship.remove(AnyDatabaseRecord(from: model))
             } catch {
                 assertionFailure()
             }

@@ -82,10 +82,8 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
 
 extension QueryModels {
     public func remove(atOffsets offsets: IndexSet) {
-        try! database.transact {
-            for item in offsets.map({ wrappedValue[$0] }) {
-                try database.delete(item)
-            }
+        for item in offsets.map({ wrappedValue[$0] }) {
+            try! database.delete(item)
         }
     }
 }
@@ -94,17 +92,19 @@ extension QueryModels {
 
 extension QueryModels {
     fileprivate class RequestOutputCoordinator: Loggable, ObservableObject, @unchecked Sendable {
-        private lazy var cancellables = Cancellables()
+        private var databaseListener: AnyCancellable?
         
         var queryRequest: QueryRequest<Model>!
-        var database: AnyDatabaseAccess! {
+        var database: LiveDatabaseAccess? {
             didSet {
-                database
-                    .willChangePublisher()
-                    .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main) // FIXME: Hack!!!
-                    .sink(in: cancellables) { [unowned self] _ in
-                        self.runQuery()
-                    }
+                databaseListener = database.map { database in
+                    (database.base as! _AnyDatabaseRecordContextTransaction)
+                        .willChangePublisher()
+                        .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main) // FIXME: Hack!!!
+                        .sink { [unowned self] _ in
+                            self.runQuery()
+                        }
+                }
             }
         }
         
@@ -117,7 +117,7 @@ extension QueryModels {
         func runQuery() {
             Task { @MainActor in
                 do {
-                    let queryTask = database.queryExecutionTask(for: queryRequest)
+                    let queryTask = try database.unwrap().queryExecutionTask(for: queryRequest)
                     
                     try Task.checkCancellation()
                     

@@ -26,9 +26,6 @@ public protocol DatabaseRecord: ObservableObject, Identifiable, CancellablesHold
     /// Unsafely encode a value for a given key.
     func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws
     
-    /// Encode a primitive value for a given key.
-    func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey: CodingKey) throws
-    
     /// Encodes a value for the given key.
     ///
     /// - parameter value: The value to encode.

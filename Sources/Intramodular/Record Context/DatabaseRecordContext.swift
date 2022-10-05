@@ -17,21 +17,21 @@ public protocol DatabaseRecordContext: ObservableObject {
     associatedtype RecordType where Record.RecordType == RecordType
     associatedtype RecordID: Hashable
     associatedtype RecordConfiguration = DatabaseRecordConfiguration<Self>
-
+    
     typealias DatabaseContext = SwiftDB.DatabaseContext<Database>
     
     var databaseContext: DatabaseContext { get }
-
+    
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
     typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
     typealias SaveError = DatabaseRecordContextSaveError<Self>
-        
+    
     /// Create a database record associated with this context.
     func createRecord(
         withConfiguration _: DatabaseRecordConfiguration<Self>,
         context: RecordCreateContext
     ) throws -> Record
-        
+    
     /// Get the record ID associated with this record.
     func recordID(from record: Record) throws -> RecordID
     

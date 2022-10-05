@@ -8,7 +8,7 @@ import Swallow
 import SwiftUI
 
 /// A type-erased description of a `Schema`.
-public struct DatabaseSchema: Hashable, Sendable, Versioned {
+public struct _Schema: Hashable, Sendable, Versioned {
     public var version: Version? = "0.0.1"
     
     public let entities: IdentifierIndexedArray<Entity, Entity.ID>
@@ -16,7 +16,7 @@ public struct DatabaseSchema: Hashable, Sendable, Versioned {
     private var entityTypesByName = BidirectionalMap<String,  Metatype<any SwiftDB.Entity.Type>>()
     private var entityTypesByEntityID = BidirectionalMap<Entity.ID, Metatype<any SwiftDB.Entity.Type>>()
     
-    public init(entities: [DatabaseSchema.Entity]) throws {
+    public init(entities: [_Schema.Entity]) throws {
         self.entities = .init(entities.sorted(by: \.name))
         
         for entity in entities {
@@ -30,7 +30,7 @@ public struct DatabaseSchema: Hashable, Sendable, Versioned {
     public init(_ schema: Schema) throws {
         let partialEntitiesByID = Dictionary(try schema.body.map({ (key: try Entity.ID(from: $0), value: try KeyedValuesOf<Entity>(from: $0)) }), uniquingKeysWith: { lhs, rhs in lhs })
         
-        var entitySubentityRelationshipsByID: [DatabaseSchema.Entity.ID: Set<DatabaseSchema.Entity.ID>] = [:]
+        var entitySubentityRelationshipsByID: [_Schema.Entity.ID: Set<_Schema.Entity.ID>] = [:]
         
         for (id, entity) in partialEntitiesByID {
             entitySubentityRelationshipsByID[id] ??= []
@@ -53,7 +53,7 @@ public struct DatabaseSchema: Hashable, Sendable, Versioned {
         try self.init(entities: entities)
     }
     
-    public subscript(_ entityID: DatabaseSchema.Entity.ID) -> DatabaseSchema.Entity? {
+    public subscript(_ entityID: _Schema.Entity.ID) -> _Schema.Entity? {
         entities[id: entityID]
     }
     
@@ -63,6 +63,10 @@ public struct DatabaseSchema: Hashable, Sendable, Versioned {
         }
         
         return entityTypesByEntityID[Metatype(type)].flatMap({ self[$0] })
+    }
+    
+    func record(forModelType modelType: Any.Type) -> _Schema.Record? {
+        entity(forModelType: modelType) // FIXME
     }
     
     func entityType(for entity: Entity.ID) throws -> any (SwiftDB.Entity).Type {
@@ -76,7 +80,7 @@ public struct DatabaseSchema: Hashable, Sendable, Versioned {
 
 // MARK: - Conformances -
 
-extension DatabaseSchema: Codable {
+extension _Schema: Codable {
     enum CodingKeys: String, CodingKey {
         case version
         case entities
@@ -100,13 +104,13 @@ extension DatabaseSchema: Codable {
 
 // MARK: - Auxiliary Implementation -
 
-extension DatabaseSchema {
+extension _Schema {
     private enum Error: Swift.Error {
         case failedToResolveEntityTypeForID(Entity.ID)
     }
 }
 
-fileprivate extension KeyedValuesOf where Wrapped == DatabaseSchema.Entity {
+fileprivate extension KeyedValuesOf where Wrapped == _Schema.Entity {
     /// Extracts values required to construct an entity schema from an entity type.
     init(from type: _opaque_Entity.Type) throws {
         // Create an uninitialized instance.
@@ -114,7 +118,7 @@ fileprivate extension KeyedValuesOf where Wrapped == DatabaseSchema.Entity {
         
         self.init()
         
-        self.parent = try type._opaque_ParentEntity.map({ parentType in try DatabaseSchema.Entity.ID(from: parentType) })
+        self.parent = try type._opaque_ParentEntity.map({ parentType in try _Schema.Entity.ID(from: parentType) })
         self.name = String(describing: type)
         self.typeIdentity = .init(from: type)
         self.properties = try instance._runtime_propertyAccessors.map({ try $0.schema() })

@@ -9,18 +9,18 @@ public struct AnyDatabaseZone: DatabaseZone {
     let base: Any
     
     public let name: String
-    public let id: Identifier
+    public let id: ID
     
     init<T: DatabaseZone>(base zone: T) {
         self.base = zone
         
         self.name = zone.name
-        self.id = Identifier(base: zone.id)
+        self.id = ID(base: zone.id)
     }
 }
 
 extension AnyDatabaseZone {
-    public struct Identifier: Codable, Hashable {
+    public struct ID: Codable, Hashable {
         let base: Any & Encodable
         
         private let hashImpl: (inout Hasher) -> Void

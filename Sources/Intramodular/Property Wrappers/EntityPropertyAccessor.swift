@@ -18,13 +18,13 @@ public struct _opaque_EntityPropertyAccessorRuntimeMetadata {
 public protocol EntityPropertyAccessor: _opaque_ObservableObject, ObservableObject, PropertyWrapper {
     var _runtimeMetadata: _opaque_EntityPropertyAccessorRuntimeMetadata { get set }
     
-    var propertyConfiguration: DatabaseSchema.Entity.PropertyConfiguration { get set }
-    var underlyingRecord: AnyDatabaseRecord? { get set }
+    var propertyConfiguration: _Schema.Entity.PropertyConfiguration { get set }
+    var _underlyingRecordContainer: _AnyDatabaseRecordContainer? { get set }
     
     var name: String? { get set }
     
-    func schema() throws -> DatabaseSchema.Entity.Property
-    func initialize(with underlyingRecord: AnyDatabaseRecord) throws
+    func schema() throws -> _Schema.Entity.Property
+    func initialize(with _underlyingRecordContainer: _AnyDatabaseRecordContainer) throws
 
     var wrappedValue: WrappedValue { get }
     
@@ -33,8 +33,9 @@ public protocol EntityPropertyAccessor: _opaque_ObservableObject, ObservableObje
 }
 
 extension EntityPropertyAccessor {
-    @usableFromInline
-    var key: AnyStringKey? {
-        name.map(AnyStringKey.init(stringValue:))
+    var key: AnyStringKey {
+        get throws {
+            try name.map(AnyStringKey.init(stringValue:)).unwrap()
+        }
     }
 }

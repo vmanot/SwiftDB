@@ -5,15 +5,15 @@
 import FoundationX
 import Swallow
 
-extension DatabaseSchema.Entity {
+extension _Schema.Entity {
     public struct AttributeConfiguration: Codable, Hashable {
-        public var type: DatabaseSchema.Entity.AttributeType
+        public var type: _Schema.Entity.AttributeType
         public var defaultValue: AnyCodableOrNSCodingValue?
         public var allowsExternalBinaryDataStorage: Bool
         public var preservesValueInHistoryOnDeletion: Bool
     }
     
-    public final class Attribute: DatabaseSchema.Entity.Property {
+    public final class Attribute: _Schema.Entity.Property {
         private enum CodingKeys: String, CodingKey {
             case attributeConfiguration
         }

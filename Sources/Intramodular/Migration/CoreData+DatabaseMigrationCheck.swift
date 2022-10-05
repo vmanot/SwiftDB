@@ -59,8 +59,8 @@ extension _CoreData.Database {
         ofType storeType: String,
         at fileURL: URL,
         withConfigurationName configurationName: String? = nil,
-        sourceSchema: DatabaseSchema,
-        destinationSchema: DatabaseSchema
+        sourceSchema: _Schema,
+        destinationSchema: _Schema
     ) throws {
         let fileManager = FileManager.default
         let temporaryDirectoryURL = fileManager.temporaryDirectory

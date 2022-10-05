@@ -22,7 +22,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
     var typeCache = TypeCache()
     var entityCacheMap: [Metatype<any Entity.Type>: EntityCache] = [:]
 
-    public init(schema: DatabaseSchema?) throws {
+    public init(schema: _Schema?) throws {
         if let schema = schema {
             for entity in schema.entities {
                 _ = try self.entityCache(for: schema.entityType(for: entity.id))

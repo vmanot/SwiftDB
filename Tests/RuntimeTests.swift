@@ -7,7 +7,7 @@ import XCTest
 @testable import SwiftDB
 
 final class RuntimeTests: XCTestCase {
-    let runtime = try! _Default_SwiftDB_Runtime(schema: DatabaseSchema(TestORMSchema()))
+    let runtime = try! _Default_SwiftDB_Runtime(schema: _Schema(TestORMSchema()))
 
     func testEntityLookup() {
         XCTAssert(runtime.metatype(forEntityNamed: "EntityWithSimpleRequiredProperty")?.value == TestORMSchema.EntityWithSimpleRequiredProperty.self)

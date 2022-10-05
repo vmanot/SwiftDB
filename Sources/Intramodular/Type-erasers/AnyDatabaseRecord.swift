@@ -8,15 +8,15 @@ import Swallow
 public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
     public struct ID: Hashable {
         public let base: AnyHashable
-    
+        
         init(base: AnyHashable) {
             self.base = base
         }
     }
-        
+    
     public typealias Reference = NoDatabaseRecordReference<ID> // FIXME!!!
-
-    let base: any DatabaseRecord
+    
+    fileprivate let base: any DatabaseRecord
     
     private init(base: any DatabaseRecord) {
         self.base = base
@@ -54,10 +54,6 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
         base.containsValue(forKey: key)
     }
     
-    public func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
-        try base.primitivelyEncodeValue(value, forKey: key)
-    }
-
     public func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws {
         try base.unsafeEncodeValue(value, forKey: key)
     }
@@ -87,7 +83,7 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
 
 extension AnyDatabaseRecord {
     public convenience init<E: Entity>(from entity: E) throws {
-        try self.init(base: entity._underlyingDatabaseRecord.unwrap().base)
+        try self.init(base: entity._underlyingDatabaseRecordContainer.unwrap().record.base)
     }
     
     public func _cast<Record: DatabaseRecord>(to recordType: Record.Type) throws -> Record {

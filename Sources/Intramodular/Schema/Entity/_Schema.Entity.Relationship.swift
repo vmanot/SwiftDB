@@ -7,16 +7,16 @@ import Foundation
 import Runtime
 import Swift
 
-extension DatabaseSchema.Entity {
+extension _Schema.Entity {
     public struct RelationshipConfiguration: Codable, Hashable {
-        public var destinationEntity: DatabaseSchema.Entity.ID?
+        public var destinationEntity: _Schema.Entity.ID?
         public var inverseRelationshipName: String?
-        public var cardinality: DatabaseSchema.Entity.Relationship.Cardinality
+        public var cardinality: _Schema.Entity.Relationship.Cardinality
         public var deleteRule: NSDeleteRule?
         public var isOrdered: Bool
     }
     
-    public final class Relationship: DatabaseSchema.Entity.Property {
+    public final class Relationship: _Schema.Entity.Property {
         private enum CodingKeys: String, CodingKey {
             case relationshipConfiguration
         }
@@ -61,7 +61,7 @@ extension DatabaseSchema.Entity {
     }
 }
 
-extension DatabaseSchema.Entity.Relationship {
+extension _Schema.Entity.Relationship {
     public enum EntityCardinality {
         case one
         case many

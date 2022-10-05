@@ -7,12 +7,12 @@ import FoundationX
 import Runtime
 import Swallow
 
-extension DatabaseSchema.Entity.Property {
+extension _Schema.Entity.Property {
     public func toNSPropertyDescription() throws -> NSPropertyDescription {
         switch self {
-            case let attribute as DatabaseSchema.Entity.Attribute:
+            case let attribute as _Schema.Entity.Attribute:
                 return try NSAttributeDescription(attribute)
-            case let relationship as DatabaseSchema.Entity.Relationship:
+            case let relationship as _Schema.Entity.Relationship:
                 return try NSRelationshipDescription(relationship)
             default:
                 throw EmptyError()
@@ -21,7 +21,7 @@ extension DatabaseSchema.Entity.Property {
 }
 
 extension NSAttributeDescription {
-    public convenience init(_ attribute: DatabaseSchema.Entity.Attribute) throws {
+    public convenience init(_ attribute: _Schema.Entity.Attribute) throws {
         self.init()
         
         let nsAttributeType = _SwiftDB_NSAttributeType(from: attribute.attributeConfiguration.type)
@@ -48,7 +48,7 @@ extension NSAttributeDescription {
 }
 
 extension NSRelationshipDescription {
-    convenience init(_ description: DatabaseSchema.Entity.Relationship) throws {
+    convenience init(_ description: _Schema.Entity.Relationship) throws {
         self.init()
         
         name = description.name
@@ -84,7 +84,7 @@ struct _SwiftDB_NSAttributeType {
     let className: String?
     let transformerName: String?
     
-    init(from type: DatabaseSchema.Entity.AttributeType) {
+    init(from type: _Schema.Entity.AttributeType) {
         switch type {
             case .primitive(let type):
                 self.attributeType = NSAttributeType(type)
@@ -107,7 +107,7 @@ struct _SwiftDB_NSAttributeType {
 }
 
 private extension NSAttributeType {
-    init(_ description: DatabaseSchema.Entity.PrimitiveAttributeType) {
+    init(_ description: _Schema.Entity.PrimitiveAttributeType) {
         switch description {
             case .integer16:
                 self = .integer16AttributeType
@@ -137,7 +137,7 @@ private extension NSAttributeType {
     }
 }
 
-private extension DatabaseSchema.Entity.PrimitiveAttributeType {
+private extension _Schema.Entity.PrimitiveAttributeType {
     init?(_ type: NSAttributeType) {
         switch type {
             case .undefinedAttributeType:

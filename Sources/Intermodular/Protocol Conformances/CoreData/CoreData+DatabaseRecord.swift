@@ -63,13 +63,9 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         rawObject.setPrimitiveValue(value, forKey: key)
     }
     
-    public func primitivelyEncodeValue<Value: PrimitiveAttributeDataType>(_ value: Value, forKey key: CodingKey) throws {
-        rawObject.setValue(value, forKey: key.stringValue)
-    }
-    
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         if let value = value as? any Entity {
-            let record = try cast(value._underlyingDatabaseRecord.unwrap(), to: _CoreData.DatabaseRecord.self)
+            let record = try AnyDatabaseRecord(from: value)._cast(to: _CoreData.DatabaseRecord.self)
             
             try unsafeEncodeValue(record.rawObject, forKey: key)
         } else if let value = value as? NSAttributeCoder {
@@ -96,9 +92,17 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         forKey key: CodingKey
     ) throws -> Value {
         if let valueType = valueType as? any SwiftDB.Entity.Type {
-            let value = _CoreData.DatabaseRecord(rawObject: try cast(unsafeDecodeValue(forKey: key), to: NSManagedObject.self))
+            let record = AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: try cast(unsafeDecodeValue(forKey: key), to: NSManagedObject.self)))
             
-            return try cast(valueType.init(from: .init(erasing: value)), to: Value.self)
+            let transactionContext = try _SwiftDB_TaskLocalValues.transactionContext.unwrap()
+            
+            let recordContainer = _AnyDatabaseRecordContainer(
+                transactionContext: transactionContext,
+                recordSchema: try transactionContext.databaseContext.recordSchema(forRecordType: record.recordType),
+                record: record
+            )
+            
+            return try cast(valueType.init(from: recordContainer), to: Value.self)
         } else if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
             return try valueType.decode(from: rawObject, forKey: key) as! Value
         } else if let valueType = valueType as? NSAttributeCoder.Type {
@@ -145,7 +149,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
             rawObject.setValue(nil, forKey: key.stringValue)
         }
     }
-        
+    
     public func relationship(for key: CodingKey) throws -> Relationship {
         Relationship(record: self, key: key)
     }

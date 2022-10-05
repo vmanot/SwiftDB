@@ -14,7 +14,6 @@ extension CKContainer {
                 return privateCloudDatabase
             case .shared:
                 return sharedCloudDatabase
-                
             @unknown default:
                 throw Never.Reason.unimplemented
         }

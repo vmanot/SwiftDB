@@ -20,7 +20,7 @@ extension Entity where Self: Codable {
         self = try decoder.userInfo._SwiftDB_DatabaseContainer.mainAccess.create(type)
         
         for property in _runtime_propertyAccessors {
-            try property.decode(from: try container.decoder(forKey: property.key.unwrap()))
+            try property.decode(from: try container.decoder(forKey: property.key))
         }
     }
     
@@ -30,7 +30,7 @@ extension Entity where Self: Codable {
         try container.encode(_EntityRuntimeMetadata(name: String(describing: self)), forKey: _EntityRuntimeMetadata.codingKey)
         
         for property in _runtime_propertyAccessors {
-            try container.encode(using: property.encode(to:), forKey: property.key.unwrap())
+            try container.encode(using: property.encode(to:), forKey: property.key)
         }
     }
 }
