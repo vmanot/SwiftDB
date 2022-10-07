@@ -192,7 +192,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             }
             
             _mainAccess.base = _AnyDatabaseRecordContextTransaction(
-                databaseContext: mainContext.databaseContext,
+                databaseContext: database.context.eraseToAnyDatabaseContext(),
                 recordContext: mainContext
             )
             

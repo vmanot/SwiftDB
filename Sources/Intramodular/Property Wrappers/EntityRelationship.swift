@@ -32,65 +32,50 @@ public final class EntityRelationship<
         }
     }
     
-    public var _underlyingRecordContainer: _AnyDatabaseRecordContainer?
+    public var _underlyingRecordContainer: _DatabaseRecordContainer?
+    public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     
     public var name: String?
-    public var propertyConfiguration: _Schema.Entity.PropertyConfiguration = .init(isOptional: true)
-    public var relationshipConfiguration: _Schema.Entity.RelationshipConfiguration
     
-    let inverse: InverseKeyPath
-    let deleteRule: NSDeleteRule?
-    
-    public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
+    private let inverse: InverseKeyPath
+    private let deleteRule: NSDeleteRule?
+    private let traits: [EntityRelationshipTrait]
     
     var isOptional: Bool {
         Value.self is _opaque_Optional.Type
     }
     
-    var isInitialized: Bool {
-        _underlyingRecordContainer != nil
-    }
-    
     public var wrappedValue: Value {
         get {
             _runtimeMetadata.wrappedValueAccessToken = UUID()
-
-            guard isInitialized else {
+            
+            guard let recordContainer = _underlyingRecordContainer else {
                 return .init(noRelatedModels: ())
             }
             
-            return try! _underlyingRecordContainer.unwrap().decode(Value.self, forKey: key)
+            return try! recordContainer.decode(Value.self, forKey: key)
         } set {
             defer {
                 _runtimeMetadata.wrappedValue_didSet_token = UUID()
             }
             
-            if let container = _underlyingRecordContainer {
-                try! container.encode(newValue, forKey: key)
+            if let recordContainer = _underlyingRecordContainer {
+                try! recordContainer.encode(newValue, forKey: key)
             }
         }
     }
     
-    init(
+    private init(
         inverse: InverseKeyPath,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        traits: [EntityRelationshipTrait]
     ) {
         self.inverse = inverse
         self.deleteRule = deleteRule
-        
-        self.relationshipConfiguration = _Schema.Entity.RelationshipConfiguration(
-            destinationEntity: try! _Schema.Entity.ID(from: ValueEntity.self),
-            inverseRelationshipName: nil,
-            cardinality: .init(
-                source: inverse.entityCardinality,
-                destination: Value.entityCardinality
-            ),
-            deleteRule: nil,
-            isOrdered: true
-        )
+        self.traits = traits
     }
     
-    public func initialize(with container: _AnyDatabaseRecordContainer) {
+    public func initialize(with container: _DatabaseRecordContainer) {
         self._underlyingRecordContainer = container
     }
 }
@@ -161,13 +146,23 @@ extension EntityRelationship {
     }
     
     public func schema() -> _Schema.Entity.Property {
-        var relationshipConfiguration = self.relationshipConfiguration
+        var relationshipConfiguration = _Schema.Entity.RelationshipConfiguration(
+            traits: traits,
+            destinationEntity: try! _Schema.Entity.ID(from: ValueEntity.self),
+            inverseRelationshipName: nil,
+            cardinality: .init(
+                source: inverse.entityCardinality,
+                destination: Value.entityCardinality
+            ),
+            deleteRule: nil,
+            isOrdered: true
+        )
         
         relationshipConfiguration.inverseRelationshipName = try! _runtime_findInverse()?.name
-
+        
         return _Schema.Entity.Relationship(
             name: name!,
-            propertyConfiguration: propertyConfiguration,
+            propertyConfiguration: .init(isOptional: true),
             relationshipConfiguration: relationshipConfiguration
         )
     }
@@ -177,32 +172,36 @@ extension EntityRelationship {
     @_disfavoredOverload
     public convenience init(
         inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Value == InverseValueEntity, ValueEntity == InverseValueEntity {
-        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule, traits: traits)
     }
     
     @_disfavoredOverload
     public convenience init(
         inverse: WritableKeyPath<InverseValueEntity, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
-        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule, traits: traits)
     }
     
     @_disfavoredOverload
     public convenience init(
         inverse: WritableKeyPath<Parent, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Parent == InverseValueEntity, Value == Optional<InverseValueEntity>, Value == Optional<ValueEntity> {
-        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule, traits: traits)
     }
     
     public convenience init(
         inverse: WritableKeyPath<ValueEntity, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Parent == InverseValueEntity, Value == RelatedModels<ValueEntity>, InverseValue == Optional<Parent>  {
-        self.init(inverse: .toOne(inverse), deleteRule: deleteRule)
+        self.init(inverse: .toOne(inverse), deleteRule: deleteRule, traits: traits)
     }
     
     /*public convenience init(
@@ -216,23 +215,26 @@ extension EntityRelationship {
 extension EntityRelationship {
     public convenience init(
         inverse: WritableKeyPath<ValueEntity, InverseValue>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Parent == InverseValueEntity, Value == Optional<ValueEntity>, InverseValue == RelatedModels<Parent> {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
+        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule, traits: traits)
     }
     
     public convenience init(
         inverse: WritableKeyPath<InverseValueEntity, RelatedModels<Parent>>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Parent == InverseValueEntity, Value == Optional<ValueEntity>, ValueEntity == InverseValueEntity, InverseValue == RelatedModels<Parent> {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
+        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule, traits: traits)
     }
     
     public convenience init(
         inverse: WritableKeyPath<Parent, RelatedModels<Parent>?>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Parent == ValueEntity, Parent == InverseValueEntity, ValueEntity == Value.RelatableEntityType, InverseValue == Optional<RelatedModels<Parent>> {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule)
+        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule, traits: traits)
     }
     
     /*public convenience init(
@@ -246,8 +248,9 @@ extension EntityRelationship {
 extension EntityRelationship {
     public convenience init(
         inverse: WritableKeyPath<ValueEntity, RelatedModels<Parent>>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) where Value == RelatedModels<ValueEntity>, InverseValue == RelatedModels<Parent>, InverseValueEntity == Parent {
-        self.init(inverse: .manyToMany(inverse), deleteRule: deleteRule)
+        self.init(inverse: .manyToMany(inverse), deleteRule: deleteRule, traits: traits)
     }
 }

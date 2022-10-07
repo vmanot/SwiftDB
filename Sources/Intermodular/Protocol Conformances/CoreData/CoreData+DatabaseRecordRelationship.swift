@@ -8,6 +8,40 @@ import Swallow
 
 extension _CoreData.DatabaseRecord {
     public struct Relationship: DatabaseRecordRelationship {
+        public typealias Record = _CoreData.DatabaseRecord
+        
+        let record: Record
+        let key: CodingKey
+        
+        public func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record> {
+            ToOneRelationship(record: record, key: key)
+        }
+        
+        public func toManyRelationship() throws -> any ToManyDatabaseRecordRelationship<Record> {
+            ToManyRelationship(record: record, key: key)
+        }
+    }
+}
+
+extension _CoreData.DatabaseRecord {
+    public struct ToOneRelationship: ToOneDatabaseRecordRelationship {
+        public typealias Record = _CoreData.DatabaseRecord
+        
+        let record: Record
+        let key: CodingKey
+        
+        public func getRecord() throws -> _CoreData.DatabaseRecord? {
+            _CoreData.DatabaseRecord(rawObject: try cast(record.unsafeDecodeValue(forKey: key), to: NSManagedObject.self))
+        }
+        
+        public func setRecord(_ other: Record?) throws {
+            try record.unsafeEncodeValue(other?.rawObject, forKey: key)
+        }
+    }
+}
+
+extension _CoreData.DatabaseRecord {
+    public struct ToManyRelationship: ToManyDatabaseRecordRelationship {
         public enum Error: Swift.Error {
             case unrecognizedRelationshipContainer(Any)
         }

@@ -19,7 +19,7 @@ public struct DatabaseContext<Database: SwiftDB.Database> {
         self.schema = schema
         self.schemaAdaptor = schemaAdaptor
     }
-        
+    
     public func eraseToAnyDatabaseContext() -> DatabaseContext<AnyDatabase> {
         .init(
             runtime: runtime,
@@ -29,7 +29,7 @@ public struct DatabaseContext<Database: SwiftDB.Database> {
     }
     
     public func recordSchema(
-        forRecordType recordType: Database.RecordContext.RecordType
+        forRecordType recordType: Database.RecordContext.Record.RecordType
     ) throws -> _Schema.Record? {
         guard let recordSchemaID = try schemaAdaptor.entity(forRecordType: recordType) else {
             return nil
@@ -66,10 +66,10 @@ public protocol Database: Named, Identifiable where ID: Codable {
     
     /// The configuration used to initialize the database.
     var configuration: Configuration { get }
-        
+    
     /// A type that encapsulates the database state and additional metadata.
     var state: State { get }
-
+    
     /// The database context.
     var context: Context { get }
     

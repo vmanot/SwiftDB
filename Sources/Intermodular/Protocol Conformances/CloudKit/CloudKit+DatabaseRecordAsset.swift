@@ -7,7 +7,7 @@ import Merge
 import Swallow
 
 extension _CloudKit.DatabaseRecord {
-    public struct Asset: DatabaseRecordAsset {
+    public struct Asset {
         let ckAsset: CKAsset
         
         public init(asset: CKAsset) {

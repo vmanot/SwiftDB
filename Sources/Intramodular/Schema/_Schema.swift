@@ -76,6 +76,10 @@ public struct _Schema: Hashable, Sendable, Versioned {
             throw Error.failedToResolveEntityTypeForID(entity)
         }
     }
+
+    func entity(withName name: String) throws -> Entity {
+        try entities.first(where: { $0.name == name }).unwrap()
+    }
 }
 
 // MARK: - Conformances -

@@ -111,7 +111,7 @@ extension _CoreData.Database {
                 
                 let sourceEntity: NSEntityDescription = try sourceMOM.entitiesByName[sourceSchemaEntity.name].unwrap()
                 let destinationEntity: NSEntityDescription = try destinationMOM.entitiesByName[destinationSchemaEntity.name].unwrap()
-
+                
                 let entityMapping = NSEntityMapping()
                 entityMapping.sourceEntityName = sourceEntity.name
                 entityMapping.sourceEntityVersionHash = sourceEntity.versionHash
@@ -163,7 +163,7 @@ extension _CoreData.Database {
                 
                 let sourceEntity: NSEntityDescription = try sourceMOM.entitiesByName[sourceSchemaEntity.name].unwrap()
                 let destinationEntity: NSEntityDescription = try destinationMOM.entitiesByName[destinationSchemaEntity.name].unwrap()
-
+                
                 let entityMapping = NSEntityMapping()
                 entityMapping.sourceEntityName = sourceEntity.name
                 entityMapping.sourceEntityVersionHash = sourceEntity.versionHash
@@ -174,6 +174,11 @@ extension _CoreData.Database {
                 entityMapping.entityMigrationPolicyClassName = NSStringFromClass(CustomEntityMigrationPolicy.self)
                 
                 var migrationPolicyConfiguration = CustomEntityMigrationPolicy.Configuration(
+                    databaseContext: .init(
+                        runtime: try _Default_SwiftDB_Runtime(schema: mappingModel.destination),
+                        schema: mappingModel.destination,
+                        schemaAdaptor: _CoreData.DatabaseSchemaAdaptor(schema: mappingModel.destination)
+                    ),
                     schemaMappingModel: mappingModel,
                     sourceEntity: sourceSchemaEntity,
                     destinationEntity: destinationSchemaEntity,
@@ -237,6 +242,7 @@ extension _CoreData.Database {
 extension _CoreData.Database {
     final class CustomEntityMigrationPolicy: NSEntityMigrationPolicy {
         struct Configuration {
+            let databaseContext: _CoreData.Database.Context
             let schemaMappingModel: CustomSchemaMappingModel
             let sourceEntity: _Schema.Entity
             let destinationEntity: _Schema.Entity
@@ -253,36 +259,64 @@ extension _CoreData.Database {
         ) throws {
             let userInfo = mapping.userInfo!
             let configuration = userInfo[UserInfoKey.configuration]! as! Configuration
-            
             var destinationObject: UnsafeRecordMigrationDestination?
+            
+            let destinationContext = _CoreData.DatabaseRecordContext(
+                databaseContext: configuration.databaseContext,
+                managedObjectContext: manager.destinationContext,
+                affectedStores: manager.destinationContext.persistentStoreCoordinator?.persistentStores
+            )
+            
+            let transactionContext = DatabaseTransactionContext(
+                databaseContext: configuration.databaseContext.eraseToAnyDatabaseContext(),
+                transaction: _AnyDatabaseRecordContextTransaction(
+                    databaseContext: configuration.databaseContext.eraseToAnyDatabaseContext(),
+                    recordContext: AnyDatabaseRecordContext(erasing: destinationContext)
+                )
+            )
+            
+            let sourceEntity = try configuration.schemaMappingModel.source.entity(withName: sInstance.entity.name.unwrap())
+            
+            let sourceRecordContainer = _DatabaseRecordContainer(
+                transactionContext: transactionContext,
+                recordSchema: sourceEntity,
+                record: .init(erasing: _CoreData.DatabaseRecord(rawObject: sInstance))
+            )
             
             try configuration.transformer(
                 .init(
-                    source: AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: sInstance)),
+                    source: sourceRecordContainer,
                     createDestination: {
                         if let destinationObject = destinationObject {
                             return destinationObject
                         }
+                        
+                        let destinationEntity = try configuration.schemaMappingModel.destination.entity(withName: mapping.destinationEntityName!)
                         
                         let nsManagedObject = NSEntityDescription.insertNewObject(
                             forEntityName: mapping.destinationEntityName!,
                             into: manager.destinationContext
                         )
                         
-                        destinationObject = UnsafeRecordMigrationDestination(
-                            schemaMappingModel: configuration.schemaMappingModel,
-                            sourceEntity: configuration.sourceEntity,
-                            destinationEntity: configuration.destinationEntity,
-                            destination: AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: nsManagedObject))
-                        )
-
-                        return destinationObject!
+                        TODO.unimplemented
+                        /*destinationObject = UnsafeRecordMigrationDestination(
+                         schemaMappingModel: configuration.schemaMappingModel,
+                         sourceEntity: configuration.sourceEntity,
+                         destinationEntity: configuration.destinationEntity,
+                         destination: AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: nsManagedObject))
+                         )
+                         
+                         return destinationObject!*/
                     }
                 )
             )
             
-            if let dInstance = try destinationObject.map({ try $0.destination._cast(to: _CoreData.DatabaseRecord.self) }) {
-                manager.associate(sourceInstance: sInstance, withDestinationInstance: dInstance.rawObject, for: mapping)
+            if let dInstance = try destinationObject.map({ try $0.destination.record._cast(to: _CoreData.DatabaseRecord.self) }) {
+                manager.associate(
+                    sourceInstance: sInstance,
+                    withDestinationInstance: dInstance.rawObject,
+                    for: mapping
+                )
             }
         }
         
@@ -291,7 +325,7 @@ extension _CoreData.Database {
             try super.createRelationships(forDestination: dInstance, in: mapping, manager: manager)
         }
         
-                
+        
         fileprivate enum UserInfoKey {
             fileprivate static let configuration = "com.vmanot.SwiftDB.CustomEntityMigrationPolicy.configuration"
         }

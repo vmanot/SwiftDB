@@ -3,7 +3,7 @@
 //
 
 import Foundation
-import Swift
+import Swallow
 
 extension _Schema.Entity {
     /// The types of primitive attributes supported by SwiftDB's canonical schema representation.
@@ -20,6 +20,35 @@ extension _Schema.Entity {
         case binaryData
         case UUID
         case URI
+        
+        public var _swiftType: any Hashable.Type {
+            switch self {
+                case .integer16:
+                    return Int16.self
+                case .integer32:
+                    return Int32.self
+                case .integer64:
+                    return Int64.self
+                case .decimal:
+                    return Decimal.self
+                case .double:
+                    return Double.self
+                case .float:
+                    return Float.self
+                case .string:
+                    return String.self
+                case .boolean:
+                    return Bool.self
+                case .date:
+                    return Date.self
+                case .binaryData:
+                    return Data.self
+                case .UUID:
+                    return Foundation.UUID.self
+                case .URI:
+                    return URL.self
+            }
+        }
     }
     
     /// The types of attributes supported by SwiftDB's canonical schema representation.
@@ -35,10 +64,41 @@ extension _Schema.Entity {
         
         public init(from type: Any.Type) {
             if let type = type as? any _EntityAttributeSchemaRepresentable.Type {
-                self = type.to_SchemaEntityAttributeType()
+                self = type.toSchemaEntityAttributeType()
             } else {
                 self = .object(type: .init(identity: .init(from: type)))
             }
         }
+        
+        public var _swiftType: Any.Type {
+            get throws {
+                switch self {
+                    case .primitive(let type):
+                        return type._swiftType
+                    case .array(let elementType):
+                        return try elementType._swiftType
+                    case .dictionary(let keyType, let valueType):
+                        return try makeDictionaryType(keyType: keyType._swiftType, valueType: valueType._swiftType)
+                    case .object(let type):
+                        return try type.identity.resolveType()
+                }
+            }
+        }
     }
+}
+
+// MARK: - Auxiliary Implementation -
+
+fileprivate extension Hashable {
+    static func dictionaryType(valueType: Any.Type) -> Any.Type {
+        func _dictionaryType<T>(_ instance: T.Type) -> Any.Type  {
+            return Dictionary<Self, T>.self
+        }
+        
+        return _openExistential(valueType, do: _dictionaryType)
+    }
+}
+
+func makeDictionaryType(keyType: Any.Type, valueType: Any.Type) throws -> Any.Type {
+    try cast(keyType, to: any Hashable.Type.self).dictionaryType(valueType: valueType)
 }

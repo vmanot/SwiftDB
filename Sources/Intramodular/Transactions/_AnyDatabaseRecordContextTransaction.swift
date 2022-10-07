@@ -23,14 +23,9 @@ public final class _AnyDatabaseRecordContextTransaction: DatabaseTransaction {
         try await recordContext.save()
     }
     
-    public func _withTransactionContext<T>(_ body: (DatabaseTransactionContext) throws -> T) rethrows -> T {
-        let context = DatabaseTransactionContext(
-            databaseContext: databaseContext,
-            transaction: _SwiftDB_TaskLocalValues.transactionContext?.transaction ?? self
-        )
-        
-        return try _SwiftDB_TaskLocalValues.$transactionContext.withValue(context) {
-            try body(context)
+    public func scope<T>(_ operation: (DatabaseTransactionContext) throws -> T) throws -> T {
+        try withDatabaseTransactionContext(.init(databaseContext: databaseContext, transaction: self)) { context in
+            try operation(context)
         }
     }
 }
@@ -43,7 +38,7 @@ extension _AnyDatabaseRecordContextTransaction {
 
 extension _AnyDatabaseRecordContextTransaction {
     public func create<Instance: Entity>(_ entityType: Instance.Type) throws -> Instance {
-        return try _withTransactionContext { context in
+        return try scope { context in
             let entity = try self.databaseContext.schema.entity(forModelType: entityType).unwrap()
             
             let record = try self.recordContext.createRecord(
@@ -55,7 +50,7 @@ extension _AnyDatabaseRecordContextTransaction {
                 context: .init()
             )
             
-            let recordContainer = _AnyDatabaseRecordContainer(
+            let recordContainer = _DatabaseRecordContainer(
                 transactionContext: context,
                 recordSchema: entity,
                 record: record
@@ -70,34 +65,34 @@ extension _AnyDatabaseRecordContextTransaction {
     public func queryExecutionTask<Model>(
         for request: QueryRequest<Model>
     ) -> AnyTask<QueryRequest<Model>.Output, Error> {
-        _withTransactionContext { context in
-            do {
-                return try recordContext
+        do {
+            return try scope { context in
+                try recordContext
                     .execute(zoneQueryRequest(from: request))
                     .successPublisher
                     .tryMap { result in
                         QueryRequest<Model>.Output(
                             results: try (result.records ?? []).map { record in
-                                try context.scope {
+                                try withDatabaseTransactionContext(context) { context in
                                     try cast(self._convertToEntityInstance(record), to: Model.self)
                                 }
                             }
                         )
                     }
                     .convertToTask()
-            } catch {
-                return .failure(error)
             }
+        } catch {
+            return .failure(error)
         }
     }
     
     private func _convertToEntityInstance(_ record: AnyDatabaseRecord) throws -> any Entity {
-        try _withTransactionContext { context in
+        try scope { context in
             let schema = databaseContext.schema
             let entityID = try databaseContext.schemaAdaptor.entity(forRecordType: record.recordType).unwrap()
             let entity = try databaseContext.schema[entityID].unwrap()
             
-            let recordContainer = _AnyDatabaseRecordContainer(
+            let recordContainer = _DatabaseRecordContainer(
                 transactionContext: context,
                 recordSchema: entity,
                 record: record

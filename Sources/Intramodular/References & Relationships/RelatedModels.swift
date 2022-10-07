@@ -7,7 +7,7 @@ import Swallow
 import SwiftUIX
 
 /// An collection of models related to an entity.
-public struct RelatedModels<Model: Entity & Identifiable>: Sequence {     
+public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     public static var entityCardinality: _Schema.Entity.Relationship.EntityCardinality {
         .many
     }
@@ -30,10 +30,8 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     
     public func makeIterator() -> AnyIterator<Model> {
         do {
-            let transactionContext = try transactionContext.unwrap()
-
-            return try transactionContext.scope {
-                AnyIterator(try relationship.all().map({ try Model(from: transactionContext._recordContainer(for: $0)) }).makeIterator())
+            return try withDatabaseTransactionContext(transactionContext) { context in
+                AnyIterator(try relationship.toManyRelationship().all().map({ try Model(from: context._recordContainer(for: $0)) }).makeIterator())
             }
         } catch {
             assertionFailure()
@@ -53,28 +51,26 @@ extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
     
     public static func decode(
-        from record: AnyDatabaseRecord,
+        from container: _DatabaseRecordContainer,
         forKey key: CodingKey
     ) throws -> Self {
-        try self.init(
-            transactionContext: _SwiftDB_TaskLocalValues.transactionContext.unwrap(),
-            relationship: try record.relationship(for: key)
-        )
+        try withDatabaseTransactionContext { context in
+            self.init(
+                transactionContext: context,
+                relationship: try container.relationship(for: key)
+            )
+        }
     }
     
-    public func encode(to record: AnyDatabaseRecord, forKey key: CodingKey) throws {
+    public func encode(to record: _DatabaseRecordContainer, forKey key: CodingKey) throws {
         fatalError()
-    }
-    
-    public func exportRelatableModels() -> [Model] {
-        .init(self)
     }
 }
 
 extension RelatedModels {
     public func insert(_ model: Model) {
         do {
-            try relationship.insert(model._underlyingDatabaseRecordContainer.unwrap().record)
+            try relationship.toManyRelationship().insert(model._underlyingDatabaseRecordContainer.unwrap().record)
         } catch {
             assertionFailure()
         }
@@ -82,7 +78,7 @@ extension RelatedModels {
     
     public func remove(_ model: Model) {
         do {
-            try relationship.remove(model._underlyingDatabaseRecordContainer.unwrap().record)
+            try relationship.toManyRelationship().remove(model._underlyingDatabaseRecordContainer.unwrap().record)
         } catch {
             assertionFailure()
         }
@@ -94,7 +90,7 @@ extension RelatedModels {
         
         for model in models {
             do {
-                try relationship.remove(AnyDatabaseRecord(from: model))
+                try relationship.toManyRelationship().remove(AnyDatabaseRecord(from: model))
             } catch {
                 assertionFailure()
             }

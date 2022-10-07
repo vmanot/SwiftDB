@@ -4,8 +4,22 @@
 
 import Swallow
 
+public protocol DatabaseRecordRelationship<Record> {
+    associatedtype Record: DatabaseRecord
+    
+    func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record>
+    func toManyRelationship() throws -> any ToManyDatabaseRecordRelationship<Record>
+}
+
+public protocol ToOneDatabaseRecordRelationship<Record> {
+    associatedtype Record: DatabaseRecord
+    
+    func getRecord() throws -> Record?
+    func setRecord(_ record: Record?) throws
+}
+
 /// An encapsulation of a relationship from one database record to another record OR a set of records.
-public protocol DatabaseRecordRelationship {
+public protocol ToManyDatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
     
     func insert(_ record: Record) throws
@@ -17,16 +31,12 @@ public protocol DatabaseRecordRelationship {
 // MARK: - Auxiliary Implementation -
 
 public struct NoDatabaseRecordRelationship<Record: DatabaseRecord>: DatabaseRecordRelationship {
-    public func insert(_ record: Record) throws  {
-        throw Never.Reason.unimplemented
+    public func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record> {
+        throw Never.Reason.unavailable
     }
     
-    public func remove(_ record: Record) throws {
-        throw Never.Reason.unimplemented
-    }
-    
-    public func all() throws -> [Record] {
-        throw Never.Reason.unimplemented
+    public func toManyRelationship() throws -> any ToManyDatabaseRecordRelationship<Record> {
+        throw Never.Reason.unavailable
     }
 }
 

@@ -10,18 +10,12 @@ import SwiftUI
 /// An space to manipulate and track changes to managed database records.
 ///
 /// `DatabaseRecordContext` is inspired from `NSManagedObjectContext`.
-public protocol DatabaseRecordContext: ObservableObject {
+public protocol DatabaseRecordContext: ObservableObject, Sendable {
     associatedtype Database: SwiftDB.Database
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord
-    associatedtype RecordType where Record.RecordType == RecordType
-    associatedtype RecordID: Hashable
-    associatedtype RecordConfiguration = DatabaseRecordConfiguration<Self>
     
-    typealias DatabaseContext = SwiftDB.DatabaseContext<Database>
-    
-    var databaseContext: DatabaseContext { get }
-    
+    typealias RecordConfiguration = DatabaseRecordConfiguration<Self>
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
     typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
     typealias SaveError = DatabaseRecordContextSaveError<Self>
@@ -31,12 +25,6 @@ public protocol DatabaseRecordContext: ObservableObject {
         withConfiguration _: DatabaseRecordConfiguration<Self>,
         context: RecordCreateContext
     ) throws -> Record
-    
-    /// Get the record ID associated with this record.
-    func recordID(from record: Record) throws -> RecordID
-    
-    /// Get the zone associatdd with this record.
-    func zone(for: Record) throws -> Zone?
     
     /// Mark a record for deletion in this record context.
     func delete(_: Record) throws
@@ -53,7 +41,7 @@ public protocol DatabaseRecordContext: ObservableObject {
     func save() -> AnyTask<Void, SaveError>
 }
 
-// MARK: - Implementation -
+// MARK: - Extensions -
 
 extension DatabaseRecordContext {
     public func execute(_ request: ZoneQueryRequest) async throws -> ZoneQueryRequest.Result {

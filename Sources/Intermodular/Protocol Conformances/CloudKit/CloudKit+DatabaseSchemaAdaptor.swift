@@ -12,8 +12,8 @@ extension _CloudKit {
         
         public func recordType(
             for entity: _Schema.Entity.ID?
-        ) throws -> _CloudKit.DatabaseRecordContext.RecordType {
-           fatalError()
+        ) throws -> Database.RecordContext.Record.RecordType {
+            fatalError()
         }
         
         public func entity(forRecordType recordType: String) -> _Schema.Entity.ID? {

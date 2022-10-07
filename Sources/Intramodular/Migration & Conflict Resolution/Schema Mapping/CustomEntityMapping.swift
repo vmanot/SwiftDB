@@ -95,11 +95,11 @@ extension CustomEntityMapping {
     }
     
     private static func inferredTransformer(_ args: CustomEntityTransformerArguments) throws -> Void {
-        let destinationObject = args.createDestination()
+        let destinationObject = try args.createDestination()
         
         try destinationObject.enumerateAttributes { attributes in
             if let sourceAttribute = attributes.sourceAttribute {
-                destinationObject[attributes.attribute] = try args.source.unsafeDecodeValue(forKey: AnyStringKey(stringValue: sourceAttribute.name))
+                destinationObject[attributes.attribute] = try args.source.decodeFieldPayload(forKey: AnyStringKey(stringValue: sourceAttribute.name))
             }
         }
     }
@@ -108,6 +108,6 @@ extension CustomEntityMapping {
 // MARK: - Auxiliary Implementation -
 
 public struct CustomEntityTransformerArguments {
-    public let source: AnyDatabaseRecord
-    public let createDestination: () -> UnsafeRecordMigrationDestination
+    public let source: _DatabaseRecordContainer
+    public let createDestination: () throws -> UnsafeRecordMigrationDestination
 }

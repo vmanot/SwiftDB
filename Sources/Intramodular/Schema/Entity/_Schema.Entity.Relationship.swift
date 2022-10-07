@@ -9,6 +9,7 @@ import Swift
 
 extension _Schema.Entity {
     public struct RelationshipConfiguration: Codable, Hashable {
+        public var traits: [EntityRelationshipTrait]
         public var destinationEntity: _Schema.Entity.ID?
         public var inverseRelationshipName: String?
         public var cardinality: _Schema.Entity.Relationship.Cardinality

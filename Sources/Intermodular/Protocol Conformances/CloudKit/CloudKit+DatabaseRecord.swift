@@ -20,7 +20,7 @@ extension _CloudKit {
             }
         }
         
-        public typealias RecordType = _CloudKit.DatabaseRecordContext.RecordType
+        public typealias RecordType = String
         
         let base: CKRecord
         
@@ -34,7 +34,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     public var objectWillChange: ObjectWillChangePublisher {
         .init()
     }
-
+    
     public var recordType: RecordType {
         base.recordType
     }
@@ -54,7 +54,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     public func containsValue(forKey key: CodingKey) -> Bool {
         base.object(forKey: key.stringValue) != nil
     }
-        
+    
     public func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws {
         base.setValue(value, forKey: key.stringValue)
     }
@@ -79,7 +79,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
         
         try encode(value, forKey: key)
     }
-
+    
     fileprivate enum DecodingError: Error {
         case some
     }

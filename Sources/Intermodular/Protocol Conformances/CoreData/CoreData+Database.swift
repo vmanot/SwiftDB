@@ -75,7 +75,7 @@ extension _CoreData {
             nsPersistentContainer.viewContext.automaticallyMergesChangesFromParent = true
             
             viewContext = DatabaseRecordContext(
-                parent: self,
+                databaseContext: context,
                 managedObjectContext: self.nsPersistentContainer.viewContext,
                 affectedStores: nil
             )
@@ -179,7 +179,7 @@ extension _CoreData.Database {
     
     public func recordContext(forZones zones: [Zone]?) throws -> RecordContext {
         .init(
-            parent: self,
+            databaseContext: context,
             managedObjectContext: nsPersistentContainer.viewContext,
             affectedStores: zones?.map({ $0.persistentStore })
         )

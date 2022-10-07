@@ -8,9 +8,9 @@ import Swallow
 extension _Schema.Entity {
     public struct AttributeConfiguration: Codable, Hashable {
         public var type: _Schema.Entity.AttributeType
+        public var traits: [EntityAttributeTrait] = []
+        
         public var defaultValue: AnyCodableOrNSCodingValue?
-        public var allowsExternalBinaryDataStorage: Bool
-        public var preservesValueInHistoryOnDeletion: Bool
     }
     
     public final class Attribute: _Schema.Entity.Property {
@@ -44,7 +44,7 @@ extension _Schema.Entity {
         
         public override func encode(to encoder: Encoder) throws {
             try super.encode(to: encoder)
-
+            
             var container = encoder.container(keyedBy: CodingKeys.self)
             
             try container.encode(attributeConfiguration, forKey: .attributeConfiguration)

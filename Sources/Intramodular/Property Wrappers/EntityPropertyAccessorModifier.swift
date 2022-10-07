@@ -35,16 +35,8 @@ extension EntityPropertyAccessorModifier  {
             base._runtimeMetadata = newValue
         }
     }
-
-    public var propertyConfiguration: _Schema.Entity.PropertyConfiguration {
-        get {
-            base.propertyConfiguration
-        } set {
-            base.propertyConfiguration = newValue
-        }
-    }
     
-    public var _underlyingRecordContainer: _AnyDatabaseRecordContainer? {
+    public var _underlyingRecordContainer: _DatabaseRecordContainer? {
         get {
             base._underlyingRecordContainer
         } set {
@@ -64,7 +56,7 @@ extension EntityPropertyAccessorModifier  {
         try base.schema()
     }
     
-    public func initialize(with container: _AnyDatabaseRecordContainer) throws {
+    public func initialize(with container: _DatabaseRecordContainer) throws {
         try base.initialize(with: container)
     }
 }
@@ -79,7 +71,7 @@ extension EntityPropertyAccessorModifier {
     }
 }
 
-// MARK: - Conformances -
+/*// MARK: - Conformances -
 
 @propertyWrapper
 public final class RenamingIdentifier<EntityPropertyAccessorType: EntityPropertyAccessor, WrappedValue>: EntityPropertyAccessorModifier {
@@ -111,4 +103,4 @@ public final class RenamingIdentifier<EntityPropertyAccessorType: EntityProperty
         base.propertyConfiguration.renamingIdentifier = identifier
     }
 }
-
+*/

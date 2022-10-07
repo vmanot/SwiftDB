@@ -131,6 +131,6 @@ fileprivate extension Database {
     func _opaque_recordContext(forZones zones: [AnyDatabaseZone]?) throws -> AnyDatabaseRecordContext {
         let _zones = try zones?.map({ try cast($0.base, to: Zone.self) })
         
-        return AnyDatabaseRecordContext(try recordContext(forZones: _zones))
+        return AnyDatabaseRecordContext(erasing: try recordContext(forZones: _zones))
     }
 }

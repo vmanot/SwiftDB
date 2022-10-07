@@ -31,6 +31,6 @@ extension DatabaseSchemaAdaptor {
     public func _opaque_entity(
         forRecordType recordType: AnyDatabaseRecord.RecordType
     ) throws -> _Schema.Entity.ID? {
-        try entity(forRecordType: recordType._cast(to: Database.RecordContext.RecordType.self))
+        try entity(forRecordType: recordType._cast(to: Database.RecordContext.Record.RecordType.self))
     }
 }

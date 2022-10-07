@@ -5,7 +5,7 @@
 import Swallow
 
 public struct DatabaseRecordConfiguration<Context: DatabaseRecordContext> {
-    public let recordType: Context.RecordType
-    public let recordID: Context.RecordID?
+    public let recordType: Context.Record.RecordType
+    public let recordID: Context.Record.ID?
     public let zone: Context.Zone?
 }

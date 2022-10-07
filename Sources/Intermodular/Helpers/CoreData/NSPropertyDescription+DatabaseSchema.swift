@@ -40,8 +40,8 @@ extension NSAttributeDescription {
             self.valueTransformerName = valueTransformerName
         }
         
-        allowsExternalBinaryDataStorage = attribute.attributeConfiguration.allowsExternalBinaryDataStorage
-        preservesValueInHistoryOnDeletion = attribute.attributeConfiguration.preservesValueInHistoryOnDeletion
+        allowsExternalBinaryDataStorage = attribute.attributeConfiguration.traits.contains(.allowsExternalBinaryDataStorage)
+        // preservesValueInHistoryOnDeletion = ...
         
         defaultValue = attribute.attributeConfiguration.defaultValue?.cocoaObjectValue()
     }

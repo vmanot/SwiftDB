@@ -10,6 +10,10 @@ public final class LiveDatabaseAccess: DatabaseCRUDQ, DatabaseTransaction {
     
     public var base: (any DatabaseTransaction)?
     
+    public var id: AnyHashable {
+        base?.id ?? AnyHashable(base?.id) // BAD HACK
+    }
+    
     public var isInitialized: Bool {
         base != nil
     }
@@ -25,24 +29,24 @@ public final class LiveDatabaseAccess: DatabaseCRUDQ, DatabaseTransaction {
     }
     
     public func create<Instance: Entity>(_ entityType: Instance.Type) throws -> Instance {
-        let result = try _withTransactionContext { _ in
-            try baseUnwrapped.create(entityType)
+        try scope { _ in
+            let instance = try baseUnwrapped.create(entityType)
+            
+            taskQueue.add {
+                try await self.commit()
+            }
+            
+            return instance
         }
-        
-        taskQueue.add {
-            try await self.commit()
-        }
-        
-        return result
     }
     
     public func delete<Instance: Entity>(_ instance: Instance) throws {
-        try _withTransactionContext { _ in
+        try scope { _ in
             try baseUnwrapped.delete(instance)
-        }
-        
-        taskQueue.add {
-            try await self.commit()
+            
+            taskQueue.add {
+                try await self.commit()
+            }
         }
     }
     
@@ -50,7 +54,7 @@ public final class LiveDatabaseAccess: DatabaseCRUDQ, DatabaseTransaction {
         for request: QueryRequest<Model>
     ) -> Merge.AnyTask<QueryRequest<Model>.Output, Error> {
         do {
-            return try _withTransactionContext { _ in
+            return try scope { _ in
                 try baseUnwrapped.queryExecutionTask(for: request)
             }
         } catch {
@@ -78,19 +82,15 @@ public final class LiveDatabaseAccess: DatabaseCRUDQ, DatabaseTransaction {
         return try body()
     }
     
-    public func _withTransactionContext<T>(_ body: (DatabaseTransactionContext) throws -> T) rethrows -> T {
-        guard let base = try? baseUnwrapped else {
-            fatalError()
-        }
-        
-        return try base._withTransactionContext { context in
+    public func scope<T>(_ operation: (DatabaseTransactionContext) throws -> T) throws -> T {
+        try baseUnwrapped.scope { context in
             let transactionContext = DatabaseTransactionContext(
                 databaseContext: context.databaseContext,
                 transaction: self
             )
             
-            return try _SwiftDB_TaskLocalValues.$transactionContext.withValue(transactionContext) {
-                try body(transactionContext)
+            return try withDatabaseTransactionContext(transactionContext) { context in
+                try operation(context)
             }
         }
     }

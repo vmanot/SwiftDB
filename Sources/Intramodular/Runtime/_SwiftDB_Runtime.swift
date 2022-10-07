@@ -21,7 +21,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
     
     var typeCache = TypeCache()
     var entityCacheMap: [Metatype<any Entity.Type>: EntityCache] = [:]
-
+    
     public init(schema: _Schema?) throws {
         if let schema = schema {
             for entity in schema.entities {
@@ -34,7 +34,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
         typeCache.entity[name]
     }
     
-
+    
     public final class EntityCache {
         let entityType: _opaque_Entity.Type
         var fieldNameToKeyPathMap: [String: AnyKeyPath] = [:]

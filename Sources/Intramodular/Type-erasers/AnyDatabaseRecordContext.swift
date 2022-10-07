@@ -7,134 +7,59 @@ import Merge
 
 public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
     public typealias Database = AnyDatabase
-    public typealias DatabaseContext = SwiftDB.DatabaseContext<AnyDatabase>
     public typealias Zone = AnyDatabaseZone
     public typealias Record = AnyDatabaseRecord
-    public typealias RecordType = AnyDatabaseRecord.RecordType
-    public typealias RecordID = AnyDatabaseRecord.ID
-    public typealias RecordConfiguration = DatabaseRecordConfiguration<AnyDatabaseRecordContext>
     
-    private let baseBox: _AnyDatabaseRecordContextBoxBase
-
+    private let base: any DatabaseRecordContext
+    
     public var objectWillChange: AnyObjectWillChangePublisher {
-        baseBox.objectWillChange
+        base.eraseObjectWillChangePublisher()
     }
     
-    private init(baseBox: _AnyDatabaseRecordContextBoxBase) {
-        self.baseBox = baseBox
+    private init(base: any DatabaseRecordContext) {
+        self.base = base
     }
     
-    public var databaseContext: DatabaseContext {
-        baseBox.databaseContext
-    }
-    
-    public convenience init<RecordContext: DatabaseRecordContext>(_ recordContext: RecordContext) {
-        self.init(baseBox: _AnyDatabaseRecordContextBox(recordContext))
+    public convenience init<RecordContext: DatabaseRecordContext>(erasing recordContext: RecordContext) {
+        self.init(base: recordContext)
     }
     
     public func createRecord(
         withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordContext>,
         context: RecordCreateContext
     ) throws -> AnyDatabaseRecord {
-        try baseBox.createRecord(
+        try base._opaque_createRecord(
             withConfiguration: configuration,
             context: context
         )
     }
-
-    public func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
-        try baseBox.recordID(from: record)
-    }
     
-    public func zone(for record: AnyDatabaseRecord) throws -> AnyDatabaseZone? {
-        try baseBox.zone(for: record)
-    }
-        
     public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
-        baseBox.execute(request)
+        base._opaque_execute(request)
     }
     
     public func delete(_ record: AnyDatabaseRecord) throws {
-        try baseBox.delete(record)
+        try base._opaque_delete(record)
     }
     
     @discardableResult
     public func save() -> AnyTask<Void, SaveError> {
-        baseBox.save()
+        base._opaque_save()
     }
 }
 
-// MARK: - Underlying Implementation -
+// MARK: - Auxiliary Implementation -
 
-class _AnyDatabaseRecordContextBoxBase: @unchecked Sendable {
-    var objectWillChange: AnyObjectWillChangePublisher {
-        fatalError()
-    }
-    
-    var databaseContext: AnyDatabaseRecordContext.DatabaseContext {
-        fatalError()
-    }
-    
-    func createRecord(
+private extension DatabaseRecordContext {
+    func _opaque_createRecord(
         withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordContext>,
         context: AnyDatabaseRecordContext.RecordCreateContext
     ) throws -> AnyDatabaseRecord {
-        fatalError()
-    }
-
-    func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
-        fatalError()
-    }
-    
-    func zone(for record: AnyDatabaseRecord) throws -> AnyDatabaseZone? {
-        fatalError()
-    }
-    
-    func zoneQueryRequest<Model>(
-        from queryRequest: QueryRequest<Model>
-    ) throws -> AnyDatabaseRecordContext.ZoneQueryRequest {
-        fatalError()
-    }
-    
-    func execute(
-        _ request: AnyDatabaseRecordContext.ZoneQueryRequest
-    ) -> AnyTask<AnyDatabaseRecordContext.ZoneQueryRequest.Result, Error> {
-        fatalError()
-    }
-    
-    func delete(_ record: AnyDatabaseRecord) throws {
-        fatalError()
-    }
-    
-    func save() -> AnyTask<Void, AnyDatabaseRecordContext.SaveError> {
-        fatalError()
-    }
-}
-
-final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatabaseRecordContextBoxBase {
-    let base: Base
-    
-    init(_ base: Base) {
-        self.base = base
-    }
-    
-    override var objectWillChange: AnyObjectWillChangePublisher {
-        .init(from: base)
-    }
-    
-    override var databaseContext: AnyDatabaseRecordContext.DatabaseContext {
-        base.databaseContext.eraseToAnyDatabaseContext()
-    }
-    
-    override func createRecord(
-        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordContext>,
-        context: AnyDatabaseRecordContext.RecordCreateContext
-    ) throws -> AnyDatabaseRecord {
-        let record = try base.createRecord(
+        let record = try createRecord(
             withConfiguration: .init(
-                recordType: configuration.recordType._cast(to: Base.RecordType.self),
-                recordID: configuration.recordID.map({ try cast($0.base, to: Base.RecordID.self) }),
-                zone: configuration.zone.map({ try cast($0.base, to: Base.Zone.self) })
+                recordType: configuration.recordType._cast(to: Record.RecordType.self),
+                recordID: configuration.recordID.map({ try cast($0.base, to: Record.ID.self) }),
+                zone: configuration.zone.map({ try cast($0.base, to: Zone.self) })
             ),
             context: .init()
         )
@@ -142,23 +67,11 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
         return .init(erasing: record)
     }
     
-    override func recordID(from record: AnyDatabaseRecord) throws -> AnyDatabaseRecord.ID {
-        let _record = try record._cast(to: Base.Record.self)
-        
-        return AnyDatabaseRecord.ID(base: try base.recordID(from: _record))
-    }
-    
-    override func zone(for record: AnyDatabaseRecord) throws -> AnyDatabaseZone? {
-        let _record = try record._cast(to: Base.Record.self)
-        
-        return try base.zone(for: _record).map(AnyDatabaseZone.init)
-    }
-        
-    override func execute(
+    func _opaque_execute(
         _ request: AnyDatabaseRecordContext.ZoneQueryRequest
     ) -> AnyTask<AnyDatabaseRecordContext.ZoneQueryRequest.Result, Error> {
         do {
-            return try base.execute(translateZoneQueryRequest(request))
+            return try execute(translateZoneQueryRequest(request))
                 .successPublisher
                 .map { result in
                     AnyDatabaseRecordContext.ZoneQueryRequest.Result(records: result.records?.map({ AnyDatabaseRecord(erasing: $0) }))
@@ -169,27 +82,9 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
         }
     }
     
-    override func delete(_ record: AnyDatabaseRecord) throws {
-        let _record = try record._cast(to: Base.Record.self)
-        
-        return try base.delete(_record)
-    }
-    
-    override func save() -> AnyTask<Void, AnyDatabaseRecordContext.SaveError> {
-        base.save()
-            .successPublisher
-            .mapError { error in
-                AnyDatabaseRecordContext.SaveError(
-                    description: error.description, 
-                    mergeConflicts: error.mergeConflicts?.map({ DatabaseRecordMergeConflict(source: AnyDatabaseRecord(erasing: $0.source)) })
-                )
-            }
-            .convertToTask()
-    }
-    
-    private func translateZoneQueryRequest(
+    func translateZoneQueryRequest(
         _ request: AnyDatabaseRecordContext.ZoneQueryRequest
-    ) throws -> Base.ZoneQueryRequest {
+    ) throws -> ZoneQueryRequest {
         .init(
             filters: try translateZoneQueryRequestFilters(request.filters),
             predicate: try translateZoneQueryRequestPredicate(request.predicate),
@@ -199,33 +94,49 @@ final class _AnyDatabaseRecordContextBox<Base: DatabaseRecordContext>: _AnyDatab
         )
     }
     
-    private func translateZoneQueryRequestFilters(
+    func translateZoneQueryRequestFilters(
         _ filters: DatabaseZoneQueryRequest<AnyDatabaseRecordContext>.Filters
-    ) throws -> DatabaseZoneQueryRequest<Base>.Filters {
-        try DatabaseZoneQueryRequest<Base>.Filters(
-            zones: filters.zones?.map({ try cast($0.base, to: Base.Zone.ID.self) }),
-            recordTypes: Set(filters.recordTypes.map({ try Base.RecordType($0.description).unwrap() })),
+    ) throws -> DatabaseZoneQueryRequest<Self>.Filters {
+        try DatabaseZoneQueryRequest<Self>.Filters(
+            zones: filters.zones?.map({ try cast($0.base, to: Zone.ID.self) }),
+            recordTypes: Set(filters.recordTypes.map({ try Record.RecordType($0.description).unwrap() })),
             includesSubentities: filters.includesSubentities
         )
     }
     
-    private func translateZoneQueryRequestPredicate(
+    func translateZoneQueryRequestPredicate(
         _ predicate: DatabaseZoneQueryPredicate<AnyDatabaseRecordContext>?
-    ) throws -> DatabaseZoneQueryPredicate<Base>? {
+    ) throws -> DatabaseZoneQueryPredicate<Self>? {
         guard let predicate = predicate else {
             return nil
         }
         
         switch predicate {
             case .related(let recordID, let fieldName):
-                return .related(to: try cast(recordID.base, to: Base.RecordID.self), by: fieldName)
+                return .related(to: try cast(recordID.base, to: Record.ID.self), by: fieldName)
             case ._nsPredicate(let predicate):
                 return ._nsPredicate(predicate)
         }
     }
+    
+    func _opaque_delete(_ record: AnyDatabaseRecord) throws {
+        let _record = try record._cast(to: Record.self)
+        
+        return try delete(_record)
+    }
+    
+    func _opaque_save() -> AnyTask<Void, AnyDatabaseRecordContext.SaveError> {
+        save()
+            .successPublisher
+            .mapError { error in
+                AnyDatabaseRecordContext.SaveError(
+                    description: error.description,
+                    mergeConflicts: error.mergeConflicts?.map({ DatabaseRecordMergeConflict(source: AnyDatabaseRecord(erasing: $0.source)) })
+                )
+            }
+            .convertToTask()
+    }
 }
-
-// MARK: - Auxiliary Implementation -
 
 extension DatabaseZoneQueryPredicate where Context == AnyDatabaseRecordContext {
     fileprivate init<T: DatabaseRecordContext>(

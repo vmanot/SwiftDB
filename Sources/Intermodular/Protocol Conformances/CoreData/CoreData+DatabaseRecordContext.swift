@@ -9,22 +9,19 @@ import Runtime
 import Swallow
 
 extension _CoreData {
-    public final class DatabaseRecordContext: ObservableObject {
-        weak var parent: Database?
-        
+    public final class DatabaseRecordContext: ObservableObject, @unchecked Sendable {
         public let databaseContext: DatabaseContext<Database>
-
+        
         let notificationCenter: NotificationCenter = .default
         let nsManagedObjectContext: NSManagedObjectContext
         let affectedStores: [NSPersistentStore]?
-                
+        
         init(
-            parent: Database,
+            databaseContext: DatabaseContext<Database>,
             managedObjectContext: NSManagedObjectContext,
             affectedStores: [NSPersistentStore]?
         ) {
-            self.databaseContext = parent.context
-            self.parent = parent
+            self.databaseContext = databaseContext
             self.nsManagedObjectContext = managedObjectContext
             self.affectedStores = affectedStores
             
@@ -69,7 +66,6 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = _CoreData.Database.Zone
     public typealias Record = _CoreData.DatabaseRecord
     public typealias RecordType = _CoreData.DatabaseRecord.RecordType
-    public typealias RecordID = _CoreData.DatabaseRecord.ID
     
     public func createRecord(
         withConfiguration configuration: RecordConfiguration,
@@ -89,14 +85,6 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         return object
     }
         
-    public func recordID(from record: Record) throws -> RecordID {
-        .init(managedObjectID: record.rawObject.objectID)
-    }
-    
-    public func zone(for object: Record) throws -> Zone? {
-        object.rawObject.objectID.persistentStore.map({ Zone(persistentStore: $0) })
-    }
-    
     public func delete(_ object: Record) throws {
         nsManagedObjectContext.delete(object.rawObject)
     }
@@ -104,7 +92,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
         do {
             let nsFetchRequests = try request.toNSFetchRequests(context: self)
-
+            
             if request.sortDescriptors.isNil {
                 return Task {
                     try await nsManagedObjectContext.perform { [nsManagedObjectContext] in
@@ -119,7 +107,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                 .map({ ZoneQueryRequest.Result(records: $0) })
                 .convertToTask()
             }
-                        
+            
             return PassthroughTask<ZoneQueryRequest.Result, Error> { attemptToFulfill -> Void in
                 do {
                     var fetchedNSManagedObjects: [NSManagedObject] = []
@@ -136,7 +124,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
                         
                         fetchedNSManagedObjects.append(contentsOf: fetchedResultsController.fetchedObjects ?? [])
                     }
-
+                    
                     attemptToFulfill(.success(ZoneQueryRequest.Result(records: fetchedNSManagedObjects.map({ Record(rawObject: $0) }))))
                 } catch {
                     attemptToFulfill(.failure(error))
@@ -154,7 +142,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
             func save() -> Result<Void, SaveError> {
                 do {
                     try self.nsManagedObjectContext.save()
-
+                    
                     return .success(())
                 } catch {
                     let error = error as NSError
@@ -171,7 +159,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
             guard nsManagedObjectContext.hasChanges else {
                 return .success(())
             }
-
+            
             if nsManagedObjectContext.concurrencyType == .mainQueueConcurrencyType {
                 return await MainActor.run {
                     save()

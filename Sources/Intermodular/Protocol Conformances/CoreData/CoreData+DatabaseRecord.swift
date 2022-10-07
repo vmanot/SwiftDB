@@ -51,59 +51,11 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         rawObject.primitiveValueExists(forKey: key.stringValue)
     }
     
-    public func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws  {
-        let key = key.stringValue
-        
-        rawObject.willChangeValue(forKey: key)
-        
-        defer {
-            rawObject.didChangeValue(forKey: key)
-        }
-        
-        rawObject.setPrimitiveValue(value, forKey: key)
-    }
-    
-    public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
-        if let value = value as? any Entity {
-            let record = try AnyDatabaseRecord(from: value)._cast(to: _CoreData.DatabaseRecord.self)
-            
-            try unsafeEncodeValue(record.rawObject, forKey: key)
-        } else if let value = value as? NSAttributeCoder {
-            try value.encode(to: rawObject, forKey: key)
-        } else if let value = value as? Codable {
-            try value.encode(to: self, forKey: key)
-        }
-    }
-    
-    public func unsafeDecodeValue(forKey key: CodingKey) throws -> Any? {
-        let key = key.stringValue
-        
-        rawObject.willAccessValue(forKey: key)
-        
-        defer {
-            rawObject.didAccessValue(forKey: key)
-        }
-        
-        return rawObject.primitiveValue(forKey: key)
-    }
-    
     public func decode<Value>(
         _ valueType: Value.Type,
         forKey key: CodingKey
     ) throws -> Value {
-        if let valueType = valueType as? any SwiftDB.Entity.Type {
-            let record = AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: try cast(unsafeDecodeValue(forKey: key), to: NSManagedObject.self)))
-            
-            let transactionContext = try _SwiftDB_TaskLocalValues.transactionContext.unwrap()
-            
-            let recordContainer = _AnyDatabaseRecordContainer(
-                transactionContext: transactionContext,
-                recordSchema: try transactionContext.databaseContext.recordSchema(forRecordType: record.recordType),
-                record: record
-            )
-            
-            return try cast(valueType.init(from: recordContainer), to: Value.self)
-        } else if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
+        if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
             return try valueType.decode(from: rawObject, forKey: key) as! Value
         } else if let valueType = valueType as? NSAttributeCoder.Type {
             return try valueType.decode(from: rawObject, forKey: key) as! Value
@@ -111,6 +63,14 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
             return try valueType.decode(from: self, forKey: key) as! Value
         } else {
             throw DecodingError.some
+        }
+    }
+    
+    public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
+        if let value = value as? NSAttributeCoder {
+            try value.encode(to: rawObject, forKey: key)
+        } else if let value = value as? Codable {
+            try value.encode(to: self, forKey: key)
         }
     }
     
@@ -141,17 +101,32 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         }
     }
     
-    public func setReference(_ reference: Reference?, forKey key: CodingKey) throws {
-        if let reference = reference {
-            /// Here, the zone ID is unused because CoreData wraps over all its 'zones' at once. This raises concerns about the record context APIs.
-            rawObject.setValue(try rawObject.managedObjectContext.unwrap().object(with: reference.recordID.nsManagedObjectID), forKey: key.stringValue)
-        } else {
-            rawObject.setValue(nil, forKey: key.stringValue)
-        }
-    }
-    
     public func relationship(for key: CodingKey) throws -> Relationship {
         Relationship(record: self, key: key)
+    }
+    
+    func unsafeDecodeValue(forKey key: CodingKey) throws -> Any? {
+        let key = key.stringValue
+        
+        rawObject.willAccessValue(forKey: key)
+        
+        defer {
+            rawObject.didAccessValue(forKey: key)
+        }
+        
+        return rawObject.primitiveValue(forKey: key)
+    }
+    
+    func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws  {
+        let key = key.stringValue
+        
+        rawObject.willChangeValue(forKey: key)
+        
+        defer {
+            rawObject.didChangeValue(forKey: key)
+        }
+        
+        rawObject.setPrimitiveValue(value, forKey: key)
     }
 }
 

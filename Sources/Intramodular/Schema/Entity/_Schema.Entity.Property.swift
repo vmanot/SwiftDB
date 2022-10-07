@@ -13,7 +13,7 @@ extension _Schema.Entity {
         public var renamingIdentifier: String?
     }
     
-    public class Property: Codable, Hashable, Model, @unchecked Sendable {
+    public class Property: Codable, Hashable, @unchecked Sendable {
         public enum PropertyType: Codable, CodingTypeDiscriminator {
             case attribute
             case relationship
@@ -71,13 +71,13 @@ extension _Schema.Entity {
 
 extension _Schema.Entity.Property: PolymorphicDecodable {
     public typealias TypeDiscriminator = PropertyType
-
+    
     fileprivate enum CodingKeys: String, CodingKey {
         case type
         case name
         case propertyConfiguration
     }
-        
+    
     public static func decodeTypeDiscriminator(from decoder: Decoder) throws -> TypeDiscriminator {
         try decoder.container(keyedBy: CodingKeys.self).decode(forKey: .type)
     }

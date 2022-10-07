@@ -54,18 +54,10 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
         base.containsValue(forKey: key)
     }
     
-    public func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws {
-        try base.unsafeEncodeValue(value, forKey: key)
-    }
-    
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         try base.encode(value, forKey: key)
     }
-    
-    public func unsafeDecodeValue(forKey key: CodingKey) throws -> Any? {
-        try base.unsafeDecodeValue(forKey: key)
-    }
-    
+        
     public func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
         try base.decode(type, forKey: key)
     }

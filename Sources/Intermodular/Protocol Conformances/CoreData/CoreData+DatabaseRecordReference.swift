@@ -12,7 +12,7 @@ extension _CoreData.DatabaseRecord {
         
         private let nsManagedObject: NSManagedObject
         
-        public var recordID: RecordContext.RecordID {
+        public var recordID: RecordContext.Record.ID {
             .init(managedObjectID: nsManagedObject.objectID)
         }
         

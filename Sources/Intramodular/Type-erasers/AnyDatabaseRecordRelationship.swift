@@ -8,18 +8,36 @@ import Merge
 public struct AnyDatabaseRecordRelationship: DatabaseRecordRelationship {
     public typealias Record = AnyDatabaseRecord
     
-    private let base: any DatabaseRecordRelationship
+    let base: any DatabaseRecordRelationship
+    
+    public init<Relationship: DatabaseRecordRelationship>(erasing relationship: Relationship) {
+        self.base = relationship
+    }
+    
+    public func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record> {
+        fatalError()
+    }
+    
+    public func toManyRelationship() throws -> any ToManyDatabaseRecordRelationship<Record> {
+        try base.toManyRelationship().eraseToAnyToManyDatabaseRelationship()
+    }
+}
 
-    private init(base: any DatabaseRecordRelationship) {
+public struct AnyToManyDatabaseRecordRelationship: ToManyDatabaseRecordRelationship {
+    public typealias Record = AnyDatabaseRecord
+    
+    private let base: any ToManyDatabaseRecordRelationship
+    
+    private init(base: any ToManyDatabaseRecordRelationship) {
         self.base = base
     }
     
-    public init<Relationship: DatabaseRecordRelationship>(erasing relationship: Relationship) {
-        assert(!(relationship is AnyDatabaseRecordRelationship))
+    public init<Relationship: ToManyDatabaseRecordRelationship>(erasing relationship: Relationship) {
+        assert(!(relationship is AnyToManyDatabaseRecordRelationship))
         
         self.init(base: relationship)
     }
-
+    
     public func insert(_ record: Record) throws {
         try base._opaque_insert(record)
     }
@@ -43,9 +61,17 @@ extension DatabaseRecordRelationship {
     }
 }
 
+extension ToManyDatabaseRecordRelationship {
+    public func eraseToAnyToManyDatabaseRelationship() -> AnyToManyDatabaseRecordRelationship {
+        assert(!(self is AnyToManyDatabaseRecordRelationship))
+        
+        return .init(erasing: self)
+    }
+}
+
 // MARK: - Auxiliary Implementation -
 
-private extension DatabaseRecordRelationship {
+private extension ToManyDatabaseRecordRelationship {
     func _opaque_insert(_ record: AnyDatabaseRecord) throws {
         try insert(record._cast(to: Record.self))
     }

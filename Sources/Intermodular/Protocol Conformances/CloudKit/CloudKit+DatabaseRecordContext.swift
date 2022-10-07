@@ -7,14 +7,14 @@ import Merge
 import Swallow
 
 extension _CloudKit {
-    public final class DatabaseRecordContext {
+    public final class DatabaseRecordContext: @unchecked Sendable {
         var ckContainer: CKContainer?
         var ckDatabase: CKDatabase
         var zones: [Zone]
         
         var records: [CKRecord.ID: CKRecord?] = [:]
         
-        public let databaseContext: DatabaseContext
+        public let databaseContext: _CloudKit.Database.Context
         
         init(parent: _CloudKit.Database, zones: [Zone]) {
             self.ckContainer = parent.ckContainer
@@ -27,10 +27,7 @@ extension _CloudKit {
 
 extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Database = _CloudKit.Database
-    public typealias DatabaseContext = _CloudKit.Database.Context
     public typealias Record = _CloudKit.DatabaseRecord
-    public typealias RecordType = String
-    public typealias RecordID = _CloudKit.DatabaseRecord.ID
     public typealias Zone = _CloudKit.DatabaseZone
     
     public func createRecord(
@@ -52,17 +49,6 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         records[record.recordID] = record
         
         return .init(ckRecord: record)
-    }
-        
-    public func recordID(from record: Record) throws -> Record.ID {
-        .init(rawValue: record.base.recordID.recordName)
-    }
-    
-    public func zone(for object: Record) throws -> Zone? {
-        zones.lazy
-            .map({ $0.ckRecordZone })
-            .first(where: { $0.zoneID == object.base.recordID.zoneID })
-            .map({ Zone(recordZone: $0) })
     }
     
     public func delete(_ object: Record) throws {
@@ -87,28 +73,28 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
             operation.database = ckDatabase
             
             /*var conflicts: [DatabaseRecordMergeConflict<_CloudKit.DatabaseRecordContext>]? = []
+             
+             operation.perRecordProgressBlock = { record, progress in
+             
+             }
+             
+             operation.perRecordCompletionBlock = { record, error in
+             if let error = error as? CKError {
+             if error.code == CKError.serverRecordChanged {
+             conflicts ??= []
+             conflicts?.append(.init(record: record, error: error))
+             }
+             }
+             }
+             
+             operation.modifyRecordsCompletionBlock = { savedRecords, deletedRecords, error in
+             if let error = error {
+             attemptToFullfill(.failure(error as! _CloudKit.DatabaseRecordContext.SaveError))
+             } else {
+             attemptToFullfill(.success(()))
+             }
+             }*/
             
-            operation.perRecordProgressBlock = { record, progress in
-                
-            }
-            
-            operation.perRecordCompletionBlock = { record, error in
-                if let error = error as? CKError {
-                    if error.code == CKError.serverRecordChanged {
-                        conflicts ??= []
-                        conflicts?.append(.init(record: record, error: error))
-                    }
-                }
-            }
-            
-            operation.modifyRecordsCompletionBlock = { savedRecords, deletedRecords, error in
-                if let error = error {
-                    attemptToFullfill(.failure(error as! _CloudKit.DatabaseRecordContext.SaveError))
-                } else {
-                    attemptToFullfill(.success(()))
-                }
-            }*/
-                        
             ckDatabase.add(operation)
             
             TODO.unimplemented

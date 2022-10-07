@@ -8,8 +8,8 @@ public protocol DatabaseSchemaAdaptor {
     associatedtype Database: SwiftDB.Database
     
     /// The corresponding record type for a given entity.
-    func recordType(for entity: _Schema.Entity.ID?) throws -> Database.RecordContext.RecordType
+    func recordType(for entity: _Schema.Entity.ID?) throws -> Database.RecordContext.Record.RecordType
     
     /// The corresponding entity ID for a given record type.
-    func entity(forRecordType recordType: Database.RecordContext.RecordType) throws -> _Schema.Entity.ID?
+    func entity(forRecordType recordType: Database.RecordContext.Record.RecordType) throws -> _Schema.Entity.ID?
 }

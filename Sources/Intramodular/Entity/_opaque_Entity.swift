@@ -8,9 +8,9 @@ import Swallow
 
 /// A shadow protocol for `Entity`.
 public protocol _opaque_Entity: _opaque_ObservableObject, Initiable {
-    static var _opaque_ParentEntity: _opaque_Entity.Type? { get }
+    static var _opaque_ParentEntity: (any Entity.Type)? { get }
     
-    var _underlyingDatabaseRecordContainer: _AnyDatabaseRecordContainer? { get }
+    var _underlyingDatabaseRecordContainer: _DatabaseRecordContainer? { get }
 }
 
 extension _opaque_Entity where Self: Entity {
@@ -27,7 +27,7 @@ extension _opaque_Entity  {
     }
     
     mutating func _runtime_configurePropertyAccessors(
-        recordContainer: _AnyDatabaseRecordContainer?
+        recordContainer: _DatabaseRecordContainer?
     ) throws {
         var instance = AnyNominalOrTupleMirror(self)!
         
@@ -48,7 +48,7 @@ extension _opaque_Entity  {
         self = try cast(instance.value, to: Self.self)
     }
     
-    init(from recordContainer: _AnyDatabaseRecordContainer?) throws {
+    init(from recordContainer: _DatabaseRecordContainer?) throws {
         self.init()
         
         try _runtime_configurePropertyAccessors(recordContainer: recordContainer)
@@ -63,14 +63,10 @@ extension _opaque_Entity  {
 }
 
 extension _opaque_Entity where Self: Entity {
-    public static var _opaque_ParentEntity: _opaque_Entity.Type? {
+    public static var _opaque_ParentEntity: (any Entity.Type)? {
         return nil
     }
-    
-    public static var _opaque_ID: Any.Type? {
-        nil
-    }
-    
+        
     public var _opaque_id: AnyHashable? {
         nil
     }
@@ -83,7 +79,7 @@ extension _opaque_Entity where Self: Entity {
         
     }
     
-    public var _underlyingDatabaseRecordContainer: _AnyDatabaseRecordContainer? {
+    public var _underlyingDatabaseRecordContainer: _DatabaseRecordContainer? {
         for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
             if let value = value as? any EntityPropertyAccessor {
                 return value._underlyingRecordContainer
@@ -95,15 +91,15 @@ extension _opaque_Entity where Self: Entity {
 }
 
 extension _opaque_Entity where Self: Entity & AnyObject {
-    public static var _opaque_ParentEntity: _opaque_Entity.Type? {
-        ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
+    public static var _opaque_ParentEntity: (any Entity.Type)? {
+        ObjCClass(Self.self).superclass?.value as? any Entity.Type
     }
 }
 
 
 extension _opaque_Entity where Self: Entity & ObservableObject {
-    public static var _opaque_ParentEntity: _opaque_Entity.Type? {
-        ObjCClass(Self.self).superclass?.value as? _opaque_Entity.Type
+    public static var _opaque_ParentEntity: (any Entity.Type)? {
+        ObjCClass(Self.self).superclass?.value as? any Entity.Type
     }
     
     public func _opaque_objectWillChange_send() throws {
@@ -112,10 +108,6 @@ extension _opaque_Entity where Self: Entity & ObservableObject {
 }
 
 extension _opaque_Entity where Self: Entity & Identifiable {
-    public static var _opaque_ID: Any.Type? {
-        ID.self
-    }
-    
     public var _opaque_id: AnyHashable? {
         AnyHashable(id)
     }

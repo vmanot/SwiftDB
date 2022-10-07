@@ -21,12 +21,12 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     
     public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     public var name: String?
-    public var propertyConfiguration: _Schema.Entity.PropertyConfiguration
     
-    var makeInitialValue: (() -> Value?)?
+    let traits: [EntityAttributeTrait]
+    let makeInitialValue: (() -> Value?)?
     var assignedInitialValue: Value?
     
-    public var _underlyingRecordContainer: _AnyDatabaseRecordContainer?
+    public var _underlyingRecordContainer: _DatabaseRecordContainer?
     
     public var isOptional: Bool {
         Value.self is _opaque_Optional.Type
@@ -53,7 +53,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
             do {
                 if try recordContainer.containsValue(forKey: key) || isOptional {
                     let result = try recordContainer.decode(Value.self, forKey: key)
-                                        
+                    
                     return result
                 } else {
                     return try encodeDefaultValueIfNecessary(into: recordContainer).unwrap()
@@ -86,14 +86,12 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         .init(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
     }
     
-    init(
-        makeInitialValue: (() -> Value?)?,
-        propertyConfiguration: _Schema.Entity.PropertyConfiguration
+    private init(
+        traits: [EntityAttributeTrait],
+        makeInitialValue: (() -> Value?)?
     ) {
+        self.traits = traits
         self.makeInitialValue = makeInitialValue
-        self.propertyConfiguration = propertyConfiguration
-        
-        self.propertyConfiguration.isOptional = isOptional // FIXME: Move to some place better?
     }
     
     public static subscript<EnclosingSelf: Entity>(
@@ -121,7 +119,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         
         return _Schema.Entity.Attribute(
             name: name!.stringValue,
-            propertyConfiguration: propertyConfiguration,
+            propertyConfiguration: .init(isOptional: isOptional),
             attributeConfiguration: .init(
                 type: _Schema.Entity.AttributeType(from: valueType),
                 defaultValue: assignedInitialValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
@@ -132,14 +130,12 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
                         
                         return nil
                     }
-                }),
-                allowsExternalBinaryDataStorage: false,
-                preservesValueInHistoryOnDeletion: false
+                })
             )
         )
     }
     
-    public func initialize(with container: _AnyDatabaseRecordContainer) throws {
+    public func initialize(with container: _DatabaseRecordContainer) throws {
         self._underlyingRecordContainer = container
         
         _ = try encodeDefaultValueIfNecessary(into: container)
@@ -148,7 +144,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     /// Encode the `defaultValue` if necessary.
     /// Needed for required attributes, otherwise the underlying object crashes on save.
     func encodeDefaultValueIfNecessary(
-        into _underlyingRecordContainer: _AnyDatabaseRecordContainer
+        into _underlyingRecordContainer: _DatabaseRecordContainer
     ) throws -> Value? {
         if let assignedInitialValue = assignedInitialValue {
             let initialValue = assignedInitialValue
@@ -175,20 +171,34 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     
     public convenience init(
         wrappedValue: @autoclosure @escaping () -> Value,
-        _ traits: [EntityAttributeTrait] = []
+        traits: [EntityAttributeTrait] = []
     ) {
         self.init(
-            makeInitialValue: wrappedValue,
-            propertyConfiguration: .init()
+            traits: traits,
+            makeInitialValue: wrappedValue
+        )
+    }
+    
+    public convenience init(
+        wrappedValue: @autoclosure @escaping () -> Value,
+        _ traits: EntityAttributeTrait...
+    ) {
+        self.init(
+            traits: traits,
+            makeInitialValue: wrappedValue
         )
     }
     
     @_disfavoredOverload
-    public convenience init(defaultValue: Value) {
-        self.init(
-            makeInitialValue: nil,
-            propertyConfiguration: .init()
-        )
+    public convenience init(defaultValue: Value, traits: [EntityAttributeTrait] = []) {
+        self.init(traits: traits, makeInitialValue: nil)
+        
+        assignedInitialValue = defaultValue
+    }
+    
+    @_disfavoredOverload
+    public convenience init(defaultValue: Value, _ traits: EntityAttributeTrait...) {
+        self.init(traits: traits, makeInitialValue: nil)
         
         assignedInitialValue = defaultValue
     }

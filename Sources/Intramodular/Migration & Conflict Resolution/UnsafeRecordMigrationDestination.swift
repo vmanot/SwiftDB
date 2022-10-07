@@ -8,13 +8,13 @@ public struct UnsafeRecordMigrationDestination {
     let schemaMappingModel: CustomSchemaMappingModel
     let sourceEntity: _Schema.Entity
     let destinationEntity: _Schema.Entity
-    let destination: AnyDatabaseRecord
+    let destination: _DatabaseRecordContainer
     
     init(
         schemaMappingModel: CustomSchemaMappingModel,
         sourceEntity: _Schema.Entity,
         destinationEntity: _Schema.Entity,
-        destination: AnyDatabaseRecord
+        destination: _DatabaseRecordContainer
     ) {
         self.schemaMappingModel = schemaMappingModel
         self.sourceEntity = sourceEntity
@@ -24,9 +24,9 @@ public struct UnsafeRecordMigrationDestination {
     
     public subscript(key: String) -> Any? {
         get {
-            try! destination.unsafeDecodeValue(forKey: AnyStringKey(stringValue: key))
+            try! destination.decodeFieldPayload(forKey: AnyStringKey(stringValue: key))
         } nonmutating set {
-            try! destination.unsafeEncodeValue(newValue, forKey: AnyStringKey(stringValue: key))
+            try! destination.encodeFieldPayload(newValue, forKey: AnyStringKey(stringValue: key))
         }
     }
     
