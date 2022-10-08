@@ -2,8 +2,12 @@
 // Copyright (c) Vatsal Manot
 //
 
+import CorePersistence
 import Swallow
 
+/// A record container.
+///
+/// Designed to wrap a transaction context and a database record to provide slightly higher-level access to a database record.
 public final class _DatabaseRecordContainer: ObservableObject {
     private enum OperationType {
         case read
@@ -13,7 +17,7 @@ public final class _DatabaseRecordContainer: ObservableObject {
     let recordSchema: _Schema.Record?
     let record: AnyDatabaseRecord
     
-    private let transaction: any DatabaseTransaction
+    private let transactionContext: DatabaseTransactionContext
     
     public let transactionLink: _DatabaseTransactionLink
     
@@ -26,7 +30,7 @@ public final class _DatabaseRecordContainer: ObservableObject {
         recordSchema: _Schema.Record?,
         record: AnyDatabaseRecord
     ) {
-        self.transaction = transactionContext.transaction
+        self.transactionContext = transactionContext
         self.transactionLink = .init(from: transactionContext.transaction)
         self.recordSchema = recordSchema
         self.record = record
@@ -38,12 +42,12 @@ public final class _DatabaseRecordContainer: ObservableObject {
     ) throws -> T {
         switch operationType {
             case .read:
-                return try transaction.scope { context in
+                return try withDatabaseTransactionContext(transactionContext) { context in
                     try operation(context)
                 }
             case .write:
-                return try transaction.scope { context in
-                    try transaction._scopeRecordMutation {
+                return try withDatabaseTransactionContext(transactionContext) { context in
+                    try context.transaction._scopeRecordMutation {
                         try operation(context)
                     }
                 }
@@ -52,6 +56,12 @@ public final class _DatabaseRecordContainer: ObservableObject {
 }
 
 extension _DatabaseRecordContainer {
+    private enum DecodingError: Error {
+        case entitySchemaRequired
+        case failedToResolvePrimaryKey
+        case unknownPropertyType(Any, forKey: CodingKey)
+    }
+    
     public func containsValue(forKey key: CodingKey) -> Bool {
         record.containsValue(forKey: key)
     }
@@ -72,12 +82,21 @@ extension _DatabaseRecordContainer {
         }
     }
     
-    public func decodeFieldPayload(forKey key: CodingKey) throws -> Any {
-        enum DecodingError: Error {
-            case entitySchemaRequired
-            case unknownPropertyType(Any, forKey: CodingKey)
+    public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
+        try scope(.write) { _ in
+            try record.setInitialValue(value(), forKey: key)
         }
-        
+    }
+    
+    public func relationship(for key: CodingKey) throws -> AnyDatabaseRecordRelationship {
+        try scope(.read) { _ in
+            try record.relationship(for: key)
+        }
+    }
+}
+
+extension _DatabaseRecordContainer {
+    func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload? {
         guard let entitySchema = recordSchema as? _Schema.Entity else {
             throw DecodingError.entitySchemaRequired
         }
@@ -87,17 +106,22 @@ extension _DatabaseRecordContainer {
         return try scope(.read) { _ in
             switch property {
                 case let property as _Schema.Entity.Attribute: do {
+                    if property.propertyConfiguration.isOptional, !containsValue(forKey: key) {
+                        return nil
+                    }
+                    
                     let attributeType = property.attributeConfiguration.type
                     
                     func _decodeValueForType<T>(_ type: T.Type) throws -> Any {
                         try self.decode(type, forKey: key)
                     }
                     
-                    return try _openExistential(attributeType._swiftType, do: _decodeValueForType)
+                    let value = try _openExistential(attributeType._swiftType, do: _decodeValueForType)
+                    
+                    return try _RecordFieldPayload(from: value)
                 }
-                case let property as _Schema.Entity.Relationship: do {
-                    print(property)
-                    TODO.unimplemented
+                case is _Schema.Entity.Relationship: do {
+                    return try .relationship(primaryKeysOrRecordIdentifiers: decodeRelatedPrimaryKeysOrRecordIDs(forKey: key))
                 }
                 default:
                     throw DecodingError.unknownPropertyType(property.type, forKey: key)
@@ -105,7 +129,7 @@ extension _DatabaseRecordContainer {
         }
     }
     
-    public func encodeFieldPayload(_ payload: Any?, forKey key: CodingKey) throws {
+    func encodeFieldPayload(_ payload: Any?, forKey key: CodingKey) throws {
         try scope(.write) { _ in
             if let payload = payload {
                 func _encodeValue<T>(_ value: T) throws {
@@ -118,34 +142,129 @@ extension _DatabaseRecordContainer {
             }
         }
     }
+}
+
+extension _DatabaseRecordContainer {
+    private func decodePrimaryKeyValue() throws -> _RecordFieldPayload? {
+        guard let schema = recordSchema as? _Schema.Entity else {
+            throw DecodingError.entitySchemaRequired
+        }
+        
+        let uniqueAttributes = schema.attributes.filter({ $0.attributeConfiguration.traits.contains(.guaranteedUnique) })
+        
+        guard uniqueAttributes.count == 1, let attribute = uniqueAttributes.first else {
+            throw DecodingError.failedToResolvePrimaryKey
+        }
+        
+        return try decodeFieldPayload(forKey: AnyStringKey(stringValue: attribute.name))
+    }
     
-    public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
-        try scope(.write) { _ in
-            try record.setInitialValue(value(), forKey: key)
+    private func relationshipType(forKey key: CodingKey) throws -> DatabaseRecordRelationshipType {
+        guard let schema = recordSchema as? _Schema.Entity else {
+            throw DecodingError.entitySchemaRequired
+        }
+        
+        return .destinationType(from: try schema.relationship(named: key.stringValue))
+    }
+    
+    private func decodeRelatedPrimaryKeysOrRecordIDs(forKey key: CodingKey) throws -> _RelatedPrimaryKeysOrRecordIDs {
+        try scope(.read) { context in
+            let containedRelatedRecords = try _relatedRecords(forKey: key)
+            
+            let result: _RelatedPrimaryKeysOrRecordIDs
+            
+            switch containedRelatedRecords {
+                case .toOne(let record):
+                    let recordContainer = try record.map(context._recordContainer(for:))
+                    
+                    result = try .toOne(keyOrIdentifier: recordContainer?.primaryKeyOrRecordID())
+                case .toMany(let records):
+                    let recordContainers = try records.map(context._recordContainer(for:))
+                    
+                    result = try .toMany(keysOrIdentifiers: Set(recordContainers.map({ try $0.primaryKeyOrRecordID() })))
+                case .orderedToMany(let records):
+                    let recordContainers = try records.map(context._recordContainer(for:))
+                    
+                    result = try .orderedToMany(keysOrIdentifiers: recordContainers.map({ try $0.primaryKeyOrRecordID() }))
+            }
+            
+            return result
         }
     }
     
-    public func relationship(for key: CodingKey) throws -> AnyDatabaseRecordRelationship {
-        try scope(.read) { _ in
-            AnyDatabaseRecordRelationship(erasing: try record.relationship(for: key))
+    func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID {
+        do {
+            return .primaryKey(value: try decodePrimaryKeyValue().unwrap())
+        } catch {
+            return try .recordID(value: _TypePersistingAnyCodable(cast(record.id, to: Codable.self)))
+        }
+    }
+    
+    func _relatedRecords(forKey key: CodingKey) throws -> _RelatedDatabaseRecords {
+        let relationshipType = try relationshipType(forKey: key)
+        
+        switch relationshipType {
+            case .toOne:
+                let toOneRelationship = try relationship(for: key).toOneRelationship()
+                let record = try toOneRelationship.getRecord()
+                
+                return _RelatedDatabaseRecords.toOne(record)
+            case .toMany:
+                let toManyRelationship = try relationship(for: key).toManyRelationship()
+                
+                return try _RelatedDatabaseRecords.toMany(toManyRelationship.all())
+            case .orderedToMany:
+                let toManyRelationship = try relationship(for: key).toManyRelationship()
+                
+                return try _RelatedDatabaseRecords.toMany(toManyRelationship.all())
         }
     }
 }
 
-public enum _RecordFieldPayload: Codable, Hashable {
-    public enum _EntityAttributeValue: Codable, Hashable {
+public enum _RelatedDatabaseRecords: Sequence {
+    case toOne(AnyDatabaseRecord?)
+    case toMany(Array<AnyDatabaseRecord>)
+    case orderedToMany(Array<AnyDatabaseRecord>)
+    
+    public func makeIterator() -> Array<AnyDatabaseRecord>.Iterator {
+        switch self {
+            case .toOne(let record):
+                return (record.map({ [$0] }) ?? []).makeIterator()
+            case .toMany(let records):
+                return records.makeIterator()
+            case .orderedToMany(let records):
+                return records.makeIterator()
+        }
+    }
+}
+
+public indirect enum _RecordFieldPayload: Codable, Hashable {
+    public indirect enum _EntityAttributeValue: Codable, Hashable {
         case primitive(value: _TypePersistingAnyCodable)
         case array(value: [_TypePersistingAnyCodable])
         case dictionary(value: [_TypePersistingAnyCodable: _TypePersistingAnyCodable])
         case object(value: _TypePersistingAnyCodable)
     }
     
-    public enum RelatedIdentifiers: Codable, Hashable {
-        case toOne(id: _TypePersistingAnyCodable)
-        case toMany(ids: Set<_TypePersistingAnyCodable>)
-        case orderedToMany(ids: [_TypePersistingAnyCodable])
-    }
-    
     case attribute(value: _EntityAttributeValue)
-    case relationship(identifiers: RelatedIdentifiers)
+    case relationship(primaryKeysOrRecordIdentifiers: _RelatedPrimaryKeysOrRecordIDs)
+    
+    public init(from value: Any) throws {
+        if let value = value as? _RecordFieldPayloadConvertible {
+            self = try value._toRecordFieldPayload()
+        } else {
+            self = .attribute(value: .object(value: _TypePersistingAnyCodable(try cast(value, to: Codable.self))))
+        }
+    }
+}
+
+public indirect enum _RelatedPrimaryKeysOrRecordIDs: Codable, Hashable {
+    case toOne(keyOrIdentifier: _PrimaryKeyOrRecordID?)
+    case toMany(keysOrIdentifiers: Set<_PrimaryKeyOrRecordID>)
+    case orderedToMany(keysOrIdentifiers: [_PrimaryKeyOrRecordID])
+}
+
+public indirect enum _PrimaryKeyOrRecordID: Codable, Hashable {
+    case primaryKey(value: _RecordFieldPayload)
+    case recordID(value: _TypePersistingAnyCodable)
 }

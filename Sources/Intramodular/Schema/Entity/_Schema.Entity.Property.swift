@@ -8,7 +8,7 @@ import Swallow
 
 extension _Schema.Entity {
     public struct PropertyConfiguration: Codable, Hashable, Sendable {
-        public var isOptional: Bool?
+        public var isOptional: Bool
         public var isTransient: Bool = false
         public var renamingIdentifier: String?
     }

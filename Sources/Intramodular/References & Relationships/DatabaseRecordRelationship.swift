@@ -4,6 +4,12 @@
 
 import Swallow
 
+public enum DatabaseRecordRelationshipType {
+    case toOne
+    case toMany
+    case orderedToMany
+}
+
 public protocol DatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
     

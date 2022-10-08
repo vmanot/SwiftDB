@@ -107,7 +107,7 @@ extension _AnyDatabaseRecordContextTransaction {
     ) throws -> AnyDatabaseRecordContext.ZoneQueryRequest {
         let recordTypes: [AnyDatabaseRecord.RecordType]
         
-        if Model.self == Any.Type.self {
+        if Model.self == Any.self {
             recordTypes = try databaseContext.schema.entities.map({ try databaseContext.schemaAdaptor.recordType(for: $0.id) })
         } else {
             let entity = try databaseContext.schema.entity(forModelType: Model.self).unwrap().id

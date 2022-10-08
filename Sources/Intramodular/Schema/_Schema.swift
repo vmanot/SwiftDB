@@ -57,16 +57,20 @@ public struct _Schema: Hashable, Sendable, Versioned {
         entities[id: entityID]
     }
     
-    func entity(forModelType modelType: Any.Type) -> Entity? {
+    func entity(forModelType modelType: Any.Type) throws -> Entity? {
         guard let type = modelType as? any SwiftDB.Entity.Type else {
-            return nil
+            throw Error.failedToMapModelTypeToEntity(modelType: modelType)
         }
         
-        return entityTypesByEntityID[Metatype(type)].flatMap({ self[$0] })
+        guard let entityID = entityTypesByEntityID[Metatype(type)] else {
+            throw Error.failedToMapModelTypeToEntity(modelType: modelType)
+        }
+        
+        return self[entityID]
     }
     
-    func record(forModelType modelType: Any.Type) -> _Schema.Record? {
-        entity(forModelType: modelType) // FIXME
+    func record(forModelType modelType: Any.Type) throws -> _Schema.Record? {
+        try entity(forModelType: modelType) // FIXME
     }
     
     func entityType(for entity: Entity.ID) throws -> any (SwiftDB.Entity).Type {
@@ -76,7 +80,7 @@ public struct _Schema: Hashable, Sendable, Versioned {
             throw Error.failedToResolveEntityTypeForID(entity)
         }
     }
-
+    
     func entity(withName name: String) throws -> Entity {
         try entities.first(where: { $0.name == name }).unwrap()
     }
@@ -111,6 +115,7 @@ extension _Schema: Codable {
 extension _Schema {
     private enum Error: Swift.Error {
         case failedToResolveEntityTypeForID(Entity.ID)
+        case failedToMapModelTypeToEntity(modelType: Any.Type)
     }
 }
 

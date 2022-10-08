@@ -101,3 +101,25 @@ extension _Schema.Entity.Relationship {
         }
     }
 }
+
+// MARK: - Supplementary API -
+
+extension DatabaseRecordRelationshipType {
+    /// The record relationship type relative to the destination of the given relationship property.
+    static func destinationType(
+        from relationship: _Schema.Entity.Relationship
+    ) -> Self {
+        let isOrdered = relationship.relationshipConfiguration.isOrdered
+        
+        switch relationship.relationshipConfiguration.cardinality {
+            case .oneToOne:
+                return .toOne
+            case .oneToMany:
+                return isOrdered ? .toMany : .orderedToMany
+            case .manyToOne:
+                return .toOne
+            case .manyToMany:
+                return isOrdered ? .toMany : .orderedToMany // FIXME?
+        }
+    }
+}

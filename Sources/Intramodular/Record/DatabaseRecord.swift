@@ -18,7 +18,7 @@ public protocol DatabaseRecord: ObservableObject, Identifiable, CancellablesHold
     var allKeys: [CodingKey] { get }
     
     /// Returns a Boolean value that indicates whether a key is known to be supported by this record.
-    func contains(_ key: CodingKey) -> Bool
+    func contains(_ key: CodingKey) throws -> Bool
     
     /// Returns a Boolean value that indicates whether an encoded value is present for the given key.
     func containsValue(forKey key: CodingKey) -> Bool
@@ -36,6 +36,6 @@ public protocol DatabaseRecord: ObservableObject, Identifiable, CancellablesHold
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
     
     func setInitialValue<Value>(_ value: @autoclosure() -> Value, forKey key: CodingKey) throws
-        
+    
     func relationship(for key: CodingKey) throws -> Relationship
 }

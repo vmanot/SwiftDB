@@ -28,7 +28,7 @@ extension NSAttributeDescription {
         
         renamingIdentifier = attribute.propertyConfiguration.renamingIdentifier
         name = attribute.name
-        isOptional = try attribute.propertyConfiguration.isOptional.unwrap()
+        isOptional = try attribute.propertyConfiguration.isOptional
         isTransient = attribute.propertyConfiguration.isTransient
         attributeType = nsAttributeType.attributeType
         
@@ -52,7 +52,7 @@ extension NSRelationshipDescription {
         self.init()
         
         name = description.name
-        isOptional = try description.propertyConfiguration.isOptional.unwrap()
+        isOptional = try description.propertyConfiguration.isOptional
         isTransient = description.propertyConfiguration.isTransient
         isOrdered = true
         

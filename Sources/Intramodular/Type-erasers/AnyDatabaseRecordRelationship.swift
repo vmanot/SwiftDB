@@ -11,6 +11,8 @@ public struct AnyDatabaseRecordRelationship: DatabaseRecordRelationship {
     let base: any DatabaseRecordRelationship
     
     public init<Relationship: DatabaseRecordRelationship>(erasing relationship: Relationship) {
+        assert(!(relationship is AnyDatabaseRecordRelationship))
+        
         self.base = relationship
     }
     

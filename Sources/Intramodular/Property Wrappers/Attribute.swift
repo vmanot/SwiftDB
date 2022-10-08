@@ -122,6 +122,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
             propertyConfiguration: .init(isOptional: isOptional),
             attributeConfiguration: .init(
                 type: _Schema.Entity.AttributeType(from: valueType),
+                traits: traits,
                 defaultValue: assignedInitialValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
                     do {
                         return try AnyCodableOrNSCodingValue(from: value)
@@ -191,14 +192,20 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     
     @_disfavoredOverload
     public convenience init(defaultValue: Value, traits: [EntityAttributeTrait] = []) {
-        self.init(traits: traits, makeInitialValue: nil)
+        self.init(
+            traits: traits,
+            makeInitialValue: nil
+        )
         
         assignedInitialValue = defaultValue
     }
     
     @_disfavoredOverload
     public convenience init(defaultValue: Value, _ traits: EntityAttributeTrait...) {
-        self.init(traits: traits, makeInitialValue: nil)
+        self.init(
+            traits: traits,
+            makeInitialValue: nil
+        )
         
         assignedInitialValue = defaultValue
     }

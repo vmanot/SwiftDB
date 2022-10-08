@@ -46,8 +46,8 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
         base.allKeys
     }
     
-    public func contains(_ key: CodingKey) -> Bool {
-        base.contains(key)
+    public func contains(_ key: CodingKey) throws -> Bool {
+        try base.contains(key)
     }
     
     public func containsValue(forKey key: CodingKey) -> Bool {
