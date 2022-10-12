@@ -62,6 +62,10 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
         try base.decode(type, forKey: key)
     }
     
+    public func removeValueOrRelationship(forKey key: CodingKey) throws {
+        try base.removeValueOrRelationship(forKey: key)
+    }
+    
     public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
         try base.setInitialValue(value(), forKey: key)
     }

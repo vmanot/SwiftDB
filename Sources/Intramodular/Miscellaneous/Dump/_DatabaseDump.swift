@@ -6,12 +6,12 @@ import Combine
 import Swallow
 import SwiftUIX
 
-public struct _DatabaseRecordsDump: Codable, Hashable {
+public struct _DatabaseDump: Codable, Hashable {
     public var records: [_DatabaseRecordDump]
 }
 
 extension DatabaseTransaction {
-    public func _dumpDatabaseRecords() async throws -> _DatabaseRecordsDump {
+    public func _dumpDatabase() async throws -> _DatabaseDump {
         let instances = try await fetchAllInstances()
         
         var recordDumps: [_DatabaseRecordDump] = []

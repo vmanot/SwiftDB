@@ -4,7 +4,7 @@
 
 import Swallow
 
-public enum CustomEntityMapping: Hashable, TypeDiscriminable {
+public enum _EntitySchemaMigrationMapping: Hashable, TypeDiscriminable {
     public enum MappingType: Hashable {
         case delete
         case insert
@@ -60,7 +60,7 @@ public enum CustomEntityMapping: Hashable, TypeDiscriminable {
     }
 }
 
-extension CustomEntityMapping {
+extension _EntitySchemaMigrationMapping {
     fileprivate var sourceEntity: _Schema.Entity.ID? {
         switch self {
             case .deleteEntity(let sourceEntity), .copyEntity(let sourceEntity, _), .transformEntity(let sourceEntity, _, _):
@@ -82,7 +82,7 @@ extension CustomEntityMapping {
 
 // MARK: - Supplementary API -
 
-extension CustomEntityMapping {
+extension _EntitySchemaMigrationMapping {
     public static func inferredTransformEntity(
         sourceEntity: _Schema.Entity.ID,
         destinationEntity: _Schema.Entity.ID

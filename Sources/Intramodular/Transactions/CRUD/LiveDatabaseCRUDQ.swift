@@ -5,10 +5,10 @@
 import Merge
 import Swallow
 
-public final class LiveDatabaseAccess: DatabaseCRUDQ, DatabaseTransaction {
+public final class LiveDatabaseAccess: DatabaseTransaction, ObservableObject {
     private let taskQueue = TaskQueue()
     
-    public var base: (any DatabaseTransaction)?
+    @Published public var base: (any DatabaseTransaction)?
     
     public var id: AnyHashable {
         base?.id ?? AnyHashable(base?.id) // BAD HACK

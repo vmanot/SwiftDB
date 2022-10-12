@@ -52,7 +52,7 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func delete(_ object: Record) throws {
-        records[object.base.recordID] = nil
+        records[object.ckRecord.recordID] = nil
     }
     
     public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {

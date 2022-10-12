@@ -125,18 +125,15 @@ extension _CoreData.Database {
     public struct Configuration: Codable, Sendable {
         public let name: String
         public let location: URL?
-        public let applicationGroupID: String?
         public let cloudKitContainerIdentifier: String?
         
         public init(
             name: String,
             location: URL?,
-            applicationGroupID: String?,
             cloudKitContainerIdentifier: String?
         ) {
             self.name = name
             self.location = location
-            self.applicationGroupID = applicationGroupID
             self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
         }
     }
@@ -244,11 +241,7 @@ extension _CoreData.Database {
         if let location = configuration.location {
             return location
         } else {
-            guard let applicationGroupID = configuration.applicationGroupID else {
-                return nsPersistentContainer.persistentStoreDescriptions.first?.url
-            }
-            
-            return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupID)!.appendingPathComponent(nsPersistentContainer.name + ".sqlite")
+            return nsPersistentContainer.persistentStoreDescriptions.first?.url
         }
     }
     

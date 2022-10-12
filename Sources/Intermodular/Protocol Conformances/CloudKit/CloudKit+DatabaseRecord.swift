@@ -22,10 +22,10 @@ extension _CloudKit {
         
         public typealias RecordType = String
         
-        let base: CKRecord
+        let ckRecord: CKRecord
         
         init(ckRecord: CKRecord) {
-            self.base = ckRecord
+            self.ckRecord = ckRecord
         }
     }
 }
@@ -36,7 +36,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     }
     
     public var recordType: RecordType {
-        base.recordType
+        ckRecord.recordType
     }
     
     public var allReservedKeys: [CodingKey] {
@@ -44,7 +44,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     }
     
     public var allKeys: [CodingKey] {
-        base.allKeys().map({ AnyStringKey(stringValue: $0) })
+        ckRecord.allKeys().map({ AnyStringKey(stringValue: $0) })
     }
     
     public func contains(_ key: CodingKey) -> Bool {
@@ -52,19 +52,23 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     }
     
     public func containsValue(forKey key: CodingKey) -> Bool {
-        base.object(forKey: key.stringValue) != nil
+        ckRecord.object(forKey: key.stringValue) != nil
     }
     
     public func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws {
-        base.setValue(value, forKey: key.stringValue)
+        ckRecord.setValue(value, forKey: key.stringValue)
     }
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         if let value = value as? NSAttributeCoder {
-            try value.encode(to: base, forKey: AnyCodingKey(key))
+            try value.encode(to: ckRecord, forKey: AnyCodingKey(key))
         } else if let value = value as? Codable {
             try value.encode(to: self, forKey: AnyCodingKey(key))
         }
+    }
+    
+    public func removeValueOrRelationship(forKey key: CodingKey) throws {
+        ckRecord.removeObject(forKey: key.stringValue)
     }
     
     public func setInitialValue<Value>(
@@ -85,14 +89,14 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     }
     
     public func unsafeDecodeValue(forKey key: CodingKey) -> Any? {
-        base.value(forKey: key.stringValue)
+        ckRecord.value(forKey: key.stringValue)
     }
     
     public func decode<Value>(_ valueType: Value.Type, forKey key: CodingKey) throws -> Value {
         if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
-            return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value
+            return try valueType.decode(from: ckRecord, forKey: AnyCodingKey(key)) as! Value
         } else if let valueType = valueType as? NSAttributeCoder.Type {
-            return try valueType.decode(from: base, forKey: AnyCodingKey(key)) as! Value
+            return try valueType.decode(from: ckRecord, forKey: AnyCodingKey(key)) as! Value
         } else if let valueType = valueType as? Codable.Type {
             return try valueType.decode(from: self, forKey: key) as! Value
         } else {
@@ -101,17 +105,17 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     }
     
     public func reference(forKey key: CodingKey) throws -> Reference? {
-        Reference(reference: try cast(try base.value(forKey: key.stringValue).unwrap(), to: CKRecord.Reference.self))
+        Reference(reference: try cast(try ckRecord.value(forKey: key.stringValue).unwrap(), to: CKRecord.Reference.self))
     }
     
     public func setReference(_ reference: Reference?, forKey key: CodingKey) throws  {
-        base.setValue(reference?.ckReference, forKey: key.stringValue)
+        ckRecord.setValue(reference?.ckReference, forKey: key.stringValue)
     }
 }
 
 extension _CloudKit.DatabaseRecord: Identifiable {
     public var id: ID {
-        .init(rawValue: base.recordID.recordName)
+        .init(rawValue: ckRecord.recordID.recordName)
     }
 }
 
@@ -120,7 +124,7 @@ extension _CloudKit.DatabaseRecord: Identifiable {
 fileprivate extension Decodable where Self: Encodable {
     static func decode(from object: _CloudKit.DatabaseRecord, forKey key: CodingKey) throws -> Self {
         return try _CodableToNSAttributeCoder<Self>.decode(
-            from: object.base,
+            from: object.ckRecord,
             forKey: AnyCodingKey(key)
         )
         .value
@@ -128,7 +132,7 @@ fileprivate extension Decodable where Self: Encodable {
     
     func encode(to object: _CloudKit.DatabaseRecord, forKey key: CodingKey) throws  {
         try _CodableToNSAttributeCoder<Self>(self).encode(
-            to: object.base,
+            to: object.ckRecord,
             forKey: AnyCodingKey(key)
         )
     }

@@ -10,6 +10,7 @@ public enum DatabaseRecordRelationshipType {
     case orderedToMany
 }
 
+/// An encapsulation of a relationship from one database record to another/set of other records.
 public protocol DatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
     

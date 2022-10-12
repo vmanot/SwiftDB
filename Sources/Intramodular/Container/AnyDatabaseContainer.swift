@@ -14,7 +14,9 @@ import SwiftUIX
 public class AnyDatabaseContainer: CustomReflectable, Loggable, ObservableObject, @unchecked Sendable {
     public enum Status: String, CustomStringConvertible {
         case uninitialized
+        case initializing
         case initialized
+        case deinitializing
         case migrationCheckFailed
         case migrationRequired
         
@@ -52,19 +54,24 @@ public class AnyDatabaseContainer: CustomReflectable, Loggable, ObservableObject
 
 /// A container that encapsulates a database stack in your app.
 public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer {
+    private enum Tasks: Hashable {
+        case initialize
+        case load
+    }
+    
+    private let taskGraph = TaskGraph<Tasks>()
+    
     public let cancellables = Cancellables()
     
     public let name: String
     public let schema: _Schema
     
     fileprivate let fileManager = FileManager.default
-    
     fileprivate let location: URL?
-    fileprivate let stateLocation: URL?
-    fileprivate let applicationGroupID: String?
-    fileprivate let cloudKitContainerIdentifier: String?
+    fileprivate var stateLocation: URL? {
+        location?.deletingLastPathComponent().appendingPathComponent(name, conformingTo: .fileURL).appendingPathExtension(DatabaseStateFileFormat.pathExtension)
+    }
     
-    fileprivate var initializeDatabaseTask: Task<_CoreData.Database, Error>?
     fileprivate var database: _CoreData.Database?
     
     private var mainContext: AnyDatabaseRecordContext? {
@@ -83,9 +90,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             "name": name,
             "schema": schema,
             "location": location as Any,
-            "stateLocation": stateLocation as Any,
-            "applicationGroupID": applicationGroupID as Any,
-            "cloudKitContainerIdentifier": cloudKitContainerIdentifier as Any
+            "stateLocation": stateLocation as Any
         ])
     }
     
@@ -96,41 +101,29 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     public init(
         name: String,
         schema: Schema,
-        location: URL? = nil,
-        applicationGroupID: String? = nil,
-        cloudKitContainerIdentifier: String? = nil
+        location: URL?
     ) throws {
         self.name = name
         self.schema = try _Schema(schema)
         self.location = location
-        self.stateLocation = location?.deletingLastPathComponent().appendingPathComponent(name, conformingTo: .fileURL).appendingPathExtension(DatabaseStateFileFormat.pathExtension)
-        self.applicationGroupID = applicationGroupID
-        self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
         
         super.init()
         
         logger.dumpToConsole = true
     }
     
-    public convenience init(name: String, schema: Schema) throws {
-        try self.init(
-            name: name,
-            schema: schema,
-            applicationGroupID: nil,
-            cloudKitContainerIdentifier: nil
-        )
-    }
-    
     @MainActor
     private func initializedDatabase() async throws -> _CoreData.Database {
-        if let database = self.database {
-            return database
-        }
-        
-        if let initializeDatabaseTask = initializeDatabaseTask {
-            return try await initializeDatabaseTask.value
-        } else {
-            let task = Task { @MainActor in
+        try await taskGraph.insert(.initialize, policy: .useExisting) { [self] in
+            if let database = self.database {
+                assert(status == .initialized)
+                
+                return database
+            } else {
+                assert(status != .initialized || status != .initializing)
+                
+                status = .initializing
+                
                 var existingDBState: _CoreData.Database.State?
                 
                 if let stateLocation = stateLocation, FileManager.default.fileExists(at: stateLocation) {
@@ -139,95 +132,63 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
                     }
                 }
                 
+                logger.info("Initializing database at location: \(location.map(String.init(describing:)) ?? "null")")
+                
                 let database = try await _CoreData.Database(
                     schema: .init(schema),
                     configuration: _CoreData.Database.Configuration(
                         name: name,
                         location: location,
-                        applicationGroupID: applicationGroupID,
-                        cloudKitContainerIdentifier: cloudKitContainerIdentifier
+                        cloudKitContainerIdentifier: nil
                     ),
                     state: existingDBState
                 )
                 
                 if existingDBState == nil {
-                    self.saveState()
+                    self.saveState(database: database)
                 }
                 
                 self.database = database
-                self.initializeDatabaseTask = nil
+                
+                status = .initialized
                 
                 return database
             }
-            
-            self.initializeDatabaseTask = task
-            
-            return try await task.value
         }
     }
     
     @MainActor
     override public func load() async throws {
-        do {
-            let database = try await initializedDatabase()
-            
-            guard status != .initialized else {
-                return
-            }
-            
+        try await taskGraph.insert(.load, policy: .useExisting) {
             do {
-                try await performMigrationCheck()
+                let database = try await initializedDatabase()
                 
-                saveState()
+                do {
+                    try await performMigrationCheck()
+                    
+                    saveState(database: database)
+                } catch {
+                    status = .migrationCheckFailed
+                }
+                
+                _ = try await database.fetchAllAvailableZones()
+                
+                guard let mainContext = mainContext else {
+                    status = .uninitialized
+                    
+                    return assertionFailure()
+                }
+                
+                _mainAccess.base = _AnyDatabaseRecordContextTransaction(
+                    databaseContext: database.context.eraseToAnyDatabaseContext(),
+                    recordContext: mainContext
+                )
             } catch {
-                status = .migrationCheckFailed
-            }
-            
-            _ = try await database.fetchAllAvailableZones()
-            
-            guard let mainContext = mainContext else {
-                status = .uninitialized
+                logger.error(error)
                 
-                return assertionFailure()
-            }
-            
-            _mainAccess.base = _AnyDatabaseRecordContextTransaction(
-                databaseContext: database.context.eraseToAnyDatabaseContext(),
-                recordContext: mainContext
-            )
-            
-            status = .initialized
-        } catch {
-            logger.error(error)
-            
-            throw error
-        }
-    }
-    
-    @MainActor
-    private func performMigrationCheck() async throws {
-        do {
-            let migrationCheck = try await initializedDatabase().performMigrationCheck()
-            
-            guard migrationCheck.zonesToMigrate.isEmpty else {
-                status = .migrationRequired
-                
-                return
-            }
-        } catch {
-            status = .migrationRequired
-        }
-    }
-    
-    private func saveState() {
-        Task.detached(priority: .userInitiated) { @MainActor in
-            let database = try await self.initializedDatabase()
-            
-            if let stateLocation = self.stateLocation {
-                try JSONEncoder().encode(database.state).write(to: stateLocation)
+                throw error
             }
         }
-        .logger(logger)
     }
     
     @MainActor
@@ -243,11 +204,89 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             configuration: _CoreData.Database.Configuration(
                 name: name,
                 location: location,
-                applicationGroupID: applicationGroupID,
-                cloudKitContainerIdentifier: cloudKitContainerIdentifier
+                cloudKitContainerIdentifier: nil
             ),
             state: .init()
         )
+    }
+    
+    // MARK: - Internal -
+    
+    @MainActor
+    private func performMigrationCheck() async throws {
+        do {
+            let database = try await initializedDatabase()
+            
+            guard !database.state.schemaHistory.schemas.isEmpty else {
+                logger.info("Schema history is empty. Skipping migration check.")
+                
+                return
+            }
+            
+            let migrationCheck = try await initializedDatabase().performMigrationCheck()
+            
+            guard migrationCheck.zonesToMigrate.isEmpty else {
+                status = .migrationRequired
+                
+                return
+            }
+        } catch {
+            logger.error(error)
+            
+            status = .migrationCheckFailed
+        }
+    }
+    
+    private func saveState(database: _CoreData.Database) {
+        guard let location = stateLocation else {
+            return
+        }
+        
+        Task.detached(priority: .userInitiated) { @MainActor in
+            SaveDatabaseState(
+                state: database.state,
+                location: location
+            )
+        }
+        .logger(logger)
+    }
+}
+
+// MARK: - Initializers -
+
+extension DatabaseContainer {
+    public convenience init(name: String, schema: Schema) throws {
+        try self.init(
+            name: name,
+            schema: schema,
+            location: nil
+        )
+    }
+    
+    public convenience init(
+        name: String,
+        schema: Schema,
+        location: CanonicalFileDirectory,
+        sqliteFilePath: String
+    ) throws {
+        try self.init(
+            name: name,
+            schema: schema,
+            location: location.toURL().appendingPathComponent(sqliteFilePath)
+        )
+    }
+}
+
+// MARK: - Operations -
+
+extension AnyDatabaseContainer {
+    struct SaveDatabaseState {
+        let state: _CoreData.Database.State
+        let location: URL
+        
+        func callAsFunction() async throws {
+            try JSONEncoder().encode(state).write(to: location)
+        }
     }
 }
 

@@ -17,39 +17,57 @@ public struct AnyDatabaseRecordRelationship: DatabaseRecordRelationship {
     }
     
     public func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record> {
-        fatalError()
+        _ToOneRelationship(erasing: try base.toOneRelationship())
     }
     
     public func toManyRelationship() throws -> any ToManyDatabaseRecordRelationship<Record> {
-        try base.toManyRelationship().eraseToAnyToManyDatabaseRelationship()
+        _ToManyRelationship(erasing: try base.toManyRelationship())
     }
 }
 
-public struct AnyToManyDatabaseRecordRelationship: ToManyDatabaseRecordRelationship {
-    public typealias Record = AnyDatabaseRecord
-    
-    private let base: any ToManyDatabaseRecordRelationship
-    
-    private init(base: any ToManyDatabaseRecordRelationship) {
-        self.base = base
-    }
-    
-    public init<Relationship: ToManyDatabaseRecordRelationship>(erasing relationship: Relationship) {
-        assert(!(relationship is AnyToManyDatabaseRecordRelationship))
+extension AnyDatabaseRecordRelationship {
+    struct _ToOneRelationship: ToOneDatabaseRecordRelationship {
+        typealias Record = AnyDatabaseRecord
         
-        self.init(base: relationship)
+        let base: any ToOneDatabaseRecordRelationship
+        
+        init<Relationship: ToOneDatabaseRecordRelationship>(erasing relationship: Relationship) {
+            assert(!(relationship is _ToOneRelationship))
+            
+            self.base = relationship
+        }
+        
+        func getRecord() throws -> Record? {
+            try base._opaque_getRecord()
+        }
+        
+        func setRecord(_ record: Record?) throws {
+            try base._opaque_setRecord(record)
+        }
     }
     
-    public func insert(_ record: Record) throws {
-        try base._opaque_insert(record)
-    }
-    
-    public func remove(_ record: Record) throws {
-        try base._opaque_remove(record)
-    }
-    
-    public func all() throws -> [Record] {
-        try base._opaque_all()
+    struct _ToManyRelationship: ToManyDatabaseRecordRelationship {
+        typealias Record = AnyDatabaseRecord
+        
+        let base: any ToManyDatabaseRecordRelationship
+        
+        init<Relationship: ToManyDatabaseRecordRelationship>(erasing relationship: Relationship) {
+            assert(!(relationship is _ToManyRelationship))
+            
+            self.base = relationship
+        }
+        
+        func insert(_ record: Record) throws {
+            try base._opaque_insert(record)
+        }
+        
+        func remove(_ record: Record) throws {
+            try base._opaque_remove(record)
+        }
+        
+        func all() throws -> [Record] {
+            try base._opaque_all()
+        }
     }
 }
 
@@ -63,15 +81,17 @@ extension DatabaseRecordRelationship {
     }
 }
 
-extension ToManyDatabaseRecordRelationship {
-    public func eraseToAnyToManyDatabaseRelationship() -> AnyToManyDatabaseRecordRelationship {
-        assert(!(self is AnyToManyDatabaseRecordRelationship))
-        
-        return .init(erasing: self)
+// MARK: - Auxiliary Implementation -
+
+private extension ToOneDatabaseRecordRelationship {
+    func _opaque_getRecord() throws -> AnyDatabaseRecord? {
+        try getRecord().map({ AnyDatabaseRecord(erasing: $0) })
+    }
+    
+    func _opaque_setRecord(_ record: AnyDatabaseRecord?) throws {
+        try setRecord(record?._cast(to: Record.self))
     }
 }
-
-// MARK: - Auxiliary Implementation -
 
 private extension ToManyDatabaseRecordRelationship {
     func _opaque_insert(_ record: AnyDatabaseRecord) throws {

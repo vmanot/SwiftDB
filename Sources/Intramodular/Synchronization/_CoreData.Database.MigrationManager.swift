@@ -35,7 +35,7 @@ extension _CoreData.Database {
 
 extension _CoreData.Database {
     struct CreateNSMappingModel {
-        let mappingModel: CustomSchemaMappingModel
+        let mappingModel: _SchemaMigrationMapping
         
         struct Output {
             let sourceMOM: NSManagedObjectModel
@@ -243,10 +243,10 @@ extension _CoreData.Database {
     final class CustomEntityMigrationPolicy: NSEntityMigrationPolicy {
         struct Configuration {
             let databaseContext: _CoreData.Database.Context
-            let schemaMappingModel: CustomSchemaMappingModel
+            let schemaMappingModel: _SchemaMigrationMapping
             let sourceEntity: _Schema.Entity
             let destinationEntity: _Schema.Entity
-            let transformer: CustomEntityMapping.Transformer
+            let transformer: _EntitySchemaMigrationMapping.Transformer
             var sourceAttributesByDestinationKey: [String: NSAttributeDescription]?
         }
         

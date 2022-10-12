@@ -26,9 +26,6 @@ public protocol EntityPropertyAccessor: _opaque_ObservableObject, ObservableObje
     func initialize(with _underlyingRecordContainer: _DatabaseRecordContainer) throws
 
     var wrappedValue: WrappedValue { get }
-    
-    func decode(from _: Decoder) throws
-    func encode(to _: Encoder) throws
 }
 
 extension EntityPropertyAccessor {

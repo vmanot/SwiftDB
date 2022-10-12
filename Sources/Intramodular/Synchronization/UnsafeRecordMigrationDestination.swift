@@ -5,13 +5,13 @@
 import Swallow
 
 public struct UnsafeRecordMigrationDestination {
-    let schemaMappingModel: CustomSchemaMappingModel
+    let schemaMappingModel: _SchemaMigrationMapping
     let sourceEntity: _Schema.Entity
     let destinationEntity: _Schema.Entity
     let destination: _DatabaseRecordContainer
     
     init(
-        schemaMappingModel: CustomSchemaMappingModel,
+        schemaMappingModel: _SchemaMigrationMapping,
         sourceEntity: _Schema.Entity,
         destinationEntity: _Schema.Entity,
         destination: _DatabaseRecordContainer

@@ -61,16 +61,6 @@ extension EntityPropertyAccessorModifier  {
     }
 }
 
-extension EntityPropertyAccessorModifier {
-    public func decode(from decoder: Decoder) throws {
-        try base.decode(from: decoder)
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        try base.encode(to: encoder)
-    }
-}
-
 /*// MARK: - Conformances -
 
 @propertyWrapper

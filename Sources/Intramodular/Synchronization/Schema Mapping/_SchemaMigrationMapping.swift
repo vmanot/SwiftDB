@@ -4,15 +4,15 @@
 
 import Swallow
 
-public struct CustomSchemaMappingModel {
+public struct _SchemaMigrationMapping {
     public let source: _Schema
     public let destination: _Schema
-    public let mappings: [CustomEntityMapping.MappingType: [CustomEntityMapping]]
+    public let mappings: [_EntitySchemaMigrationMapping.MappingType: [_EntitySchemaMigrationMapping]]
     
     public init(
         source: _Schema,
         destination: _Schema,
-        mappings: [CustomEntityMapping]
+        mappings: [_EntitySchemaMigrationMapping]
     ) {
         self.source = source
         self.destination = destination
@@ -22,12 +22,12 @@ public struct CustomSchemaMappingModel {
 
 // MARK: - Supplementary API -
 
-extension CustomSchemaMappingModel {
+extension _SchemaMigrationMapping {
     public static func createInferredMapping(
         source: _Schema,
         destination: _Schema
     ) -> Self {
-        CustomSchemaMappingModel(
+        _SchemaMigrationMapping(
             source: source,
             destination: destination,
             mappings: Self.resolveEntityMappings(source: source, destination: destination)
@@ -35,16 +35,16 @@ extension CustomSchemaMappingModel {
     }
 }
 
-extension CustomSchemaMappingModel {
+extension _SchemaMigrationMapping {
     private static func resolveEntityMappings(
         source: _Schema,
         destination: _Schema,
-        entityMappings: [CustomEntityMapping] = []
-    ) -> [CustomEntityMapping] {
-        var deleteMappings: Set<CustomEntityMapping> = []
-        var insertMappings: Set<CustomEntityMapping> = []
-        var copyMappings: Set<CustomEntityMapping> = []
-        var transformMappings: Set<CustomEntityMapping> = []
+        entityMappings: [_EntitySchemaMigrationMapping] = []
+    ) -> [_EntitySchemaMigrationMapping] {
+        var deleteMappings: Set<_EntitySchemaMigrationMapping> = []
+        var insertMappings: Set<_EntitySchemaMigrationMapping> = []
+        var copyMappings: Set<_EntitySchemaMigrationMapping> = []
+        var transformMappings: Set<_EntitySchemaMigrationMapping> = []
         var allMappedSourceKeys: [_Schema.Entity.ID: _Schema.Entity.ID] = [:]
         var allMappedDestinationKeys: [_Schema.Entity.ID: _Schema.Entity.ID] = [:]
         
@@ -147,7 +147,7 @@ extension CustomSchemaMappingModel {
             }
         }
         
-        var mappings: Set<CustomEntityMapping> = []
+        var mappings: Set<_EntitySchemaMigrationMapping> = []
         
         mappings.formUnion(deleteMappings)
         mappings.formUnion(insertMappings)

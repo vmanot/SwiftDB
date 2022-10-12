@@ -8,6 +8,11 @@ import Swallow
 
 extension _CoreData {
     public final class DatabaseRecord {
+        private enum Error: Swift.Error {
+            case failedToDecodeValueForKey(CodingKey)
+            case attemptedToEncodeRelationshipAsValue(CodingKey)
+        }
+        
         public lazy var cancellables = Cancellables()
         
         let rawObject: NSManagedObject
@@ -62,16 +67,24 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         } else if let valueType = valueType as? Codable.Type {
             return try valueType.decode(from: self, forKey: key) as! Value
         } else {
-            throw DecodingError.some
+            throw Error.failedToDecodeValueForKey(key)
         }
     }
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
+        guard rawObject.entity.relationshipsByName[key.stringValue] == nil else {
+            throw Error.attemptedToEncodeRelationshipAsValue(key)
+        }
+        
         if let value = value as? NSAttributeCoder {
             try value.encode(to: rawObject, forKey: key)
         } else if let value = value as? Codable {
             try value.encode(to: self, forKey: key)
         }
+    }
+    
+    public func removeValueOrRelationship(forKey key: CodingKey) throws {
+        try unsafeEncodeValue(nil, forKey: key)
     }
     
     public func setInitialValue<Value>(
@@ -159,12 +172,6 @@ extension _CoreData.DatabaseRecord {
         init(managedObjectID: NSManagedObjectID) {
             self.base = managedObjectID
         }
-    }
-}
-
-extension _CoreData.DatabaseRecord {
-    fileprivate enum DecodingError: Error {
-        case some
     }
 }
 

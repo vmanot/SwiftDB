@@ -62,8 +62,10 @@ extension _DatabaseRecordContainer {
         case unknownPropertyType(Any, forKey: CodingKey)
     }
     
-    public func containsValue(forKey key: CodingKey) -> Bool {
-        record.containsValue(forKey: key)
+    public func containsValue(forKey key: CodingKey) throws -> Bool {
+        try scope(.read) { _ in
+            record.containsValue(forKey: key)
+        }
     }
     
     public func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
@@ -78,7 +80,21 @@ extension _DatabaseRecordContainer {
     
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         try scope(.write) { _ in
-            try record.encode(value, forKey: key)
+            if let value = value as? any EntityRelatable {
+                try value.encode(to: self, forKey: key)
+            } else {
+                try record.encode(value, forKey: key)
+            }
+        }
+    }
+    
+    public func removeValueOrRelationship(forKey key: CodingKey) throws {
+        guard try containsValue(forKey: key) else {
+            return
+        }
+        
+        try scope(.write) {_ in
+            try record.removeValueOrRelationship(forKey: key)
         }
     }
     
@@ -106,7 +122,7 @@ extension _DatabaseRecordContainer {
         return try scope(.read) { _ in
             switch property {
                 case let property as _Schema.Entity.Attribute: do {
-                    if property.propertyConfiguration.isOptional, !containsValue(forKey: key) {
+                    if property.propertyConfiguration.isOptional, try !containsValue(forKey: key) {
                         return nil
                     }
                     

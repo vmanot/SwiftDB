@@ -34,12 +34,8 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
     }
     
     public mutating func update() {
-        if database.isInitialized && coordinator.database == nil {
-            coordinator.queryRequest = queryRequest
-            coordinator.database = database
-            
-            coordinator.runQuery()
-        }
+        coordinator.queryRequest = queryRequest
+        coordinator.database = database
     }
     
     public init(
@@ -95,15 +91,24 @@ extension QueryModels {
         private var databaseListener: AnyCancellable?
         
         var queryRequest: QueryRequest<Model>!
-        var database: LiveDatabaseAccess? {
+        
+        @PublishedObject var database: LiveDatabaseAccess? {
             didSet {
-                databaseListener = database.map { database in
-                    (database.base as! _AnyDatabaseRecordContextTransaction)
+                if let database = database {
+                    guard databaseListener == nil || oldValue !== database else {
+                        return
+                    }
+                    
+                    databaseListener = (database.base as? _AnyDatabaseRecordContextTransaction)?
                         .willChangePublisher()
                         .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main) // FIXME: Hack!!!
                         .sink { [unowned self] _ in
                             self.runQuery()
                         }
+                    
+                    runQuery()
+                } else {
+                    databaseListener = nil
                 }
             }
         }
@@ -115,9 +120,13 @@ extension QueryModels {
         }
         
         func runQuery() {
+            guard let database = database, database.isInitialized else {
+                return
+            }
+            
             Task { @MainActor in
                 do {
-                    let queryTask = try database.unwrap().queryExecutionTask(for: queryRequest)
+                    let queryTask = database.queryExecutionTask(for: queryRequest)
                     
                     try Task.checkCancellation()
                     

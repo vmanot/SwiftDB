@@ -47,7 +47,9 @@ extension EntityRelatable where Self: Entity {
     }
     
     public func encode(to container: _DatabaseRecordContainer, forKey key: CodingKey) throws {
-        fatalError()
+        let relationship = try container.relationship(for: key).toOneRelationship()
+        
+        try relationship.setRecord(try _underlyingDatabaseRecordContainer.unwrap().record)
     }
 }
 
@@ -66,14 +68,21 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
         from container: _DatabaseRecordContainer,
         forKey key: CodingKey
     ) throws -> Optional<Wrapped> {
-        if container.containsValue(forKey: key) {
+        if try container.containsValue(forKey: key) {
             return try container.decode(Wrapped.self, forKey: key)
         } else {
             return nil
         }
     }
     
-    public func encode(to container: _DatabaseRecordContainer, forKey key: CodingKey) throws {
-        fatalError()
+    public func encode(
+        to container: _DatabaseRecordContainer,
+        forKey key: CodingKey
+    ) throws {
+        if let wrappedValue = self {
+            try wrappedValue.encode(to: container, forKey: key)
+        } else {
+            try container.removeValueOrRelationship(forKey: key)
+        }
     }
 }
