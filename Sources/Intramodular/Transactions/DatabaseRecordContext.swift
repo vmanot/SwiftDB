@@ -14,6 +14,7 @@ public protocol DatabaseRecordContext: ObservableObject, Sendable {
     associatedtype Database: SwiftDB.Database
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord
+    associatedtype QuerySubscription: DatabaseQuerySubscription
     
     typealias RecordConfiguration = DatabaseRecordConfiguration<Self>
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
@@ -34,6 +35,9 @@ public protocol DatabaseRecordContext: ObservableObject, Sendable {
     /// - Parameters:
     ///   - request: The query request to execute.
     func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error>
+    
+    /// A query subscription for a given zone.
+    func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription
     
     /// Save the changes made in this record context.
     ///

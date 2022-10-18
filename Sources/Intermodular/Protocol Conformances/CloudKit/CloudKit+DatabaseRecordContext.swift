@@ -59,6 +59,18 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
         fatalError(reason: .unimplemented)
     }
     
+    public final class QuerySubscription: DatabaseQuerySubscription {
+        fileprivate init() {
+            TODO.unimplemented
+        }
+    }
+    
+    public func querySubscription(
+        for request: ZoneQueryRequest
+    ) throws -> QuerySubscription {
+        TODO.unimplemented
+    }
+    
     public func save() -> AnyTask<Void, SaveError> {
         let ckDatabase = self.ckDatabase
         let records = self.records

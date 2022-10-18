@@ -5,7 +5,15 @@
 import Runtime
 import Swallow
 
-public protocol DatabaseTransaction: AnyObject, DatabaseCRUDQ, Identifiable {
+public struct DatabaseTransactionID: Hashable {
+    private let rawValue: AnyHashable
+    
+    public init(rawValue: AnyHashable) {
+        self.rawValue = rawValue
+    }
+}
+
+public protocol DatabaseTransaction: AnyObject, DatabaseCRUDQ, Identifiable where ID == DatabaseTransactionID {
     func commit() async throws
     
     func scope<T>(_ context: (DatabaseTransactionContext) throws -> T) throws -> T
@@ -30,10 +38,10 @@ public final class _DatabaseTransactionLink {
     init(from transaction: any DatabaseTransaction) {
         self.transactionID = transaction.id
         
-        asObjCObject(transaction).keepAlive(ExecuteClosureOnDeinit { [weak self] in
-            if self != nil {
-                assertionFailure("Transaction link has outlived transaction.")
-            }
-        })
+        /*asObjCObject(transaction).keepAlive(ExecuteClosureOnDeinit { [weak self] in
+         if self != nil {
+         assertionFailure("Transaction link has outlived transaction.")
+         }
+         })*/
     }
 }

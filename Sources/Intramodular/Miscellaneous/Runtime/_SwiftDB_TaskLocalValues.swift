@@ -13,9 +13,15 @@ func withDatabaseTransactionContext<T>(
     perform operation: (DatabaseTransactionContext) throws -> T
 ) throws -> T {
     if let context = context {
-        if let existingContext = _SwiftDB_TaskLocalValues.transactionContext, existingContext.transaction.id == context.transaction.id {
-            return try _SwiftDB_TaskLocalValues.$transactionContext.withValue(existingContext) {
-                try operation(existingContext)
+        if let existingContext = _SwiftDB_TaskLocalValues.transactionContext {
+            if existingContext.transaction.id == context.transaction.id {
+                return try _SwiftDB_TaskLocalValues.$transactionContext.withValue(existingContext) {
+                    try operation(existingContext)
+                }
+            } else {
+                return try _SwiftDB_TaskLocalValues.$transactionContext.withValue(context) {
+                    return try operation(context)
+                }
             }
         } else {
             return try _SwiftDB_TaskLocalValues.$transactionContext.withValue(context) {

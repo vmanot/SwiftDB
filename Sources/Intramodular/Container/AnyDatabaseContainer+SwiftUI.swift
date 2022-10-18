@@ -17,16 +17,12 @@ struct AttachDatabaseContainer: ViewModifier {
             if container.status == .initialized {
                 content
                     .environmentObject(container)
-                    .environment(\.database, container.mainAccess)
+                    .environment(\.database, container.liveAccess)
             } else {
                 if !hasAttemptedFirstLoad {
                     firstLoadView
                 } else {
-                    #if DEBUG
-                    if #available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *) {
-                        DiagnosticView(container: container)
-                    }
-                    #endif
+                    DiagnosticView(container: container)
                 }
             }
         }
@@ -76,11 +72,11 @@ extension View {
 
 extension EnvironmentValues {
     fileprivate struct _DatabaseEnvironmentKey: EnvironmentKey {
-        static let defaultValue = LiveDatabaseAccess(base: nil)
+        static let defaultValue = AnyDatabaseContainer.LiveAccess()
     }
     
     /// The database record context associated with this environment.
-    public fileprivate(set) var database: LiveDatabaseAccess {
+    public fileprivate(set) var database: AnyDatabaseContainer.LiveAccess {
         get {
             self[_DatabaseEnvironmentKey.self]
         } set {
@@ -92,21 +88,14 @@ extension EnvironmentValues {
 // MARK: - Diagnostics -
 
 extension AttachDatabaseContainer {
-    @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
     struct DiagnosticView: View {
         @ObservedObject var container: AnyDatabaseContainer
         
         var body: some View {
             NavigationStack {
-                MirrorSummary(mirror: container.customMirror)
+                _MirrorSummaryView(mirror: container.customMirror)
                     .navigationTitle("Database Summary")
-                    .modify {
-                        #if !os(macOS)
-                        $0.navigationBarTitleDisplayMode(.inline)
-                        #else
-                        $0
-                        #endif
-                    }
+                    .navigationBarTitleDisplayMode(.inline)
             }
         }
     }

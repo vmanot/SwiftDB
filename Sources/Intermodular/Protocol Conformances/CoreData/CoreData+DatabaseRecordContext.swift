@@ -66,7 +66,8 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     public typealias Zone = _CoreData.Database.Zone
     public typealias Record = _CoreData.DatabaseRecord
     public typealias RecordType = _CoreData.DatabaseRecord.RecordType
-    
+    public typealias QuerySubscription = _CoreData.Database.QuerySubscription
+
     public func createRecord(
         withConfiguration configuration: RecordConfiguration,
         context: RecordCreateContext
@@ -136,6 +137,10 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
         }
     }
     
+    public func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription {
+        .init(recordContext: self)
+    }
+
     public func save() -> AnyTask<Void, SaveError> {
         return Task { @Sendable in
             @Sendable

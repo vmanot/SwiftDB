@@ -25,9 +25,7 @@ public class AnyDatabaseContainer: CustomReflectable, Loggable, ObservableObject
         }
     }
     
-    public var mainAccess: LiveDatabaseAccess {
-        fatalError(reason: .abstract)
-    }
+    public private(set) var liveAccess = LiveAccess()
     
     public var customMirror: Mirror {
         Mirror(self, children: [])
@@ -77,13 +75,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     private var mainContext: AnyDatabaseRecordContext? {
         database?.viewContext.map(AnyDatabaseRecordContext.init)
     }
-    
-    private var _mainAccess = LiveDatabaseAccess(base: nil)
-    
-    override public var mainAccess: LiveDatabaseAccess {
-        _mainAccess
-    }
-    
+        
     public override var customMirror: Mirror {
         Mirror(self, children: [
             "status": status,
@@ -92,10 +84,6 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             "location": location as Any,
             "stateLocation": stateLocation as Any
         ])
-    }
-    
-    enum Ops: LoggableOperation {
-        case readAndRestoreDatabaseState
     }
     
     public init(
@@ -127,9 +115,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
                 var existingDBState: _CoreData.Database.State?
                 
                 if let stateLocation = stateLocation, FileManager.default.fileExists(at: stateLocation) {
-                    _ = try? logger.log(Ops.readAndRestoreDatabaseState) {
-                        existingDBState = try JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
-                    }
+                    existingDBState = try JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
                 }
                 
                 logger.info("Initializing database at location: \(location.map(String.init(describing:)) ?? "null")")
@@ -179,9 +165,11 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
                     return assertionFailure()
                 }
                 
-                _mainAccess.base = _AnyDatabaseRecordContextTransaction(
-                    databaseContext: database.context.eraseToAnyDatabaseContext(),
-                    recordContext: mainContext
+                liveAccess.setBaseTransaction(
+                    _AnyDatabaseRecordContextTransaction(
+                        databaseContext: database.context.eraseToAnyDatabaseContext(),
+                        recordContext: mainContext
+                    )
                 )
             } catch {
                 logger.error(error)
@@ -292,10 +280,6 @@ extension AnyDatabaseContainer {
 
 // MARK: - Auxiliary Implementation -
 
-extension CodingUserInfoKey {
-    fileprivate static let _SwiftDB_DatabaseContainer = CodingUserInfoKey(rawValue: "_SwiftDB_DatabaseContainer")!
-}
-
 extension Dictionary where Key == CodingUserInfoKey, Value == Any {
     var _SwiftDB_DatabaseContainer: AnyDatabaseContainer! {
         get {
@@ -304,4 +288,8 @@ extension Dictionary where Key == CodingUserInfoKey, Value == Any {
             self[._SwiftDB_DatabaseContainer] = newValue
         }
     }
+}
+
+extension CodingUserInfoKey {
+    fileprivate static let _SwiftDB_DatabaseContainer = CodingUserInfoKey(rawValue: "_SwiftDB_DatabaseContainer")!
 }

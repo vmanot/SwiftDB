@@ -5,32 +5,22 @@
 import Merge
 import Swallow
 
-public final class LiveDatabaseAccess: DatabaseTransaction, ObservableObject {
+final class _AutoCommittingDatabaseTransaction: DatabaseTransaction, ObservableObject {
     private let taskQueue = TaskQueue()
     
-    @Published public var base: (any DatabaseTransaction)?
+    let base: any DatabaseTransaction
     
-    public var id: AnyHashable {
-        base?.id ?? AnyHashable(base?.id) // BAD HACK
+    var id: DatabaseTransactionID {
+        base.id
     }
     
-    public var isInitialized: Bool {
-        base != nil
-    }
-    
-    private var baseUnwrapped: any DatabaseTransaction {
-        get throws {
-            try base.unwrap()
-        }
-    }
-    
-    init(base: (any DatabaseTransaction)?) {
+    init(base: any DatabaseTransaction) {
         self.base = base
     }
     
-    public func create<Instance: Entity>(_ entityType: Instance.Type) throws -> Instance {
+    func create<Instance: Entity>(_ entityType: Instance.Type) throws -> Instance {
         try scope { _ in
-            let instance = try baseUnwrapped.create(entityType)
+            let instance = try base.create(entityType)
             
             taskQueue.add {
                 try await self.commit()
@@ -42,7 +32,7 @@ public final class LiveDatabaseAccess: DatabaseTransaction, ObservableObject {
     
     public func delete<Instance: Entity>(_ instance: Instance) throws {
         try scope { _ in
-            try baseUnwrapped.delete(instance)
+            try base.delete(instance)
             
             taskQueue.add {
                 try await self.commit()
@@ -55,17 +45,23 @@ public final class LiveDatabaseAccess: DatabaseTransaction, ObservableObject {
     ) -> Merge.AnyTask<QueryRequest<Model>.Output, Error> {
         do {
             return try scope { _ in
-                try baseUnwrapped.queryExecutionTask(for: request)
+                base.queryExecutionTask(for: request)
             }
         } catch {
             return .failure(error)
         }
     }
     
+    public func querySubscription<Model>(for request: QueryRequest<Model>) throws -> QuerySubscription<Model> {
+        return try scope { _ in
+            try base.querySubscription(for: request)
+        }
+    }
+    
     public func commit() async throws {
         try await taskQueue.perform {
             do {
-                try await self.baseUnwrapped.commit()
+                try await self.base.commit()
             } catch {
                 assertionFailure()
             }
@@ -83,7 +79,7 @@ public final class LiveDatabaseAccess: DatabaseTransaction, ObservableObject {
     }
     
     public func scope<T>(_ operation: (DatabaseTransactionContext) throws -> T) throws -> T {
-        try baseUnwrapped.scope { context in
+        try base.scope { context in
             let transactionContext = DatabaseTransactionContext(
                 databaseContext: context.databaseContext,
                 transaction: self

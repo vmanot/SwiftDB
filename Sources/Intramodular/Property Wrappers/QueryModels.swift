@@ -90,25 +90,35 @@ extension QueryModels {
     fileprivate class RequestOutputCoordinator: Loggable, ObservableObject, @unchecked Sendable {
         private var databaseListener: AnyCancellable?
         
-        var queryRequest: QueryRequest<Model>!
-        
-        @PublishedObject var database: LiveDatabaseAccess? {
+        var queryRequest: QueryRequest<Model>! {
             didSet {
-                if let database = database {
-                    guard databaseListener == nil || oldValue !== database else {
-                        return
-                    }
-                    
-                    databaseListener = (database.base as? _AnyDatabaseRecordContextTransaction)?
-                        .willChangePublisher()
-                        .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main) // FIXME: Hack!!!
-                        .sink { [unowned self] _ in
-                            self.runQuery()
-                        }
-                    
-                    runQuery()
-                } else {
-                    databaseListener = nil
+                // TODO: Uncomment when QueryRequest is Equatable
+                /*guard oldValue != queryRequest else {
+                    return
+                }
+                
+                databaseListener = nil
+                
+                do {
+                    try setUpDatabaseListenerIfNecessary()
+                } catch {
+                    logger.error(error)
+                }*/
+            }
+        }
+        
+        @PublishedObject var database: AnyDatabaseContainer.LiveAccess? {
+            didSet {
+                guard databaseListener == nil || oldValue !== database else {
+                    return
+                }
+                
+                databaseListener = nil
+                
+                do {
+                    try setUpDatabaseListenerIfNecessary()
+                } catch {
+                    logger.error(error)
                 }
             }
         }
@@ -117,6 +127,29 @@ extension QueryModels {
         
         init() {
             logger.dumpToConsole = true
+        }
+        
+        private func setUpDatabaseListenerIfNecessary() throws {
+            guard databaseListener == nil else {
+                return 
+            }
+            
+            guard let queryRequest = queryRequest else {
+                return
+            }
+            
+            guard let database = database, database.isInitialized else {
+                return
+            }
+            
+            databaseListener = try database.querySubscription(for: queryRequest)
+                .objectWillChange
+                .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main) // FIXME: Hack!!!
+                .sink { [unowned self] _ in
+                    self.runQuery()
+                }
+            
+            runQuery()
         }
         
         func runQuery() {

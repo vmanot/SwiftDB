@@ -46,6 +46,6 @@ public protocol DatabaseRecord: ObservableObject, Identifiable, CancellablesHold
     /// - parameter key: The key to associate the initial value with.
     func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws
         
-    /// The relationship container for a given key.
+    /// The relationship container for a given key./Users/vmanot/Downloads/GitHub/vmanot/Applications/Lists/Targets/Lists/Files/App.swift
     func relationship(for key: CodingKey) throws -> Relationship
 }

@@ -8,6 +8,8 @@ import Merge
 import Swallow
 
 public final class _AnyDatabaseRecordContextTransaction: DatabaseTransaction {
+    public let id: DatabaseTransactionID = .init(rawValue: UUID())
+    
     private let databaseContext: AnyDatabase.Context
     private let recordContext: AnyDatabase.RecordContext
     
@@ -84,6 +86,10 @@ extension _AnyDatabaseRecordContextTransaction {
         } catch {
             return .failure(error)
         }
+    }
+    
+    public func querySubscription<Model>(for request: QueryRequest<Model>) throws -> QuerySubscription<Model> {
+        try .init(from: recordContext.querySubscription(for: zoneQueryRequest(from: request)))
     }
     
     private func _convertToEntityInstance(_ record: AnyDatabaseRecord) throws -> any Entity {

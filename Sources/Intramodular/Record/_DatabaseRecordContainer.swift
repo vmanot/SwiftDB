@@ -212,7 +212,7 @@ extension _DatabaseRecordContainer {
         do {
             return .primaryKey(value: try decodePrimaryKeyValue().unwrap())
         } catch {
-            return try .recordID(value: _TypePersistingAnyCodable(cast(record.id, to: Codable.self)))
+            return try .recordID(value: _PersistentTypeRepresentedCodable(cast(record.id, to: Codable.self)))
         }
     }
     
@@ -256,10 +256,10 @@ public enum _RelatedDatabaseRecords: Sequence {
 
 public indirect enum _RecordFieldPayload: Codable, Hashable {
     public indirect enum _EntityAttributeValue: Codable, Hashable {
-        case primitive(value: _TypePersistingAnyCodable)
-        case array(value: [_TypePersistingAnyCodable])
-        case dictionary(value: [_TypePersistingAnyCodable: _TypePersistingAnyCodable])
-        case object(value: _TypePersistingAnyCodable)
+        case primitive(value: _PersistentTypeRepresentedCodable)
+        case array(value: [_PersistentTypeRepresentedCodable])
+        case dictionary(value: [_PersistentTypeRepresentedCodable: _PersistentTypeRepresentedCodable])
+        case object(value: _PersistentTypeRepresentedCodable)
     }
     
     case attribute(value: _EntityAttributeValue)
@@ -269,7 +269,7 @@ public indirect enum _RecordFieldPayload: Codable, Hashable {
         if let value = value as? _RecordFieldPayloadConvertible {
             self = try value._toRecordFieldPayload()
         } else {
-            self = .attribute(value: .object(value: _TypePersistingAnyCodable(try cast(value, to: Codable.self))))
+            self = .attribute(value: .object(value: _PersistentTypeRepresentedCodable(try cast(value, to: Codable.self))))
         }
     }
 }
@@ -282,5 +282,5 @@ public indirect enum _RelatedPrimaryKeysOrRecordIDs: Codable, Hashable {
 
 public indirect enum _PrimaryKeyOrRecordID: Codable, Hashable {
     case primaryKey(value: _RecordFieldPayload)
-    case recordID(value: _TypePersistingAnyCodable)
+    case recordID(value: _PersistentTypeRepresentedCodable)
 }

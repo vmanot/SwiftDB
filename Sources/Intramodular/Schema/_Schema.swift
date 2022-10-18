@@ -20,7 +20,7 @@ public struct _Schema: Hashable, Sendable, Versioned {
         self.entities = .init(entities.sorted(by: \.name))
         
         for entity in entities {
-            let metatype = Metatype(try cast(entity.typeIdentity.resolveType(), to: any SwiftDB.Entity.Type.self))
+            let metatype = Metatype(try cast(entity.persistentTypeRepresentation.resolveType(), to: any SwiftDB.Entity.Type.self))
             
             entityTypesByName[entity.name] = metatype
             entityTypesByEntityID[entity.id] = metatype
@@ -129,7 +129,7 @@ fileprivate extension KeyedValuesOf where Wrapped == _Schema.Entity {
         
         self.parent = try type._opaque_ParentEntity.map({ parentType in try _Schema.Entity.ID(from: parentType) })
         self.name = String(describing: type)
-        self.typeIdentity = .init(from: type)
+        self.persistentTypeRepresentation = .init(from: type)
         self.properties = try instance._runtime_propertyAccessors.map({ try $0.schema() })
     }
 }

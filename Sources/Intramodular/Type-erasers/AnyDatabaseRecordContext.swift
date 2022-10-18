@@ -9,6 +9,7 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
     public typealias Database = AnyDatabase
     public typealias Zone = AnyDatabaseZone
     public typealias Record = AnyDatabaseRecord
+    public typealias QuerySubscription = AnyDatabaseQuerySubscription
     
     private let base: any DatabaseRecordContext
     
@@ -38,6 +39,10 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
         base._opaque_execute(request)
     }
     
+    public func querySubscription(for request: ZoneQueryRequest) throws -> AnyDatabaseQuerySubscription {
+        try base._opaque_querySubscription(for: request)
+    }
+
     public func delete(_ record: AnyDatabaseRecord) throws {
         try base._opaque_delete(record)
     }
@@ -82,43 +87,12 @@ private extension DatabaseRecordContext {
         }
     }
     
-    func translateZoneQueryRequest(
-        _ request: AnyDatabaseRecordContext.ZoneQueryRequest
-    ) throws -> ZoneQueryRequest {
-        .init(
-            filters: try translateZoneQueryRequestFilters(request.filters),
-            predicate: try translateZoneQueryRequestPredicate(request.predicate),
-            sortDescriptors: request.sortDescriptors,
-            cursor: request.cursor,
-            limit: request.fetchLimit
-        )
+    func _opaque_querySubscription(
+        for request: AnyDatabaseRecordContext.ZoneQueryRequest
+    ) throws -> AnyDatabaseQuerySubscription {
+        try .init(erasing: querySubscription(for: translateZoneQueryRequest(request)))
     }
-    
-    func translateZoneQueryRequestFilters(
-        _ filters: DatabaseZoneQueryRequest<AnyDatabaseRecordContext>.Filters
-    ) throws -> DatabaseZoneQueryRequest<Self>.Filters {
-        try DatabaseZoneQueryRequest<Self>.Filters(
-            zones: filters.zones?.map({ try cast($0.base, to: Zone.ID.self) }),
-            recordTypes: Set(filters.recordTypes.map({ try Record.RecordType($0.description).unwrap() })),
-            includesSubentities: filters.includesSubentities
-        )
-    }
-    
-    func translateZoneQueryRequestPredicate(
-        _ predicate: DatabaseZoneQueryPredicate<AnyDatabaseRecordContext>?
-    ) throws -> DatabaseZoneQueryPredicate<Self>? {
-        guard let predicate = predicate else {
-            return nil
-        }
         
-        switch predicate {
-            case .related(let recordID, let fieldName):
-                return .related(to: try cast(recordID.base, to: Record.ID.self), by: fieldName)
-            case ._nsPredicate(let predicate):
-                return ._nsPredicate(predicate)
-        }
-    }
-    
     func _opaque_delete(_ record: AnyDatabaseRecord) throws {
         let _record = try record._cast(to: Record.self)
         
@@ -135,6 +109,43 @@ private extension DatabaseRecordContext {
                 )
             }
             .convertToTask()
+    }
+    
+    private func translateZoneQueryRequest(
+        _ request: AnyDatabaseRecordContext.ZoneQueryRequest
+    ) throws -> ZoneQueryRequest {
+        .init(
+            filters: try translateZoneQueryRequestFilters(request.filters),
+            predicate: try translateZoneQueryRequestPredicate(request.predicate),
+            sortDescriptors: request.sortDescriptors,
+            cursor: request.cursor,
+            limit: request.fetchLimit
+        )
+    }
+    
+    private  func translateZoneQueryRequestFilters(
+        _ filters: DatabaseZoneQueryRequest<AnyDatabaseRecordContext>.Filters
+    ) throws -> DatabaseZoneQueryRequest<Self>.Filters {
+        try DatabaseZoneQueryRequest<Self>.Filters(
+            zones: filters.zones?.map({ try cast($0.base, to: Zone.ID.self) }),
+            recordTypes: Set(filters.recordTypes.map({ try Record.RecordType($0.description).unwrap() })),
+            includesSubentities: filters.includesSubentities
+        )
+    }
+    
+    private func translateZoneQueryRequestPredicate(
+        _ predicate: DatabaseZoneQueryPredicate<AnyDatabaseRecordContext>?
+    ) throws -> DatabaseZoneQueryPredicate<Self>? {
+        guard let predicate = predicate else {
+            return nil
+        }
+        
+        switch predicate {
+            case .related(let recordID, let fieldName):
+                return .related(to: try cast(recordID.base, to: Record.ID.self), by: fieldName)
+            case ._nsPredicate(let predicate):
+                return ._nsPredicate(predicate)
+        }
     }
 }
 
