@@ -12,15 +12,15 @@ extension _CoreData {
         public typealias Database = _CoreData.Database
         
         private let schema: _Schema
-        private let recordTypesByEntityID: BidirectionalMap<_Schema.Entity.ID, Database.RecordContext.RecordType>
+        private let recordTypesByEntityID: BidirectionalMap<_Schema.Entity.ID, Database.RecordSpace.RecordType>
         
         init(schema: _Schema) {
             self.schema = schema
             
-            var recordTypesByEntityID = BidirectionalMap<_Schema.Entity.ID, Database.RecordContext.RecordType>()
+            var recordTypesByEntityID = BidirectionalMap<_Schema.Entity.ID, Database.RecordSpace.RecordType>()
             
             for entity in schema.entities {
-                recordTypesByEntityID[entity.id] = Database.RecordContext.RecordType(rawValue: entity.name)
+                recordTypesByEntityID[entity.id] = Database.RecordSpace.RecordType(rawValue: entity.name)
             }
             
             self.recordTypesByEntityID = recordTypesByEntityID

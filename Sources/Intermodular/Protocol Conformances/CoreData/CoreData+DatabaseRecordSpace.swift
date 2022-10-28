@@ -9,7 +9,7 @@ import Runtime
 import Swallow
 
 extension _CoreData {
-    public final class DatabaseRecordContext: ObservableObject, @unchecked Sendable {
+    public final class DatabaseRecordSpace: ObservableObject, @unchecked Sendable {
         public let databaseContext: DatabaseContext<Database>
         
         let notificationCenter: NotificationCenter = .default
@@ -61,7 +61,7 @@ extension _CoreData {
     }
 }
 
-extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
+extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
     public typealias Database = _CoreData.Database
     public typealias Zone = _CoreData.Database.Zone
     public typealias Record = _CoreData.DatabaseRecord
@@ -138,7 +138,7 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
     }
     
     public func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription {
-        .init(recordContext: self)
+        .init(recordSpace: self)
     }
 
     public func save() -> AnyTask<Void, SaveError> {
@@ -179,20 +179,20 @@ extension _CoreData.DatabaseRecordContext: DatabaseRecordContext {
 
 // MARK: - Helpers -
 
-fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.DatabaseRecordContext {
+fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.DatabaseRecordSpace {
     init(conflict: NSMergeConflict) {
         self.source = .init(rawObject: conflict.sourceObject)
     }
 }
 
-fileprivate extension DatabaseZoneQueryRequest where Context == _CoreData.DatabaseRecordContext {
+fileprivate extension DatabaseZoneQueryRequest where Context == _CoreData.DatabaseRecordSpace {
     func toNSFetchRequests(context: Context) throws -> [NSFetchRequest<NSManagedObject>] {
         guard !filters.recordTypes.isEmpty else {
-            throw _CoreData.DatabaseRecordContext.DatabaseZoneQueryRequestError.atLeastOneRecordTypeRequired
+            throw _CoreData.DatabaseRecordSpace.DatabaseZoneQueryRequestError.atLeastOneRecordTypeRequired
         }
         
         guard filters.recordTypes.count == 1 else {
-            throw _CoreData.DatabaseRecordContext.DatabaseZoneQueryRequestError.multipleRecordTypesUnsupported
+            throw _CoreData.DatabaseRecordSpace.DatabaseZoneQueryRequestError.multipleRecordTypesUnsupported
         }
         
         var nsFetchRequests: [NSFetchRequest<NSManagedObject>] = []
@@ -240,7 +240,7 @@ fileprivate extension DatabaseZoneQueryRequest where Context == _CoreData.Databa
     }
 }
 
-extension _CoreData.DatabaseRecordContext {
+extension _CoreData.DatabaseRecordSpace {
     enum DatabaseZoneQueryRequestError: Swift.Error {
         case atLeastOneRecordTypeRequired
         case multipleRecordTypesUnsupported

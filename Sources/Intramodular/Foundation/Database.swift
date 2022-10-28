@@ -5,40 +5,6 @@
 import Merge
 import Swallow
 
-public struct DatabaseContext<Database: SwiftDB.Database> {
-    public let runtime: _SwiftDB_Runtime
-    public let schema: _Schema
-    public let schemaAdaptor: Database.SchemaAdaptor
-    
-    public init(
-        runtime: _SwiftDB_Runtime,
-        schema: _Schema,
-        schemaAdaptor: Database.SchemaAdaptor
-    ) {
-        self.runtime = runtime
-        self.schema = schema
-        self.schemaAdaptor = schemaAdaptor
-    }
-    
-    public func eraseToAnyDatabaseContext() -> DatabaseContext<AnyDatabase> {
-        .init(
-            runtime: runtime,
-            schema: schema,
-            schemaAdaptor: .init(erasing: schemaAdaptor)
-        )
-    }
-    
-    public func recordSchema(
-        forRecordType recordType: Database.RecordContext.Record.RecordType
-    ) throws -> _Schema.Record? {
-        guard let recordSchemaID = try schemaAdaptor.entity(forRecordType: recordType) else {
-            return nil
-        }
-        
-        return schema[recordSchemaID]
-    }
-}
-
 /// A type that represents a database.
 ///
 /// A SwiftDB database is made up of the following parts:
@@ -51,7 +17,7 @@ public struct DatabaseContext<Database: SwiftDB.Database> {
 ///     An encapsulation of any additional metadata stored by the database.
 /// - Zone:
 ///     A representation of a local or remote store.
-/// - RecordContext:
+/// - RecordSpace:
 ///     An in-memory scratchpad for transacting on managed records.
 public protocol Database: Named, Identifiable where ID: Codable {
     typealias Runtime = _SwiftDB_Runtime
@@ -59,8 +25,8 @@ public protocol Database: Named, Identifiable where ID: Codable {
     associatedtype Configuration: Codable
     associatedtype State: Codable & Equatable
     associatedtype SchemaAdaptor: DatabaseSchemaAdaptor where SchemaAdaptor.Database == Self
-    associatedtype Zone where Zone == RecordContext.Zone
-    associatedtype RecordContext: DatabaseRecordContext
+    associatedtype Zone where Zone == RecordSpace.Zone
+    associatedtype RecordSpace: DatabaseRecordSpace
     
     typealias Context = DatabaseContext<Self>
     
@@ -85,7 +51,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     @discardableResult
     func fetchZone(named _: String) -> AnyTask<Zone, Error>
     
-    func recordContext(forZones _: [Zone]?) throws -> RecordContext
+    func recordSpace(forZones _: [Zone]?) throws -> RecordSpace
     
     /// Erase all data in the database.
     ///

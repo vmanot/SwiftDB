@@ -7,7 +7,7 @@ import Merge
 import Swallow
 
 extension _CloudKit {
-    public final class DatabaseRecordContext: @unchecked Sendable {
+    public final class DatabaseRecordSpace: @unchecked Sendable {
         var ckContainer: CKContainer?
         var ckDatabase: CKDatabase
         var zones: [Zone]
@@ -25,7 +25,7 @@ extension _CloudKit {
     }
 }
 
-extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
+extension _CloudKit.DatabaseRecordSpace: DatabaseRecordSpace {
     public typealias Database = _CloudKit.Database
     public typealias Record = _CloudKit.DatabaseRecord
     public typealias Zone = _CloudKit.DatabaseZone
@@ -84,7 +84,7 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
             operation.isAtomic = true
             operation.database = ckDatabase
             
-            /*var conflicts: [DatabaseRecordMergeConflict<_CloudKit.DatabaseRecordContext>]? = []
+            /*var conflicts: [DatabaseRecordMergeConflict<_CloudKit.DatabaseRecordSpace>]? = []
              
              operation.perRecordProgressBlock = { record, progress in
              
@@ -101,7 +101,7 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
              
              operation.modifyRecordsCompletionBlock = { savedRecords, deletedRecords, error in
              if let error = error {
-             attemptToFullfill(.failure(error as! _CloudKit.DatabaseRecordContext.SaveError))
+             attemptToFullfill(.failure(error as! _CloudKit.DatabaseRecordSpace.SaveError))
              } else {
              attemptToFullfill(.success(()))
              }
@@ -115,7 +115,7 @@ extension _CloudKit.DatabaseRecordContext: DatabaseRecordContext {
     }
 }
 
-extension DatabaseRecordMergeConflict where Context == _CloudKit.DatabaseRecordContext {
+extension DatabaseRecordMergeConflict where Context == _CloudKit.DatabaseRecordSpace {
     init(record: CKRecord, error: CKError) {
         self.source = .init(ckRecord: record)
     }

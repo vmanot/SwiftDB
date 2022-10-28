@@ -12,11 +12,11 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
         .many
     }
     
-    let transactionContext: DatabaseTransactionContext?
+    let transactionContext: _SwiftDB_RuntimeTaskContext?
     let relationship: AnyDatabaseRecordRelationship
     
     init(
-        transactionContext: DatabaseTransactionContext,
+        transactionContext: _SwiftDB_RuntimeTaskContext,
         relationship: AnyDatabaseRecordRelationship
     ) {
         self.transactionContext = transactionContext
@@ -30,7 +30,7 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     
     public func makeIterator() -> AnyIterator<Model> {
         do {
-            return try withDatabaseTransactionContext(transactionContext) { context in
+            return try _withRuntimeTaskContext(transactionContext) { context in
                 AnyIterator(try relationship.toManyRelationship().all().map({ try Model(from: context._recordContainer(for: $0)) }).makeIterator())
             }
         } catch {
@@ -54,7 +54,7 @@ extension RelatedModels: EntityRelatable {
         from container: _DatabaseRecordContainer,
         forKey key: CodingKey
     ) throws -> Self {
-        try withDatabaseTransactionContext { context in
+        try _withRuntimeTaskContext { context in
             self.init(
                 transactionContext: context,
                 relationship: try container.relationship(for: key)

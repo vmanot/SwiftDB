@@ -5,28 +5,28 @@
 import Swallow
 import Merge
 
-public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
+public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
     public typealias Database = AnyDatabase
     public typealias Zone = AnyDatabaseZone
     public typealias Record = AnyDatabaseRecord
     public typealias QuerySubscription = AnyDatabaseQuerySubscription
     
-    private let base: any DatabaseRecordContext
+    private let base: any DatabaseRecordSpace
     
     public var objectWillChange: AnyObjectWillChangePublisher {
         base.eraseObjectWillChangePublisher()
     }
     
-    private init(base: any DatabaseRecordContext) {
+    private init(base: any DatabaseRecordSpace) {
         self.base = base
     }
     
-    public convenience init<RecordContext: DatabaseRecordContext>(erasing recordContext: RecordContext) {
-        self.init(base: recordContext)
+    public convenience init<RecordSpace: DatabaseRecordSpace>(erasing recordSpace: RecordSpace) {
+        self.init(base: recordSpace)
     }
     
     public func createRecord(
-        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordContext>,
+        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordSpace>,
         context: RecordCreateContext
     ) throws -> AnyDatabaseRecord {
         try base._opaque_createRecord(
@@ -55,10 +55,10 @@ public final class AnyDatabaseRecordContext: DatabaseRecordContext, Sendable {
 
 // MARK: - Auxiliary Implementation -
 
-private extension DatabaseRecordContext {
+private extension DatabaseRecordSpace {
     func _opaque_createRecord(
-        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordContext>,
-        context: AnyDatabaseRecordContext.RecordCreateContext
+        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordSpace>,
+        context: AnyDatabaseRecordSpace.RecordCreateContext
     ) throws -> AnyDatabaseRecord {
         let record = try createRecord(
             withConfiguration: .init(
@@ -73,13 +73,13 @@ private extension DatabaseRecordContext {
     }
     
     func _opaque_execute(
-        _ request: AnyDatabaseRecordContext.ZoneQueryRequest
-    ) -> AnyTask<AnyDatabaseRecordContext.ZoneQueryRequest.Result, Error> {
+        _ request: AnyDatabaseRecordSpace.ZoneQueryRequest
+    ) -> AnyTask<AnyDatabaseRecordSpace.ZoneQueryRequest.Result, Error> {
         do {
             return try execute(translateZoneQueryRequest(request))
                 .successPublisher
                 .map { result in
-                    AnyDatabaseRecordContext.ZoneQueryRequest.Result(records: result.records?.map({ AnyDatabaseRecord(erasing: $0) }))
+                    AnyDatabaseRecordSpace.ZoneQueryRequest.Result(records: result.records?.map({ AnyDatabaseRecord(erasing: $0) }))
                 }
                 .convertToTask()
         } catch {
@@ -88,7 +88,7 @@ private extension DatabaseRecordContext {
     }
     
     func _opaque_querySubscription(
-        for request: AnyDatabaseRecordContext.ZoneQueryRequest
+        for request: AnyDatabaseRecordSpace.ZoneQueryRequest
     ) throws -> AnyDatabaseQuerySubscription {
         try .init(erasing: querySubscription(for: translateZoneQueryRequest(request)))
     }
@@ -99,11 +99,11 @@ private extension DatabaseRecordContext {
         return try delete(_record)
     }
     
-    func _opaque_save() -> AnyTask<Void, AnyDatabaseRecordContext.SaveError> {
+    func _opaque_save() -> AnyTask<Void, AnyDatabaseRecordSpace.SaveError> {
         save()
             .successPublisher
             .mapError { error in
-                AnyDatabaseRecordContext.SaveError(
+                AnyDatabaseRecordSpace.SaveError(
                     description: error.description,
                     mergeConflicts: error.mergeConflicts?.map({ DatabaseRecordMergeConflict(source: AnyDatabaseRecord(erasing: $0.source)) })
                 )
@@ -112,7 +112,7 @@ private extension DatabaseRecordContext {
     }
     
     private func translateZoneQueryRequest(
-        _ request: AnyDatabaseRecordContext.ZoneQueryRequest
+        _ request: AnyDatabaseRecordSpace.ZoneQueryRequest
     ) throws -> ZoneQueryRequest {
         .init(
             filters: try translateZoneQueryRequestFilters(request.filters),
@@ -124,7 +124,7 @@ private extension DatabaseRecordContext {
     }
     
     private  func translateZoneQueryRequestFilters(
-        _ filters: DatabaseZoneQueryRequest<AnyDatabaseRecordContext>.Filters
+        _ filters: DatabaseZoneQueryRequest<AnyDatabaseRecordSpace>.Filters
     ) throws -> DatabaseZoneQueryRequest<Self>.Filters {
         try DatabaseZoneQueryRequest<Self>.Filters(
             zones: filters.zones?.map({ try cast($0.base, to: Zone.ID.self) }),
@@ -134,7 +134,7 @@ private extension DatabaseRecordContext {
     }
     
     private func translateZoneQueryRequestPredicate(
-        _ predicate: DatabaseZoneQueryPredicate<AnyDatabaseRecordContext>?
+        _ predicate: DatabaseZoneQueryPredicate<AnyDatabaseRecordSpace>?
     ) throws -> DatabaseZoneQueryPredicate<Self>? {
         guard let predicate = predicate else {
             return nil
@@ -149,8 +149,8 @@ private extension DatabaseRecordContext {
     }
 }
 
-extension DatabaseZoneQueryPredicate where Context == AnyDatabaseRecordContext {
-    fileprivate init<T: DatabaseRecordContext>(
+extension DatabaseZoneQueryPredicate where Context == AnyDatabaseRecordSpace {
+    fileprivate init<T: DatabaseRecordSpace>(
         from predicate: DatabaseZoneQueryPredicate<T>
     ) {
         switch predicate {

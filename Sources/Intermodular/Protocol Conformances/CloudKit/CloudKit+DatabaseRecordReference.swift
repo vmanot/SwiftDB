@@ -8,10 +8,10 @@ import Swallow
 
 extension _CloudKit.DatabaseRecord {
     public struct Reference: Codable, DatabaseRecordReference {
-        public typealias RecordContext = _CloudKit.DatabaseRecordContext
+        public typealias RecordSpace = _CloudKit.DatabaseRecordSpace
         
         public let recordID: ID
-        public let zoneID: RecordContext.Zone.ID
+        public let zoneID: RecordSpace.Zone.ID
         
         public var ckReference: CKRecord.Reference {
             .init(

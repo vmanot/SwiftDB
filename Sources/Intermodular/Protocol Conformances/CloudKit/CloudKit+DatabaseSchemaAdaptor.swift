@@ -12,7 +12,7 @@ extension _CloudKit {
         
         public func recordType(
             for entity: _Schema.Entity.ID?
-        ) throws -> Database.RecordContext.Record.RecordType {
+        ) throws -> Database.RecordSpace.Record.RecordType {
             fatalError()
         }
         

@@ -5,7 +5,7 @@
 import Merge
 import Swallow
 
-public struct DatabaseRecordContextSaveError<Context: DatabaseRecordContext>: CustomStringConvertible, LocalizedError {
+public struct DatabaseRecordSpaceSaveError<Context: DatabaseRecordSpace>: CustomStringConvertible, LocalizedError {
     public let description: String
     public let mergeConflicts: [DatabaseRecordMergeConflict<Context>]?
     

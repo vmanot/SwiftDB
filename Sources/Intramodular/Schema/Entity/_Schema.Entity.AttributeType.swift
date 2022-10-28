@@ -67,6 +67,15 @@ extension _Schema.Entity {
                 self = type.toSchemaEntityAttributeType()
             } else {
                 self = .object(type: .init(identity: .init(from: type)))
+                
+                if let type = type as? any RawRepresentable.Type,
+                   let rawValueType = type._opaque_RawValue as? _EntityAttributeSchemaRepresentable.Type,
+                   case .primitive(let primitiveType) = rawValueType.toSchemaEntityAttributeType()
+                {
+                    self = .primitive(type: primitiveType)
+                } else {
+                    self = .object(type: .init(identity: .init(from: type)))
+                }
             }
         }
         

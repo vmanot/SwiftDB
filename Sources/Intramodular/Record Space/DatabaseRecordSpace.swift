@@ -9,8 +9,8 @@ import SwiftUI
 
 /// An space to manipulate and track changes to managed database records.
 ///
-/// `DatabaseRecordContext` is inspired from `NSManagedObjectContext`.
-public protocol DatabaseRecordContext: ObservableObject, Sendable {
+/// `DatabaseRecordSpace` is inspired from `NSManagedObjectContext`.
+public protocol DatabaseRecordSpace: ObservableObject, Sendable {
     associatedtype Database: SwiftDB.Database
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord
@@ -19,7 +19,7 @@ public protocol DatabaseRecordContext: ObservableObject, Sendable {
     typealias RecordConfiguration = DatabaseRecordConfiguration<Self>
     typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
     typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
-    typealias SaveError = DatabaseRecordContextSaveError<Self>
+    typealias SaveError = DatabaseRecordSpaceSaveError<Self>
     
     /// Create a database record associated with this context.
     func createRecord(
@@ -27,10 +27,10 @@ public protocol DatabaseRecordContext: ObservableObject, Sendable {
         context: RecordCreateContext
     ) throws -> Record
     
-    /// Mark a record for deletion in this record context.
+    /// Mark a record for deletion in this record space.
     func delete(_: Record) throws
     
-    /// Execute a zone query request within the zones captured by this record context.
+    /// Execute a zone query request within the zones captured by this record space.
     ///
     /// - Parameters:
     ///   - request: The query request to execute.
@@ -39,7 +39,7 @@ public protocol DatabaseRecordContext: ObservableObject, Sendable {
     /// A query subscription for a given zone.
     func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription
     
-    /// Save the changes made in this record context.
+    /// Save the changes made in this record space.
     ///
     /// - Returns: A task representing the save operation.
     func save() -> AnyTask<Void, SaveError>
@@ -47,7 +47,7 @@ public protocol DatabaseRecordContext: ObservableObject, Sendable {
 
 // MARK: - Extensions -
 
-extension DatabaseRecordContext {
+extension DatabaseRecordSpace {
     public func execute(_ request: ZoneQueryRequest) async throws -> ZoneQueryRequest.Result {
         try await execute(request).value
     }

@@ -17,37 +17,37 @@ public final class _DatabaseRecordContainer: ObservableObject {
     let recordSchema: _Schema.Record?
     let record: AnyDatabaseRecord
     
-    private let transactionContext: DatabaseTransactionContext
+    private let transactionContext: _SwiftDB_RuntimeTaskContext
     
-    public let transactionLink: _DatabaseTransactionLink
+    public let transactionLink: _TransactionLink
     
     public var objectWillChange: AnyObjectWillChangePublisher {
         record.objectWillChange
     }
     
     init(
-        transactionContext: DatabaseTransactionContext,
+        transactionContext: _SwiftDB_RuntimeTaskContext,
         recordSchema: _Schema.Record?,
         record: AnyDatabaseRecord
-    ) {
+    ) throws {
         self.transactionContext = transactionContext
-        self.transactionLink = .init(from: transactionContext.transaction)
+        self.transactionLink = .init(from: try transactionContext.transaction.unwrap())
         self.recordSchema = recordSchema
         self.record = record
     }
     
     private func scope<T>(
         _ operationType: OperationType,
-        perform operation: (DatabaseTransactionContext) throws -> T
+        perform operation: (_SwiftDB_RuntimeTaskContext) throws -> T
     ) throws -> T {
         switch operationType {
             case .read:
-                return try withDatabaseTransactionContext(transactionContext) { context in
+                return try _withRuntimeTaskContext(transactionContext) { context in
                     try operation(context)
                 }
             case .write:
-                return try withDatabaseTransactionContext(transactionContext) { context in
-                    try context.transaction._scopeRecordMutation {
+                return try _withRuntimeTaskContext(transactionContext) { context in
+                    try context.transaction.unwrap()._scopeRecordMutation {
                         try operation(context)
                     }
                 }
@@ -73,6 +73,18 @@ extension _DatabaseRecordContainer {
             if let type = type as? any EntityRelatable.Type {
                 return try cast(try type.decode(from: self, forKey: key), to: Value.self)
             } else {
+                // Special handling for RawRepresentable types.
+                if let rawRepresentableType = type as? any RawRepresentable.Type,
+                   case .primitive = _Schema.Entity.AttributeType(from: rawRepresentableType)
+                {
+                    let rawValue = try record._opaque_decode(rawRepresentableType._opaque_RawValue, forKey: key)
+                    
+                    return try cast(
+                        try rawRepresentableType.init(_opaque_rawValue: rawValue),
+                        to: Value.self
+                    )
+                }
+                
                 return try record.decode(type, forKey: key)
             }
         }
@@ -237,50 +249,14 @@ extension _DatabaseRecordContainer {
     }
 }
 
-public enum _RelatedDatabaseRecords: Sequence {
-    case toOne(AnyDatabaseRecord?)
-    case toMany(Array<AnyDatabaseRecord>)
-    case orderedToMany(Array<AnyDatabaseRecord>)
-    
-    public func makeIterator() -> Array<AnyDatabaseRecord>.Iterator {
-        switch self {
-            case .toOne(let record):
-                return (record.map({ [$0] }) ?? []).makeIterator()
-            case .toMany(let records):
-                return records.makeIterator()
-            case .orderedToMany(let records):
-                return records.makeIterator()
+// MARK: - Auxiliary Implementation -
+
+fileprivate extension AnyDatabaseRecord {
+    func _opaque_decode(_ type: Any.Type, forKey key: CodingKey) throws -> Any {
+        func _decodeValueForType<T>(_ type: T.Type) throws -> Any {
+            try self.decode(type, forKey: key)
         }
+        
+        return try _openExistential(type, do: _decodeValueForType)
     }
-}
-
-public indirect enum _RecordFieldPayload: Codable, Hashable {
-    public indirect enum _EntityAttributeValue: Codable, Hashable {
-        case primitive(value: _PersistentTypeRepresentedCodable)
-        case array(value: [_PersistentTypeRepresentedCodable])
-        case dictionary(value: [_PersistentTypeRepresentedCodable: _PersistentTypeRepresentedCodable])
-        case object(value: _PersistentTypeRepresentedCodable)
-    }
-    
-    case attribute(value: _EntityAttributeValue)
-    case relationship(primaryKeysOrRecordIdentifiers: _RelatedPrimaryKeysOrRecordIDs)
-    
-    public init(from value: Any) throws {
-        if let value = value as? _RecordFieldPayloadConvertible {
-            self = try value._toRecordFieldPayload()
-        } else {
-            self = .attribute(value: .object(value: _PersistentTypeRepresentedCodable(try cast(value, to: Codable.self))))
-        }
-    }
-}
-
-public indirect enum _RelatedPrimaryKeysOrRecordIDs: Codable, Hashable {
-    case toOne(keyOrIdentifier: _PrimaryKeyOrRecordID?)
-    case toMany(keysOrIdentifiers: Set<_PrimaryKeyOrRecordID>)
-    case orderedToMany(keysOrIdentifiers: [_PrimaryKeyOrRecordID])
-}
-
-public indirect enum _PrimaryKeyOrRecordID: Codable, Hashable {
-    case primaryKey(value: _RecordFieldPayload)
-    case recordID(value: _PersistentTypeRepresentedCodable)
 }

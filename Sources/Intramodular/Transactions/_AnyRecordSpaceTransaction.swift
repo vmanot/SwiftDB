@@ -7,43 +7,44 @@ import Diagnostics
 import Merge
 import Swallow
 
-public final class _AnyDatabaseRecordContextTransaction: DatabaseTransaction {
-    public let id: DatabaseTransactionID = .init(rawValue: UUID())
+/// A type that wraps a record space into a SwiftDB transaction.
+final class _AnyRecordSpaceTransaction: _Transaction {
+    let id: _TransactionID = .init(rawValue: UUID())
     
     private let databaseContext: AnyDatabase.Context
-    private let recordContext: AnyDatabase.RecordContext
+    private let recordSpace: AnyDatabase.RecordSpace
     
-    public init(
+    init(
         databaseContext: AnyDatabase.Context,
-        recordContext: AnyDatabase.RecordContext
+        recordSpace: AnyDatabase.RecordSpace
     ) {
         self.databaseContext = databaseContext
-        self.recordContext = recordContext
+        self.recordSpace = recordSpace
     }
     
-    public func commit() async throws {
-        try await recordContext.save()
+    func commit() async throws {
+        try await recordSpace.save()
     }
     
-    public func scope<T>(_ operation: (DatabaseTransactionContext) throws -> T) throws -> T {
-        try withDatabaseTransactionContext(.init(databaseContext: databaseContext, transaction: self)) { context in
+    func scope<T>(_ operation: (_SwiftDB_RuntimeTaskContext) throws -> T) throws -> T {
+        try _withRuntimeTaskContext(.init(databaseContext: databaseContext, transaction: self)) { context in
             try operation(context)
         }
     }
 }
 
-extension _AnyDatabaseRecordContextTransaction {
-    public func willChangePublisher() -> AnyObjectWillChangePublisher {
-        recordContext.objectWillChange
+extension _AnyRecordSpaceTransaction {
+    func willChangePublisher() -> AnyObjectWillChangePublisher {
+        recordSpace.objectWillChange
     }
 }
 
-extension _AnyDatabaseRecordContextTransaction {
-    public func create<Instance: Entity>(_ entityType: Instance.Type) throws -> Instance {
+extension _AnyRecordSpaceTransaction {
+    func create<Instance: Entity>(_ entityType: Instance.Type) throws -> Instance {
         return try scope { context in
             let entity = try self.databaseContext.schema.entity(forModelType: entityType).unwrap()
             
-            let record = try self.recordContext.createRecord(
+            let record = try self.recordSpace.createRecord(
                 withConfiguration: .init(
                     recordType: self.databaseContext.schemaAdaptor.recordType(for: entity.id),
                     recordID: nil,
@@ -52,7 +53,7 @@ extension _AnyDatabaseRecordContextTransaction {
                 context: .init()
             )
             
-            let recordContainer = _DatabaseRecordContainer(
+            let recordContainer = try _DatabaseRecordContainer(
                 transactionContext: context,
                 recordSchema: entity,
                 record: record
@@ -63,19 +64,19 @@ extension _AnyDatabaseRecordContextTransaction {
     }
 }
 
-extension _AnyDatabaseRecordContextTransaction {
-    public func queryExecutionTask<Model>(
+extension _AnyRecordSpaceTransaction {
+    func queryExecutionTask<Model>(
         for request: QueryRequest<Model>
     ) -> AnyTask<QueryRequest<Model>.Output, Error> {
         do {
             return try scope { context in
-                try recordContext
+                try recordSpace
                     .execute(zoneQueryRequest(from: request))
                     .successPublisher
                     .tryMap { result in
                         QueryRequest<Model>.Output(
                             results: try (result.records ?? []).map { record in
-                                try withDatabaseTransactionContext(context) { context in
+                                try _withRuntimeTaskContext(context) { context in
                                     try cast(self._convertToEntityInstance(record), to: Model.self)
                                 }
                             }
@@ -88,8 +89,8 @@ extension _AnyDatabaseRecordContextTransaction {
         }
     }
     
-    public func querySubscription<Model>(for request: QueryRequest<Model>) throws -> QuerySubscription<Model> {
-        try .init(from: recordContext.querySubscription(for: zoneQueryRequest(from: request)))
+    func querySubscription<Model>(for request: QueryRequest<Model>) throws -> QuerySubscription<Model> {
+        try .init(from: recordSpace.querySubscription(for: zoneQueryRequest(from: request)))
     }
     
     private func _convertToEntityInstance(_ record: AnyDatabaseRecord) throws -> any Entity {
@@ -98,7 +99,7 @@ extension _AnyDatabaseRecordContextTransaction {
             let entityID = try databaseContext.schemaAdaptor.entity(forRecordType: record.recordType).unwrap()
             let entity = try databaseContext.schema[entityID].unwrap()
             
-            let recordContainer = _DatabaseRecordContainer(
+            let recordContainer = try _DatabaseRecordContainer(
                 transactionContext: context,
                 recordSchema: entity,
                 record: record
@@ -110,7 +111,7 @@ extension _AnyDatabaseRecordContextTransaction {
     
     private func zoneQueryRequest<Model>(
         from queryRequest: QueryRequest<Model>
-    ) throws -> AnyDatabaseRecordContext.ZoneQueryRequest {
+    ) throws -> AnyDatabaseRecordSpace.ZoneQueryRequest {
         let recordTypes: [AnyDatabaseRecord.RecordType]
         
         if Model.self == Any.self {
@@ -121,7 +122,7 @@ extension _AnyDatabaseRecordContextTransaction {
             recordTypes = [try databaseContext.schemaAdaptor.recordType(for: entity)]
         }
         
-        return try AnyDatabaseRecordContext.ZoneQueryRequest(
+        return try AnyDatabaseRecordSpace.ZoneQueryRequest(
             filters: .init(
                 zones: nil,
                 recordTypes: Set(recordTypes),
@@ -146,8 +147,8 @@ extension _AnyDatabaseRecordContextTransaction {
     }
 }
 
-extension _AnyDatabaseRecordContextTransaction {
-    public func delete<Instance: Entity>(_ instance: Instance) throws {
-        try recordContext.delete(AnyDatabaseRecord(from: instance))
+extension _AnyRecordSpaceTransaction {
+    func delete<Instance: Entity>(_ instance: Instance) throws {
+        try recordSpace.delete(AnyDatabaseRecord(from: instance))
     }
 }

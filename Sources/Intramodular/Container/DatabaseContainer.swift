@@ -37,14 +37,12 @@ public class AnyDatabaseContainer: CustomReflectable, Loggable, ObservableObject
         fatalError(reason: .abstract)
     }
     
-    public func save() async throws {
+    public func transact<R>(
+        _ body: (DatabaseCRUDQ) async throws -> R
+    ) async throws -> R {
         fatalError(reason: .abstract)
     }
-    
-    public func fetchAllInstances() async throws -> [Any] {
-        fatalError(reason: .abstract)
-    }
-    
+        
     public func reset() async throws {
         fatalError(reason: .abstract)
     }
@@ -72,10 +70,10 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     
     fileprivate var database: _CoreData.Database?
     
-    private var mainContext: AnyDatabaseRecordContext? {
-        database?.viewContext.map(AnyDatabaseRecordContext.init)
+    private var mainContext: AnyDatabaseRecordSpace? {
+        database?.viewContext.map(AnyDatabaseRecordSpace.init)
     }
-        
+    
     public override var customMirror: Mirror {
         Mirror(self, children: [
             "status": status,
@@ -99,9 +97,103 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
         
         logger.dumpToConsole = true
     }
+        
+    @MainActor
+    override public func load() async throws {
+        try await taskGraph.insert(.load, policy: .useExisting) {
+            do {
+                let database = try await initializeDatabase()
+                
+                do {
+                    try await performMigrationCheck(database: database)
+                    
+                    saveState(database: database)
+                } catch {
+                    status = .migrationCheckFailed
+                }
+                
+                _ = try await database.fetchAllAvailableZones()
+                
+                guard let mainContext = mainContext else {
+                    status = .uninitialized
+                    
+                    return assertionFailure()
+                }
+                
+                liveAccess.setBaseTransaction(
+                    _AnyRecordSpaceTransaction(
+                        databaseContext: database.context.eraseToAnyDatabaseContext(),
+                        recordSpace: mainContext
+                    )
+                )
+            } catch {
+                logger.error(error)
+                
+                throw error
+            }
+        }
+    }
     
     @MainActor
-    private func initializedDatabase() async throws -> _CoreData.Database {
+    public override func transact<R>(
+        _ body: (DatabaseCRUDQ) async throws -> R
+    ) async throws -> R {
+        let database = try await loadedDatabase()
+        
+        let transaction = _AnyRecordSpaceTransaction(
+            databaseContext: database.context.eraseToAnyDatabaseContext(),
+            recordSpace: .init(erasing: try database.viewContext.unwrap())
+        )
+        
+        let result: R
+        
+        do {
+            result = try await body(transaction)
+        } catch {
+            assertionFailure(error)
+            
+            throw error
+        }
+        
+        try await transaction.commit()
+        
+        return result
+    }
+    
+    @MainActor
+    override public func reset() async throws {
+        let database = try await loadedDatabase()
+        
+        objectWillChange.send()
+        
+        try await database.delete()
+        
+        self.database = try await _CoreData.Database(
+            schema: database.schema,
+            configuration: _CoreData.Database.Configuration(
+                name: name,
+                location: location,
+                cloudKitContainerIdentifier: nil
+            ),
+            state: .init()
+        )
+    }
+}
+
+// MARK: - Internal -
+
+extension DatabaseContainer {
+    @MainActor
+    private func loadedDatabase() async throws -> _CoreData.Database {
+        guard status == .initialized else {
+            throw Error.containerUninitialized
+        }
+        
+        return try database.unwrap()
+    }
+    
+    @MainActor
+    private func initializeDatabase() async throws -> _CoreData.Database {
         try await taskGraph.insert(.initialize, policy: .useExisting) { [self] in
             if let database = self.database {
                 assert(status == .initialized)
@@ -142,76 +234,17 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
             }
         }
     }
-    
+
     @MainActor
-    override public func load() async throws {
-        try await taskGraph.insert(.load, policy: .useExisting) {
-            do {
-                let database = try await initializedDatabase()
-                
-                do {
-                    try await performMigrationCheck()
-                    
-                    saveState(database: database)
-                } catch {
-                    status = .migrationCheckFailed
-                }
-                
-                _ = try await database.fetchAllAvailableZones()
-                
-                guard let mainContext = mainContext else {
-                    status = .uninitialized
-                    
-                    return assertionFailure()
-                }
-                
-                liveAccess.setBaseTransaction(
-                    _AnyDatabaseRecordContextTransaction(
-                        databaseContext: database.context.eraseToAnyDatabaseContext(),
-                        recordContext: mainContext
-                    )
-                )
-            } catch {
-                logger.error(error)
-                
-                throw error
-            }
-        }
-    }
-    
-    @MainActor
-    override public func reset() async throws {
-        let database = try await initializedDatabase()
-        
-        objectWillChange.send()
-        
-        try await database.delete()
-        
-        self.database = try await _CoreData.Database(
-            schema: database.schema,
-            configuration: _CoreData.Database.Configuration(
-                name: name,
-                location: location,
-                cloudKitContainerIdentifier: nil
-            ),
-            state: .init()
-        )
-    }
-    
-    // MARK: - Internal -
-    
-    @MainActor
-    private func performMigrationCheck() async throws {
+    private func performMigrationCheck(database: _CoreData.Database) async throws {
         do {
-            let database = try await initializedDatabase()
-            
             guard !database.state.schemaHistory.schemas.isEmpty else {
                 logger.info("Schema history is empty. Skipping migration check.")
                 
                 return
             }
             
-            let migrationCheck = try await initializedDatabase().performMigrationCheck()
+            let migrationCheck = try await database.performMigrationCheck()
             
             guard migrationCheck.zonesToMigrate.isEmpty else {
                 status = .migrationRequired
@@ -240,32 +273,13 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     }
 }
 
-// MARK: - Initializers -
+// MARK: - Auxiliary Implementation -
 
-extension DatabaseContainer {
-    public convenience init(name: String, schema: Schema) throws {
-        try self.init(
-            name: name,
-            schema: schema,
-            location: nil
-        )
-    }
-    
-    public convenience init(
-        name: String,
-        schema: Schema,
-        location: CanonicalFileDirectory,
-        sqliteFilePath: String
-    ) throws {
-        try self.init(
-            name: name,
-            schema: schema,
-            location: location.toURL().appendingPathComponent(sqliteFilePath)
-        )
+extension AnyDatabaseContainer {
+    public enum Error: Swift.Error {
+        case containerUninitialized
     }
 }
-
-// MARK: - Operations -
 
 extension AnyDatabaseContainer {
     struct SaveDatabaseState {
@@ -276,20 +290,4 @@ extension AnyDatabaseContainer {
             try JSONEncoder().encode(state).write(to: location)
         }
     }
-}
-
-// MARK: - Auxiliary Implementation -
-
-extension Dictionary where Key == CodingUserInfoKey, Value == Any {
-    var _SwiftDB_DatabaseContainer: AnyDatabaseContainer! {
-        get {
-            self[._SwiftDB_DatabaseContainer] as? AnyDatabaseContainer
-        } set {
-            self[._SwiftDB_DatabaseContainer] = newValue
-        }
-    }
-}
-
-extension CodingUserInfoKey {
-    fileprivate static let _SwiftDB_DatabaseContainer = CodingUserInfoKey(rawValue: "_SwiftDB_DatabaseContainer")!
 }

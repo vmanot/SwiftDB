@@ -9,7 +9,7 @@ extension AnyDatabaseContainer {
     public final class LiveAccess: ObservableObject {
         private let taskQueue = TaskQueue()
         
-        @Published private var base: (any DatabaseTransaction)?
+        @Published private var base: (any _Transaction)?
         
         public var id: any Hashable {
             base?.id ?? AnyHashable(base?.id) // BAD HACK
@@ -19,7 +19,7 @@ extension AnyDatabaseContainer {
             base != nil
         }
         
-        private var baseUnwrapped: any DatabaseTransaction {
+        private var baseUnwrapped: any _Transaction {
             get throws {
                 try base.unwrap()
             }
@@ -29,9 +29,9 @@ extension AnyDatabaseContainer {
             
         }
         
-        public func setBaseTransaction(_ transaction: (any DatabaseTransaction)?) {
+        func setBaseTransaction(_ transaction: (any _Transaction)?) {
             self.base = transaction.map {
-                _AutoCommittingDatabaseTransaction(base: $0)
+                _AutoCommittingTransaction(base: $0)
             }
         }
     }

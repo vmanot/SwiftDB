@@ -14,7 +14,7 @@ extension _CoreData {
         private let setupTasksQueue = TaskQueue()
                         
         public typealias SchemaAdaptor = DatabaseSchemaAdaptor
-        public typealias RecordContext = _CoreData.DatabaseRecordContext
+        public typealias RecordSpace = _CoreData.DatabaseRecordSpace
         
         let schema: _Schema
         
@@ -22,7 +22,7 @@ extension _CoreData {
         public var state: State
         public let context: Context
          
-        public var viewContext: DatabaseRecordContext?
+        public var viewContext: DatabaseRecordSpace?
         
         public var nsPersistentContainer: NSPersistentContainer!
         
@@ -74,7 +74,7 @@ extension _CoreData {
             
             nsPersistentContainer.viewContext.automaticallyMergesChangesFromParent = true
             
-            viewContext = DatabaseRecordContext(
+            viewContext = DatabaseRecordSpace(
                 databaseContext: context,
                 managedObjectContext: self.nsPersistentContainer.viewContext,
                 affectedStores: nil
@@ -174,7 +174,7 @@ extension _CoreData.Database {
             .convertToTask()
     }
     
-    public func recordContext(forZones zones: [Zone]?) throws -> RecordContext {
+    public func recordSpace(forZones zones: [Zone]?) throws -> RecordSpace {
         .init(
             databaseContext: context,
             managedObjectContext: nsPersistentContainer.viewContext,

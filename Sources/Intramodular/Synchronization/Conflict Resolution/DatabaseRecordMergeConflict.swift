@@ -4,7 +4,7 @@
 
 import Swift
 
-/// An encapsulation of conflicts that occur during an attempt to save changes in a database record context.
-public struct DatabaseRecordMergeConflict<Context: DatabaseRecordContext> {
+/// An encapsulation of conflicts that occur during an attempt to save changes in a database record space.
+public struct DatabaseRecordMergeConflict<Context: DatabaseRecordSpace> {
     let source: Context.Record
 }

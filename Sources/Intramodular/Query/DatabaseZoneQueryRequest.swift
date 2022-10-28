@@ -6,7 +6,7 @@ import API
 import FoundationX
 import Swallow
 
-public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordContext>: Hashable, NSPredicateConvertible {
+public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordSpace>: Hashable, NSPredicateConvertible {
     case related(to: Context.Record.ID, by: AnyCodingKey)
     
     case _nsPredicate(NSPredicate)
@@ -25,7 +25,7 @@ public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordContext>: Hashable
     }
 }
 
-public struct DatabaseZoneQueryRequest<Context: DatabaseRecordContext>: Hashable {
+public struct DatabaseZoneQueryRequest<Context: DatabaseRecordSpace>: Hashable {
     public struct Filters: Codable, Hashable {
         public let zones: [Context.Zone.ID]?
         public var recordTypes: Set<Context.Record.RecordType>

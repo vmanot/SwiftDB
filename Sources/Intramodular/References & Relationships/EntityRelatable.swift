@@ -37,7 +37,7 @@ extension EntityRelatable where Self: Entity {
         from container: _DatabaseRecordContainer,
         forKey key: CodingKey
     ) throws -> Self {
-        try withDatabaseTransactionContext { context in
+        try _withRuntimeTaskContext { context in
             try context.validate(container.transactionLink)
             
             let record = try container.relationship(for: key).toOneRelationship().getRecord().unwrap()

@@ -28,7 +28,7 @@ final class _CoreDataTestSuite: XCTestCase {
         let database = try! DatabaseContainer(
             name: randomDatabaseName,
             schema: TestORMSchema(),
-            location: URL(tempDir.appending("\(randomDatabaseName).sqlite"))
+            location: URL(filePath: tempDir.appending("\(randomDatabaseName).sqlite"))
         )
 
         return database
@@ -41,95 +41,95 @@ final class _CoreDataTestSuite: XCTestCase {
     func testInstanceCreation() async throws {
         try await database.load()
         
-        let foo = try database.mainContext.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
-        
-        foo.foo += 100
-        
-        try await database.mainContext.save()
-        
-        _ = try database.mainContext.create(TestORMSchema.EntityWithOptionalProperties.self)
-        
-        try await database.mainContext.save()
+        try await database.transact { transaction in
+            let foo = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
+            
+            foo.foo += 100
+            
+            _ = try transaction.create(TestORMSchema.EntityWithOptionalProperties.self)
+        }
     }
 
     func testEntityWithComplexProperties() async throws {
         try await database.load()
 
-        let noPreviousInstancesExist = try await database.mainContext.first(TestORMSchema.EntityWithComplexProperties.self) == nil
-
-        XCTAssert(noPreviousInstancesExist)
-
-        let foo = try database.mainContext.create(TestORMSchema.EntityWithComplexProperties.self)
-
-        foo.animal = .cat
-
-        try await database.save()
-
-        let retrievedFoo = try await self.database.mainContext.first(TestORMSchema.EntityWithComplexProperties.self).unwrap()
-
-        XCTAssert(retrievedFoo.animal == .cat)
-
-        foo.animal = .dog
-
-        XCTAssert(retrievedFoo.animal == .dog)
+        try await database.transact { transaction in
+            let noPreviousInstancesExist = try await transaction.first(TestORMSchema.EntityWithComplexProperties.self) == nil
+            
+            XCTAssert(noPreviousInstancesExist)
+            
+            let foo = try transaction.create(TestORMSchema.EntityWithComplexProperties.self)
+            
+            foo.animal = .cat
+                        
+            let retrievedFoo = try await transaction.first(TestORMSchema.EntityWithComplexProperties.self).unwrap()
+            
+            XCTAssert(retrievedFoo.animal == .cat)
+            
+            foo.animal = .dog
+            
+            XCTAssert(retrievedFoo.animal == .dog)
+        }
     }
 
     func testEntityWithDynamicProperties() async throws {
         try await database.load()
 
-        let foo = try database.mainContext.create(TestORMSchema.EntityWithDynamicProperties.self)
-        let newFoo = try database.mainContext.create(TestORMSchema.EntityWithDynamicProperties.self)
-
-        XCTAssert(foo.id != newFoo.id)
-        XCTAssert(foo.defaultValueID == newFoo.defaultValueID)
+        try await database.transact { transaction in
+            let foo = try transaction.create(TestORMSchema.EntityWithDynamicProperties.self)
+            let newFoo = try transaction.create(TestORMSchema.EntityWithDynamicProperties.self)
+            
+            XCTAssert(foo.id != newFoo.id)
+            XCTAssert(foo.defaultValueID == newFoo.defaultValueID)
+        }
     }
 
     func testInstanceRetrieval() async throws {
         try await database.load()
 
-        let foo = try database.mainContext.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
-
-        foo.foo += 100
-
-        try await database.mainContext.save()
-
-        let retrievedFoo = try await database.mainContext.first(TestORMSchema.EntityWithSimpleRequiredProperty.self).unwrap()
-        
-        XCTAssert(retrievedFoo.foo == 100)
-        
-        try await (0..<1000).concurrentForEach { _ in
-            _ = try await self.database.mainContext.first(TestORMSchema.EntityWithSimpleRequiredProperty.self).unwrap()
+        try await database.transact { transaction in
+            let foo = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
+            
+            foo.foo += 100
+                        
+            let retrievedFoo = try await transaction.first(TestORMSchema.EntityWithSimpleRequiredProperty.self).unwrap()
+            
+            XCTAssert(retrievedFoo.foo == 100)
+            
+            try await (0..<1000).concurrentForEach { _ in
+                _ = try await transaction.first(TestORMSchema.EntityWithSimpleRequiredProperty.self).unwrap()
+            }
+            
+            try transaction.delete(retrievedFoo)
         }
-
-        try await database.mainContext.delete(retrievedFoo)
-        try await database.mainContext.save()
     }
     
     func testDatabaseSave() async throws {
         try await database.load()
 
         for _ in 0..<1000 {
-            _ = try database.mainContext.create(TestORMSchema.EmptyEntity.self)
-
-            try await database.mainContext.save()
+            try await database.transact { transaction in
+                _ = try transaction.create(TestORMSchema.EmptyEntity.self)
+            }
         }
         
         try await (0..<1000).concurrentForEach { _ in
-            _ = try self.database.mainContext.create(TestORMSchema.EmptyEntity.self)
-
-            try await self.database.mainContext.save()
+            try await self.database.transact { transaction in
+                _ = try transaction.create(TestORMSchema.EmptyEntity.self)
+            }
         }
     }
     
     func testInstanceDeletion() async throws {
         try await database.load()
 
-        let foo = try database.mainContext.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
-        
-        foo.foo += 100
-        
-        try await database.mainContext.delete(foo)
-        try await database.mainContext.save()
+        try await database.transact { transaction in
+            let foo = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
+            
+            foo.foo += 100
+            
+            try transaction.delete(foo)
+        }
     }
 }
 
@@ -148,14 +148,16 @@ extension _CoreDataTestSuite {
         print(property.relationshipConfiguration.cardinality)
         XCTAssert(property.relationshipConfiguration.cardinality == .manyToOne)
         
-        let parent = try database.mainContext.create(TestORMSchema.ChildParentEntity.self)
-        
-        for _ in 0..<10 {
-            let child = try database.mainContext.create(TestORMSchema.ChildParentEntity.self)
+        try await database.transact { transaction in
+            let parent = try transaction.create(TestORMSchema.ChildParentEntity.self)
             
-            parent.children.insert(child)
+            for _ in 0..<10 {
+                let child = try transaction.create(TestORMSchema.ChildParentEntity.self)
+                
+                parent.children.insert(child)
+            }
+            
+            XCTAssert(Array(parent.children).count == 10)
         }
-        
-        XCTAssert(Array(parent.children).count == 10)
     }
 }

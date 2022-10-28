@@ -7,14 +7,14 @@ import Swallow
 
 extension _CoreData.Database {
     public final class QuerySubscription: DatabaseQuerySubscription {
-        private let recordContext: RecordContext
+        private let recordSpace: RecordSpace
         
         public var objectWillChange: ObservableObjectPublisher {
-            recordContext.objectWillChange
+            recordSpace.objectWillChange
         }
         
-        public init(recordContext: RecordContext) {
-            self.recordContext = recordContext
+        public init(recordSpace: RecordSpace) {
+            self.recordSpace = recordSpace
         }
     }
 }

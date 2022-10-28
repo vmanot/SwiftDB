@@ -8,15 +8,15 @@ import Swallow
 
 extension _CoreData.DatabaseRecord {
     public struct Reference: DatabaseRecordReference {
-        public typealias RecordContext = _CoreData.DatabaseRecordContext
+        public typealias RecordSpace = _CoreData.DatabaseRecordSpace
         
         private let nsManagedObject: NSManagedObject
         
-        public var recordID: RecordContext.Record.ID {
+        public var recordID: RecordSpace.Record.ID {
             .init(managedObjectID: nsManagedObject.objectID)
         }
         
-        public var zoneID: RecordContext.Zone.ID {
+        public var zoneID: RecordSpace.Zone.ID {
             _CoreData.Database.Zone(persistentStore: nsManagedObject.objectID.persistentStore!).id
         }
         

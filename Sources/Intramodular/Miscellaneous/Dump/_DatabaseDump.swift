@@ -10,7 +10,7 @@ public struct _DatabaseDump: Codable, Hashable {
     public var records: [_DatabaseRecordDump]
 }
 
-extension DatabaseTransaction {
+extension DatabaseCRUDQ {
     public func _dumpDatabase() async throws -> _DatabaseDump {
         let instances = try await fetchAllInstances()
         

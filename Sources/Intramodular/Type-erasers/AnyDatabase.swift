@@ -8,7 +8,7 @@ import Swift
 /// A type-erased database.
 public final class AnyDatabase: Database {
     public typealias SchemaAdaptor = AnyDatabaseSchemaAdaptor
-    public typealias RecordContext = AnyDatabaseRecordContext
+    public typealias RecordSpace = AnyDatabaseRecordSpace
     public typealias Zone = AnyDatabaseZone
     
     private let base: any Database
@@ -54,8 +54,8 @@ public final class AnyDatabase: Database {
         base._opaque_fetchZone(named: zoneName)
     }
     
-    public func recordContext(forZones zones: [AnyDatabaseZone]?) throws -> AnyDatabaseRecordContext {
-        try base._opaque_recordContext(forZones: zones)
+    public func recordSpace(forZones zones: [AnyDatabaseZone]?) throws -> AnyDatabaseRecordSpace {
+        try base._opaque_recordSpace(forZones: zones)
     }
     
     public func delete() -> AnyTask<Void, Error> {
@@ -128,9 +128,9 @@ fileprivate extension Database {
             .convertToTask()
     }
     
-    func _opaque_recordContext(forZones zones: [AnyDatabaseZone]?) throws -> AnyDatabaseRecordContext {
+    func _opaque_recordSpace(forZones zones: [AnyDatabaseZone]?) throws -> AnyDatabaseRecordSpace {
         let _zones = try zones?.map({ try cast($0.base, to: Zone.self) })
         
-        return AnyDatabaseRecordContext(erasing: try recordContext(forZones: _zones))
+        return AnyDatabaseRecordSpace(erasing: try recordSpace(forZones: _zones))
     }
 }

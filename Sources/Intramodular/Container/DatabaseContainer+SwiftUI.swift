@@ -75,7 +75,7 @@ extension EnvironmentValues {
         static let defaultValue = AnyDatabaseContainer.LiveAccess()
     }
     
-    /// The database record context associated with this environment.
+    /// The database record space associated with this environment.
     public fileprivate(set) var database: AnyDatabaseContainer.LiveAccess {
         get {
             self[_DatabaseEnvironmentKey.self]

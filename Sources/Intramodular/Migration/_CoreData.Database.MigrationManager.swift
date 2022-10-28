@@ -261,23 +261,23 @@ extension _CoreData.Database {
             let configuration = userInfo[UserInfoKey.configuration]! as! Configuration
             var destinationObject: UnsafeRecordMigrationDestination?
             
-            let destinationContext = _CoreData.DatabaseRecordContext(
+            let destinationContext = _CoreData.DatabaseRecordSpace(
                 databaseContext: configuration.databaseContext,
                 managedObjectContext: manager.destinationContext,
                 affectedStores: manager.destinationContext.persistentStoreCoordinator?.persistentStores
             )
             
-            let transactionContext = DatabaseTransactionContext(
+            let transactionContext = _SwiftDB_RuntimeTaskContext(
                 databaseContext: configuration.databaseContext.eraseToAnyDatabaseContext(),
-                transaction: _AnyDatabaseRecordContextTransaction(
+                transaction: _AnyRecordSpaceTransaction(
                     databaseContext: configuration.databaseContext.eraseToAnyDatabaseContext(),
-                    recordContext: AnyDatabaseRecordContext(erasing: destinationContext)
+                    recordSpace: AnyDatabaseRecordSpace(erasing: destinationContext)
                 )
             )
             
             let sourceEntity = try configuration.schemaMappingModel.source.entity(withName: sInstance.entity.name.unwrap())
             
-            let sourceRecordContainer = _DatabaseRecordContainer(
+            let sourceRecordContainer = try _DatabaseRecordContainer(
                 transactionContext: transactionContext,
                 recordSchema: sourceEntity,
                 record: .init(erasing: _CoreData.DatabaseRecord(rawObject: sInstance))
