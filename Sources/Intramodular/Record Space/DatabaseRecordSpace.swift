@@ -12,19 +12,16 @@ import SwiftUI
 /// `DatabaseRecordSpace` is inspired from `NSManagedObjectContext`.
 public protocol DatabaseRecordSpace: ObservableObject, Sendable {
     associatedtype Database: SwiftDB.Database
-    associatedtype Zone: DatabaseZone
-    associatedtype Record: DatabaseRecord
+    associatedtype Zone: DatabaseZone where Zone == Database.Zone
+    associatedtype Record: DatabaseRecord where Record == Database.Record
     associatedtype QuerySubscription: DatabaseQuerySubscription
     
-    typealias RecordConfiguration = DatabaseRecordConfiguration<Self>
-    typealias RecordCreateContext = DatabaseRecordCreateContext<Self>
-    typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
+    typealias RecordConfiguration = DatabaseRecordConfiguration<Database>
     typealias SaveError = DatabaseRecordSpaceSaveError<Self>
     
     /// Create a database record associated with this context.
     func createRecord(
-        withConfiguration _: DatabaseRecordConfiguration<Self>,
-        context: RecordCreateContext
+        withConfiguration _: RecordConfiguration
     ) throws -> Record
     
     /// Mark a record for deletion in this record space.
@@ -34,10 +31,10 @@ public protocol DatabaseRecordSpace: ObservableObject, Sendable {
     ///
     /// - Parameters:
     ///   - request: The query request to execute.
-    func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error>
+    func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error>
     
     /// A query subscription for a given zone.
-    func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription
+    func querySubscription(for request: Database.ZoneQueryRequest) throws -> QuerySubscription
     
     /// Save the changes made in this record space.
     ///
@@ -48,7 +45,7 @@ public protocol DatabaseRecordSpace: ObservableObject, Sendable {
 // MARK: - Extensions -
 
 extension DatabaseRecordSpace {
-    public func execute(_ request: ZoneQueryRequest) async throws -> ZoneQueryRequest.Result {
+    public func execute(_ request: Database.ZoneQueryRequest) async throws -> Database.ZoneQueryRequest.Result {
         try await execute(request).value
     }
     

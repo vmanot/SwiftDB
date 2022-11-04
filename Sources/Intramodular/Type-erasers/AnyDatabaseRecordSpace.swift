@@ -26,20 +26,18 @@ public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
     }
     
     public func createRecord(
-        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordSpace>,
-        context: RecordCreateContext
+        withConfiguration configuration: RecordConfiguration
     ) throws -> AnyDatabaseRecord {
         try base._opaque_createRecord(
-            withConfiguration: configuration,
-            context: context
+            withConfiguration: configuration
         )
     }
     
-    public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
+    public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {
         base._opaque_execute(request)
     }
     
-    public func querySubscription(for request: ZoneQueryRequest) throws -> AnyDatabaseQuerySubscription {
+    public func querySubscription(for request: Database.ZoneQueryRequest) throws -> AnyDatabaseQuerySubscription {
         try base._opaque_querySubscription(for: request)
     }
 
@@ -57,29 +55,29 @@ public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
 
 private extension DatabaseRecordSpace {
     func _opaque_createRecord(
-        withConfiguration configuration: DatabaseRecordConfiguration<AnyDatabaseRecordSpace>,
-        context: AnyDatabaseRecordSpace.RecordCreateContext
+        withConfiguration configuration: AnyDatabaseRecordSpace.RecordConfiguration
     ) throws -> AnyDatabaseRecord {
         let record = try createRecord(
-            withConfiguration: .init(
-                recordType: configuration.recordType._cast(to: Record.RecordType.self),
+            withConfiguration: RecordConfiguration(
+                recordType: configuration.recordType?._cast(to: Record.RecordType.self),
                 recordID: configuration.recordID.map({ try cast($0.base, to: Record.ID.self) }),
                 zone: configuration.zone.map({ try cast($0.base, to: Zone.self) })
-            ),
-            context: .init()
+            )
         )
         
         return .init(erasing: record)
     }
     
     func _opaque_execute(
-        _ request: AnyDatabaseRecordSpace.ZoneQueryRequest
-    ) -> AnyTask<AnyDatabaseRecordSpace.ZoneQueryRequest.Result, Error> {
+        _ request: AnyDatabase.ZoneQueryRequest
+    ) -> AnyTask<AnyDatabase.ZoneQueryRequest.Result, Error> {
         do {
             return try execute(translateZoneQueryRequest(request))
                 .successPublisher
                 .map { result in
-                    AnyDatabaseRecordSpace.ZoneQueryRequest.Result(records: result.records?.map({ AnyDatabaseRecord(erasing: $0) }))
+                    AnyDatabase.ZoneQueryRequest.Result(
+                        records: result.records?.map({ AnyDatabaseRecord(erasing: $0) })
+                    )
                 }
                 .convertToTask()
         } catch {
@@ -88,7 +86,7 @@ private extension DatabaseRecordSpace {
     }
     
     func _opaque_querySubscription(
-        for request: AnyDatabaseRecordSpace.ZoneQueryRequest
+        for request: AnyDatabase.ZoneQueryRequest
     ) throws -> AnyDatabaseQuerySubscription {
         try .init(erasing: querySubscription(for: translateZoneQueryRequest(request)))
     }
@@ -112,8 +110,8 @@ private extension DatabaseRecordSpace {
     }
     
     private func translateZoneQueryRequest(
-        _ request: AnyDatabaseRecordSpace.ZoneQueryRequest
-    ) throws -> ZoneQueryRequest {
+        _ request: AnyDatabase.ZoneQueryRequest
+    ) throws -> Database.ZoneQueryRequest {
         .init(
             filters: try translateZoneQueryRequestFilters(request.filters),
             predicate: try translateZoneQueryRequestPredicate(request.predicate),
@@ -124,9 +122,9 @@ private extension DatabaseRecordSpace {
     }
     
     private  func translateZoneQueryRequestFilters(
-        _ filters: DatabaseZoneQueryRequest<AnyDatabaseRecordSpace>.Filters
-    ) throws -> DatabaseZoneQueryRequest<Self>.Filters {
-        try DatabaseZoneQueryRequest<Self>.Filters(
+        _ filters: DatabaseZoneQueryRequest<AnyDatabase>.Filters
+    ) throws -> DatabaseZoneQueryRequest<Database>.Filters {
+        try DatabaseZoneQueryRequest.Filters(
             zones: filters.zones?.map({ try cast($0.base, to: Zone.ID.self) }),
             recordTypes: Set(filters.recordTypes.map({ try Record.RecordType($0.description).unwrap() })),
             includesSubentities: filters.includesSubentities
@@ -134,8 +132,8 @@ private extension DatabaseRecordSpace {
     }
     
     private func translateZoneQueryRequestPredicate(
-        _ predicate: DatabaseZoneQueryPredicate<AnyDatabaseRecordSpace>?
-    ) throws -> DatabaseZoneQueryPredicate<Self>? {
+        _ predicate: DatabaseZoneQueryPredicate<AnyDatabase>?
+    ) throws -> DatabaseZoneQueryPredicate<Database>? {
         guard let predicate = predicate else {
             return nil
         }
@@ -149,7 +147,7 @@ private extension DatabaseRecordSpace {
     }
 }
 
-extension DatabaseZoneQueryPredicate where Context == AnyDatabaseRecordSpace {
+extension DatabaseZoneQueryPredicate where Database == AnyDatabase {
     fileprivate init<T: DatabaseRecordSpace>(
         from predicate: DatabaseZoneQueryPredicate<T>
     ) {

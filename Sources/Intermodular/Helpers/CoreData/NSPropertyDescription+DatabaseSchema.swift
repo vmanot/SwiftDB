@@ -7,19 +7,6 @@ import FoundationX
 import Runtime
 import Swallow
 
-extension _Schema.Entity.Property {
-    public func toNSPropertyDescription() throws -> NSPropertyDescription {
-        switch self {
-            case let attribute as _Schema.Entity.Attribute:
-                return try NSAttributeDescription(attribute)
-            case let relationship as _Schema.Entity.Relationship:
-                return try NSRelationshipDescription(relationship)
-            default:
-                throw EmptyError()
-        }
-    }
-}
-
 extension NSAttributeDescription {
     public convenience init(_ attribute: _Schema.Entity.Attribute) throws {
         self.init()

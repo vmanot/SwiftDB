@@ -6,8 +6,8 @@ import API
 import FoundationX
 import Swallow
 
-public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordSpace>: Hashable, NSPredicateConvertible {
-    case related(to: Context.Record.ID, by: AnyCodingKey)
+public enum DatabaseZoneQueryPredicate<Database: SwiftDB.Database>: Hashable, NSPredicateConvertible {
+    case related(to: Database.Record.ID, by: AnyCodingKey)
     
     case _nsPredicate(NSPredicate)
     
@@ -25,15 +25,15 @@ public enum DatabaseZoneQueryPredicate<Context: DatabaseRecordSpace>: Hashable, 
     }
 }
 
-public struct DatabaseZoneQueryRequest<Context: DatabaseRecordSpace>: Hashable {
+public struct DatabaseZoneQueryRequest<Database: SwiftDB.Database>: Hashable {
     public struct Filters: Codable, Hashable {
-        public let zones: [Context.Zone.ID]?
-        public var recordTypes: Set<Context.Record.RecordType>
+        public let zones: [Database.Zone.ID]?
+        public var recordTypes: Set<Database.Record.RecordType>
         public let includesSubentities: Bool
     }
     
     public var filters: Filters
-    public var predicate: DatabaseZoneQueryPredicate<Context>?
+    public var predicate: DatabaseZoneQueryPredicate<Database>?
     public var sortDescriptors: [AnySortDescriptor]?
     
     public let cursor: PaginationCursor?
@@ -41,7 +41,7 @@ public struct DatabaseZoneQueryRequest<Context: DatabaseRecordSpace>: Hashable {
     
     public init(
         filters: Filters,
-        predicate: DatabaseZoneQueryPredicate<Context>?,
+        predicate: DatabaseZoneQueryPredicate<Database>?,
         sortDescriptors: [AnySortDescriptor]?,
         cursor: PaginationCursor?,
         limit: FetchLimit?
@@ -56,6 +56,6 @@ public struct DatabaseZoneQueryRequest<Context: DatabaseRecordSpace>: Hashable {
 
 extension DatabaseZoneQueryRequest {
     public struct Result {
-        let records: [Context.Record]?
+        let records: [Database.Record]?
     }
 }

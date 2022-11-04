@@ -69,12 +69,11 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
     public typealias QuerySubscription = _CoreData.Database.QuerySubscription
 
     public func createRecord(
-        withConfiguration configuration: RecordConfiguration,
-        context: RecordCreateContext
+        withConfiguration configuration: RecordConfiguration
     ) throws -> Record {
-        let object = Record(
+        let object = try Record(
             rawObject: NSEntityDescription.insertNewObject(
-                forEntityName: configuration.recordType.rawValue,
+                forEntityName: configuration.recordType.unwrap().rawValue,
                 into: nsManagedObjectContext
             )
         )
@@ -90,9 +89,9 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
         nsManagedObjectContext.delete(object.rawObject)
     }
     
-    public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
+    public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {
         do {
-            let nsFetchRequests = try request.toNSFetchRequests(context: self)
+            let nsFetchRequests = try request.toNSFetchRequests(recordSpace: self)
             
             if request.sortDescriptors.isNil {
                 return Task {
@@ -105,16 +104,16 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
                     }
                 }
                 .publisher()
-                .map({ ZoneQueryRequest.Result(records: $0) })
+                .map({ Database.ZoneQueryRequest.Result(records: $0) })
                 .convertToTask()
             }
             
-            return PassthroughTask<ZoneQueryRequest.Result, Error> { attemptToFulfill -> Void in
+            return PassthroughTask<Database.ZoneQueryRequest.Result, Error> { attemptToFulfill -> Void in
                 do {
                     var fetchedNSManagedObjects: [NSManagedObject] = []
                     
                     for nsFetchRequest in nsFetchRequests {
-                        let fetchedResultsController = NSFetchedResultsController(
+                        let fetchedResultsController = NSFetchedResultsController<NSManagedObject>(
                             fetchRequest: nsFetchRequest,
                             managedObjectContext: self.nsManagedObjectContext,
                             sectionNameKeyPath: nil,
@@ -126,7 +125,7 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
                         fetchedNSManagedObjects.append(contentsOf: fetchedResultsController.fetchedObjects ?? [])
                     }
                     
-                    attemptToFulfill(.success(ZoneQueryRequest.Result(records: fetchedNSManagedObjects.map({ Record(rawObject: $0) }))))
+                    attemptToFulfill(.success(Database.ZoneQueryRequest.Result(records: fetchedNSManagedObjects.map({ Record(rawObject: $0) }))))
                 } catch {
                     attemptToFulfill(.failure(error))
                 }
@@ -137,8 +136,10 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
         }
     }
     
-    public func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription {
-        .init(recordSpace: self)
+    public func querySubscription(
+        for request: Database.ZoneQueryRequest
+    ) throws -> QuerySubscription {
+        try .init(recordSpace: self, queryRequest: request)
     }
 
     public func save() -> AnyTask<Void, SaveError> {
@@ -185,8 +186,10 @@ fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.Dat
     }
 }
 
-fileprivate extension DatabaseZoneQueryRequest where Context == _CoreData.DatabaseRecordSpace {
-    func toNSFetchRequests(context: Context) throws -> [NSFetchRequest<NSManagedObject>] {
+extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
+    func toNSFetchRequests(
+        recordSpace: Database.RecordSpace
+    ) throws -> [NSFetchRequest<NSManagedObject>] {
         guard !filters.recordTypes.isEmpty else {
             throw _CoreData.DatabaseRecordSpace.DatabaseZoneQueryRequestError.atLeastOneRecordTypeRequired
         }
@@ -211,7 +214,7 @@ fileprivate extension DatabaseZoneQueryRequest where Context == _CoreData.Databa
             }
             
             nsFetchRequest.sortDescriptors = self.sortDescriptors.map({ $0.map({ $0 as NSSortDescriptor }) })
-            nsFetchRequest.affectedStores = context.affectedStores?.filter({ (self.filters.zones?.contains(_CoreData.Database.Zone(persistentStore: $0).id) ?? false) })
+            nsFetchRequest.affectedStores = recordSpace.affectedStores?.filter({ (self.filters.zones?.contains(_CoreData.Database.Zone(persistentStore: $0).id) ?? false) })
             nsFetchRequest.includesSubentities = filters.includesSubentities
             
             if let cursor = cursor {

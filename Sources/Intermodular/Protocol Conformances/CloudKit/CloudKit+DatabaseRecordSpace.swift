@@ -31,13 +31,12 @@ extension _CloudKit.DatabaseRecordSpace: DatabaseRecordSpace {
     public typealias Zone = _CloudKit.DatabaseZone
     
     public func createRecord(
-        withConfiguration configuration: RecordConfiguration,
-        context: RecordCreateContext
+        withConfiguration configuration: RecordConfiguration
     ) throws -> Record {
         let record: CKRecord
         
-        record = CKRecord(
-            recordType: configuration.recordType,
+        record = try CKRecord(
+            recordType: configuration.recordType.unwrap(),
             recordID: CKRecord.ID(
                 recordName: configuration.recordID?.rawValue,
                 zoneID: configuration.zone.map {
@@ -55,18 +54,27 @@ extension _CloudKit.DatabaseRecordSpace: DatabaseRecordSpace {
         records[object.ckRecord.recordID] = nil
     }
     
-    public func execute(_ request: ZoneQueryRequest) -> AnyTask<ZoneQueryRequest.Result, Error> {
+    public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {
         fatalError(reason: .unimplemented)
     }
     
     public final class QuerySubscription: DatabaseQuerySubscription {
+        public typealias Database = _CloudKit.Database
+        
+        public typealias Output = [Database.Record]
+        public typealias Failure = Error
+        
         fileprivate init() {
             TODO.unimplemented
+        }
+        
+        public func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, [Database.Record] == S.Input {
+            fatalError()
         }
     }
     
     public func querySubscription(
-        for request: ZoneQueryRequest
+        for request: Database.ZoneQueryRequest
     ) throws -> QuerySubscription {
         TODO.unimplemented
     }

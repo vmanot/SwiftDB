@@ -8,8 +8,9 @@ import Swift
 /// A type-erased database.
 public final class AnyDatabase: Database {
     public typealias SchemaAdaptor = AnyDatabaseSchemaAdaptor
-    public typealias RecordSpace = AnyDatabaseRecordSpace
     public typealias Zone = AnyDatabaseZone
+    public typealias Record = AnyDatabaseRecord
+    public typealias RecordSpace = AnyDatabaseRecordSpace
     
     private let base: any Database
     
@@ -49,11 +50,7 @@ public final class AnyDatabase: Database {
     public func fetchAllAvailableZones() -> AnyTask<[AnyDatabaseZone], Error> {
         base._opaque_fetchAllAvailableZones()
     }
-    
-    public func fetchZone(named zoneName: String) -> AnyTask<AnyDatabaseZone, Error> {
-        base._opaque_fetchZone(named: zoneName)
-    }
-    
+        
     public func recordSpace(forZones zones: [AnyDatabaseZone]?) throws -> AnyDatabaseRecordSpace {
         try base._opaque_recordSpace(forZones: zones)
     }
@@ -118,13 +115,6 @@ fileprivate extension Database {
         fetchAllAvailableZones()
             .successPublisher
             .map({ $0.map(AnyDatabaseZone.init(base:)) })
-            .convertToTask()
-    }
-    
-    func _opaque_fetchZone(named zoneName: String) -> AnyTask<AnyDatabaseZone, Error> {
-        fetchZone(named: zoneName)
-            .successPublisher
-            .map({ AnyDatabaseZone(base: $0) })
             .convertToTask()
     }
     

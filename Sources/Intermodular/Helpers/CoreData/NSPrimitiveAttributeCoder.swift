@@ -100,15 +100,15 @@ extension Character: NSPrimitiveAttributeCoder {
     public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
         try .init(String.primitivelyDecode(from: object, forKey: key))
     }
-
+    
     public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
         try .init(String.decode(from: object, forKey: key))
     }
-
+    
     public func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
         try stringValue.primitivelyEncode(to: object, forKey: key)
     }
-
+    
     public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) {
         stringValue.encode(to: object, forKey: key)
     }

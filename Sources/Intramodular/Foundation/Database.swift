@@ -25,11 +25,14 @@ public protocol Database: Named, Identifiable where ID: Codable {
     associatedtype Configuration: Codable
     associatedtype State: Codable & Equatable
     associatedtype SchemaAdaptor: DatabaseSchemaAdaptor where SchemaAdaptor.Database == Self
-    associatedtype Zone where Zone == RecordSpace.Zone
-    associatedtype RecordSpace: DatabaseRecordSpace
+    associatedtype Zone: DatabaseZone
+    associatedtype Record: DatabaseRecord
+    associatedtype RecordSpace: DatabaseRecordSpace where RecordSpace.Zone == Zone, RecordSpace.Record == Record
     
     typealias Context = DatabaseContext<Self>
     
+    typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
+
     /// The configuration used to initialize the database.
     var configuration: Configuration { get }
     
@@ -48,8 +51,6 @@ public protocol Database: Named, Identifiable where ID: Codable {
     
     @discardableResult
     func fetchAllAvailableZones() -> AnyTask<[Zone], Error>
-    @discardableResult
-    func fetchZone(named _: String) -> AnyTask<Zone, Error>
     
     func recordSpace(forZones _: [Zone]?) throws -> RecordSpace
     

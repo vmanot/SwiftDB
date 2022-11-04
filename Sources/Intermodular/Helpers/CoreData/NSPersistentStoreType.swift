@@ -6,7 +6,7 @@ import CoreData
 import Swift
 
 /// A persistent store type.
-public enum PersistentStoreType {
+public enum NSPersistentStoreType {
     case binaryStore
     case inMemory
     case sqlite

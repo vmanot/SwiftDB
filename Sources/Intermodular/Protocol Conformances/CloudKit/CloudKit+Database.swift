@@ -56,8 +56,9 @@ extension _CloudKit.Database {
 
 extension _CloudKit.Database: Database {
     public typealias SchemaAdaptor = _CloudKit.DatabaseSchemaAdaptor
-    public typealias RecordSpace = _CloudKit.DatabaseRecordSpace
     public typealias Zone = _CloudKit.DatabaseZone
+    public typealias Record = _CloudKit.DatabaseRecord
+    public typealias RecordSpace = _CloudKit.DatabaseRecordSpace
 
     public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
         let operation = CKFetchRecordZonesOperation()
@@ -77,11 +78,7 @@ extension _CloudKit.Database: Database {
 
         return result.handleEvents(receiveStart: { operation.start() }).eraseToAnyTask()
     }
-
-    public func fetchZone(named name: String) -> AnyTask<Zone, Error> {
-        fatalError()
-    }
-
+    
     public func recordSpace(forZones zones: [Zone]?) throws -> RecordSpace {
         .init(parent: self, zones: try zones.unwrap())
     }

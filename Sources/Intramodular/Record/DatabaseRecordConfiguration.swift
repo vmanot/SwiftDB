@@ -4,8 +4,8 @@
 
 import Swallow
 
-public struct DatabaseRecordConfiguration<Context: DatabaseRecordSpace> {
-    public let recordType: Context.Record.RecordType
-    public let recordID: Context.Record.ID?
-    public let zone: Context.Zone?
+public struct DatabaseRecordConfiguration<Database: SwiftDB.Database> {
+    public let recordType: Database.Record.RecordType?
+    public let recordID: Database.Record.ID?
+    public let zone: Database.Zone?
 }

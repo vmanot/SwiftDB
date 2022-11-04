@@ -49,8 +49,7 @@ extension _AnyRecordSpaceTransaction {
                     recordType: self.databaseContext.schemaAdaptor.recordType(for: entity.id),
                     recordID: nil,
                     zone: nil
-                ),
-                context: .init()
+                )
             )
             
             let recordContainer = try _DatabaseRecordContainer(
@@ -111,7 +110,7 @@ extension _AnyRecordSpaceTransaction {
     
     private func zoneQueryRequest<Model>(
         from queryRequest: QueryRequest<Model>
-    ) throws -> AnyDatabaseRecordSpace.ZoneQueryRequest {
+    ) throws -> AnyDatabase.ZoneQueryRequest {
         let recordTypes: [AnyDatabaseRecord.RecordType]
         
         if Model.self == Any.self {
@@ -122,7 +121,7 @@ extension _AnyRecordSpaceTransaction {
             recordTypes = [try databaseContext.schemaAdaptor.recordType(for: entity)]
         }
         
-        return try AnyDatabaseRecordSpace.ZoneQueryRequest(
+        return try AnyDatabase.ZoneQueryRequest(
             filters: .init(
                 zones: nil,
                 recordTypes: Set(recordTypes),

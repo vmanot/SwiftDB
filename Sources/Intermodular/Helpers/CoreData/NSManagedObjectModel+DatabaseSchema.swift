@@ -13,11 +13,11 @@ extension NSManagedObjectModel {
         self.init()
         
         var relationshipNameToRelationship: [String: NSRelationshipDescription] = [:]
-        var parentNameToChildrenMap: [String: [_SwiftDB_NSEntityDescription]] = [:]
-        var nameToEntityMap: [String: _SwiftDB_NSEntityDescription] = [:]
+        var parentNameToChildrenMap: [String: [_CoreData._SwiftDB_NSEntityDescription]] = [:]
+        var nameToEntityMap: [String: _CoreData._SwiftDB_NSEntityDescription] = [:]
         
         for entity in schema.entities {
-            let description = try _SwiftDB_NSEntityDescription(from: entity, in: schema)
+            let description = try _CoreData._SwiftDB_NSEntityDescription(from: entity, in: schema)
             
             nameToEntityMap[entity.name] = description
             

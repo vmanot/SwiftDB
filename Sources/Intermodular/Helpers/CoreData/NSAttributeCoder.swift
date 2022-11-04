@@ -19,7 +19,7 @@ public protocol NSAttributeCoder {
     static func toNSAttributeTypeIfPossible() -> NSAttributeType?
 }
 
-// MARK: - Implementation -
+// MARK: - Default Implementation -
 
 extension NSAttributeCoder {
     public static func primitivelyDecode<Key: CodingKey>(
@@ -161,7 +161,109 @@ extension Wrapper where Value: NSAttributeCoder, Self: NSAttributeCoder {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Implementations -
+
+struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Loggable {
+    let value: T
+    
+    init(_ value: T) {
+        self.value = value
+    }
+    
+    static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+        .init(try ObjectDecoder().decode(T.self, from: object.primitiveValue(forKey: key.stringValue).unwrap()))
+    }
+    
+    static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+        let value = object.value(forKey: key.stringValue)
+        
+        if value == nil, let _T = T.self as? _opaque_Optional.Type {
+            return .init(_T.init(none: ()) as! T)
+        }
+        
+        return .init(try ObjectDecoder().decode(T.self, from: try value.unwrap()))
+    }
+    
+    func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+        guard object.managedObjectContext != nil else {
+            return
+        }
+        
+        object.setPrimitiveValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
+    }
+    
+    func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+        if let object = object as? NSManagedObject {
+            guard object.managedObjectContext != nil else {
+                assertionFailure()
+                
+                return
+            }
+        }
+        
+        let encodedValue = try ObjectEncoder().encode(value)
+        
+        object.setValue(encodedValue, forKey: key.stringValue)
+    }
+    
+    func getNSAttributeType() -> NSAttributeType {
+        .transformableAttributeType
+    }
+}
+
+struct _OptionalCodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
+    let value: T?
+    
+    init(_ value: T?) {
+        self.value = value
+    }
+    
+    static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+        guard let primitiveValue = object.primitiveValue(forKey: key.stringValue) else {
+            return .init(nil)
+        }
+        
+        return .init(try ObjectDecoder().decode(T.self, from: primitiveValue))
+    }
+    
+    static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+        guard let value = object.value(forKey: key.stringValue) else {
+            return .init(nil)
+        }
+        
+        return .init(try ObjectDecoder().decode(T.self, from: value))
+    }
+    
+    func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+        guard object.managedObjectContext != nil else {
+            return
+        }
+        
+        guard let value = value else {
+            return
+        }
+        
+        object.setPrimitiveValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
+    }
+    
+    func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+        if let object = object as? NSManagedObject {
+            guard object.managedObjectContext != nil else {
+                return
+            }
+        }
+        
+        guard let value = value else {
+            return
+        }
+        
+        object.setValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
+    }
+    
+    func getNSAttributeType() -> NSAttributeType {
+        .transformableAttributeType
+    }
+}
 
 extension NSObject: NSAttributeCoder {
     public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {

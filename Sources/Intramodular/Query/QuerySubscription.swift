@@ -7,12 +7,13 @@ import Swallow
 
 public final class QuerySubscription<Model>: ObservableObject {
     private let base: AnyDatabaseQuerySubscription
-    
-    public var objectWillChange: AnyObjectWillChangePublisher {
-        base.eraseObjectWillChangePublisher()
-    }
+    private var baseSubscription: AnyCancellable?
     
     init(from base: AnyDatabaseQuerySubscription) {
         self.base = base
+        
+        baseSubscription = base.stopExecutionOnError().sink { _ in
+            self.objectWillChange.send()
+        }
     }
 }

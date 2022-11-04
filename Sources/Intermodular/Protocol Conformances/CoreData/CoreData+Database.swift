@@ -3,6 +3,7 @@
 //
 
 import CoreData
+import CorePersistence
 import Diagnostics
 import Foundation
 import Merge
@@ -14,6 +15,7 @@ extension _CoreData {
         private let setupTasksQueue = TaskQueue()
                         
         public typealias SchemaAdaptor = DatabaseSchemaAdaptor
+        public typealias Record = _CoreData.DatabaseRecord
         public typealias RecordSpace = _CoreData.DatabaseRecordSpace
         
         let schema: _Schema
@@ -165,15 +167,7 @@ extension _CoreData.Database {
     public func fetchAllAvailableZones() async throws -> [Zone] {
         try await fetchAllAvailableZones().value
     }
-    
-    public func fetchZone(named name: String) -> AnyTask<Zone, Error> {
-        fetchAllAvailableZones()
-            .successPublisher
-            .tryMap({ try $0.filter({ $0.name == name }).first.unwrap() })
-            .eraseError()
-            .convertToTask()
-    }
-    
+        
     public func recordSpace(forZones zones: [Zone]?) throws -> RecordSpace {
         .init(
             databaseContext: context,
