@@ -23,8 +23,8 @@ extension _CloudKit.Database {
         }
 
         /// Mark a record for deletion in this record space.
-        public func delete(_ record: Database.Record) throws {
-            try recordSpace.delete(record)
+        public func delete(_ recordID: Database.Record.ID) throws {
+            try recordSpace.delete(recordID)
         }
     }
     

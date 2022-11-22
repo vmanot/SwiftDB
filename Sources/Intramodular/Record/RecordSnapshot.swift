@@ -14,7 +14,7 @@ public struct RecordSnapshot<T> {
     fileprivate let base: T
     
     public var recordMetadata: RecordMetadata<T> {
-        let recordProxy = try! cast(base, to: (any Entity).self)._databaseRecordProxy.unwrap()
+        let recordProxy = try! cast(base, to: (any Entity).self)._databaseRecordProxy
         
         return .init(
             id: recordProxy.recordID

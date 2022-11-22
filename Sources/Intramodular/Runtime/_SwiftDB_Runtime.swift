@@ -14,7 +14,7 @@ public protocol _SwiftDB_Runtime: Sendable {
 
 // MARK: - Conformances -
 
-public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendable {
+public final class _SwiftDB_DefaultRuntime: _SwiftDB_Runtime, @unchecked Sendable {
     struct TypeCache: Hashable {
         var entity: [String: Metatype<any Entity.Type>] = [:]
     }
@@ -39,7 +39,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
         let entityType: _opaque_Entity.Type
         var fieldNameToKeyPathMap: [String: AnyKeyPath] = [:]
         
-        lazy var prototype: _opaque_Entity = try! entityType.init(from: nil)
+        lazy var prototype: _opaque_Entity = try! entityType.init(_databaseRecordProxy: nil)
         
         init(entityType: _opaque_Entity.Type) {
             self.entityType = entityType
@@ -51,7 +51,6 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
             }
             
             let valueType = try type(of: cast(keyPath, to: _opaque_KeyPathType.self))._opaque_ValueType
-            let prototype = try entityType.init(from: nil)
             
             func _accessKeyPath<T>(_ instance: T) throws  {
                 let keyPath = try cast(keyPath, to: PartialKeyPath<T>.self)
@@ -94,7 +93,7 @@ public final class _Default_SwiftDB_Runtime: _SwiftDB_Runtime, @unchecked Sendab
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension CodingUserInfoKey {
     fileprivate static let _SwiftDB_runtime = CodingUserInfoKey(rawValue: "_SwiftDB_runtime")!

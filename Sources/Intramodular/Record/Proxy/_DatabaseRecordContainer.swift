@@ -55,13 +55,7 @@ public final class _DatabaseRecordContainer: ObservableObject {
     }
 }
 
-extension _DatabaseRecordContainer {
-    private enum DecodingError: Error {
-        case entitySchemaRequired
-        case failedToResolvePrimaryKey
-        case unknownPropertyType(Any, forKey: CodingKey)
-    }
-    
+extension _DatabaseRecordContainer: _DatabaseRecordProxyBase {
     public var allKeys: [CodingKey] {
         record.allKeys
     }
@@ -120,15 +114,19 @@ extension _DatabaseRecordContainer {
 }
 
 extension _DatabaseRecordContainer {
-    func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID {
+    public func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID {
         try recordCoder().primaryKeyOrRecordID()
     }
-    
-    func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload? {
-        try recordCoder().decodeFieldPayload(forKey: key)
+
+    public func decodeFieldValue(forKey key: CodingKey) throws -> Any? {
+        try recordCoder().decodeFieldValue(forKey: key)
     }
-    
-    func encodeFieldPayload(_ payload: Any?, forKey key: CodingKey) throws {
-        try recordCoder().encodeFieldPayload(payload, forKey: key)
+
+    public func encodeFieldValue(_ payload: Any?, forKey key: CodingKey) throws {
+        try recordCoder().encodeFieldValue(payload, forKey: key)
+    }
+
+    public func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload? {
+        try recordCoder().decodeFieldPayload(forKey: key)
     }
 }

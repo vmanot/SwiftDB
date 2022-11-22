@@ -25,7 +25,7 @@ public struct AnyDatabaseSchemaAdaptor: DatabaseSchemaAdaptor {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension DatabaseSchemaAdaptor {
     public func _opaque_entity(

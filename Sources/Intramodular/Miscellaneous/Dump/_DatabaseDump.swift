@@ -18,7 +18,7 @@ extension AnyLocalTransaction {
         
         for instance in instances {
             let entity = try cast(instance, to: (any Entity).self)
-            let recordContainer = try entity._databaseRecordProxy.unwrap()
+            let recordContainer = try entity._databaseRecordProxy
             
             try recordDumps.append(recordContainer._dumpRecord())
         }

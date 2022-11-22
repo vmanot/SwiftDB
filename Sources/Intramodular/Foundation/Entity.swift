@@ -16,12 +16,12 @@ public protocol Entity: _opaque_Entity, EntityRelatable, PredicateExpressionPrim
 
 extension Entity {
     public func toPredicateExpressionPrimitive() -> PredicateExpressionPrimitive {
-        guard let container = _databaseRecordProxy else {
-            assertionFailure()
+        do {
+            return try _databaseRecordProxy.recordID._cast(to: PredicateExpressionPrimitiveConvertible.self).toPredicateExpressionPrimitive()
+        } catch {
+            assertionFailure(error)
             
             return NilPredicateExpressionValue(nilLiteral: ())
         }
-        
-        return try! container.record._cast(to: _CoreData.DatabaseRecord.self).rawObject
     }
 }

@@ -105,7 +105,7 @@ extension _EntitySchemaMigrationMapping {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 public struct CustomEntityTransformerArguments {
     public let source: _DatabaseRecordProxy

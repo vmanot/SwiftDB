@@ -3,6 +3,7 @@
 //
 
 import CoreData
+import FoundationX
 import Merge
 import Swallow
 
@@ -143,7 +144,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension _CoreData.DatabaseRecord {
     public struct RecordType: Codable, CustomStringConvertible, Hashable, LosslessStringConvertible {
@@ -162,7 +163,7 @@ extension _CoreData.DatabaseRecord {
         }
     }
     
-    public struct ID: Hashable {
+    public struct ID: Hashable, PredicateExpressionPrimitiveConvertible {
         private let base: NSManagedObjectID
         
         var nsManagedObjectID: NSManagedObjectID {
@@ -171,6 +172,10 @@ extension _CoreData.DatabaseRecord {
         
         init(managedObjectID: NSManagedObjectID) {
             self.base = managedObjectID
+        }
+        
+        public func toPredicateExpressionPrimitive() -> PredicateExpressionPrimitive {
+            base // FIXME: Is this a valid `NSPredicate` expression primitive?
         }
     }
 }

@@ -24,7 +24,7 @@ public protocol DatabaseRecordSpace: ObservableObject, Sendable {
     ) throws -> Record
 
     /// Mark a record for deletion in this record space.
-    func delete(_: Record) throws
+    func delete(_: Record.ID) throws
 
     /// Execute a zone query request within the zones captured by this record space.
     ///

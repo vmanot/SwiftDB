@@ -10,7 +10,7 @@ import Swallow
 public protocol _opaque_Entity: _opaque_ObservableObject, Initiable {
     static var _opaque_ParentEntity: (any Entity.Type)? { get }
     
-    var _databaseRecordProxy: _DatabaseRecordProxy? { get }
+    var _databaseRecordProxy: _DatabaseRecordProxy { get throws }
 }
 
 extension _opaque_Entity where Self: Entity {
@@ -27,7 +27,7 @@ extension _opaque_Entity  {
     }
     
     mutating func _runtime_configurePropertyAccessors(
-        recordContainer: _DatabaseRecordProxy?
+        withRecordProxy recordProxy: _DatabaseRecordProxy?
     ) throws {
         var instance = AnyNominalOrTupleMirror(self)!
         
@@ -37,8 +37,8 @@ extension _opaque_Entity  {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 }
                 
-                if let recordContainer = recordContainer {
-                    try property.initialize(with: recordContainer)
+                if let recordProxy = recordProxy {
+                    try property.initialize(with: recordProxy)
                 }
                 
                 instance[key] = property
@@ -48,16 +48,18 @@ extension _opaque_Entity  {
         self = try cast(instance.value, to: Self.self)
     }
     
-    init(from recordContainer: _DatabaseRecordProxy?) throws {
+    init(_databaseRecordProxy: _DatabaseRecordProxy?) throws {
         self.init()
         
-        try _runtime_configurePropertyAccessors(recordContainer: recordContainer)
-        
-        if let recordContainer = recordContainer, type(of: self) is AnyObject.Type {
-            recordContainer
+        if let databaseRecordProxy = _databaseRecordProxy, type(of: self) is AnyObject.Type {
+            try _runtime_configurePropertyAccessors(withRecordProxy: databaseRecordProxy)
+            
+            databaseRecordProxy
                 .objectWillChange
                 .publish(to: self)
-                .subscribe(in: recordContainer.record.cancellables)
+                .subscribe(in: databaseRecordProxy.cancellables)
+        } else {
+            try _runtime_configurePropertyAccessors(withRecordProxy: nil)
         }
     }
 }
@@ -72,21 +74,31 @@ extension _opaque_Entity where Self: Entity {
     }
     
     public var _opaque_objectWillChange: AnyObjectWillChangePublisher {
-        _databaseRecordProxy?.objectWillChange ?? .empty
+        do {
+            return try _databaseRecordProxy.objectWillChange
+        } catch {
+            assertionFailure(error)
+            
+            return .empty
+        }
     }
     
     public func _opaque_objectWillChange_send() throws {
         
     }
     
-    public var _databaseRecordProxy: _DatabaseRecordProxy? {
-        for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
-            if let value = value as? any EntityPropertyAccessor {
-                return value._underlyingRecordProxy
+    public var _databaseRecordProxy: _DatabaseRecordProxy {
+        get throws {
+            for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
+                if let value = value as? any EntityPropertyAccessor {
+                    if let proxy = value._underlyingRecordProxy {
+                        return proxy
+                    }
+                }
             }
+            
+            throw _opaque_EntityError.failedToResolveDatabaseRecordProxy
         }
-        
-        return nil
     }
 }
 
@@ -112,7 +124,7 @@ extension _opaque_Entity where Self: Entity & Identifiable {
     }
 }
 
-// MARK: - Helpers -
+// MARK: - Auxiliary -
 
 extension _opaque_Entity {
     public static func isSuperclass(of other: _opaque_Entity.Type) -> Bool {
@@ -124,4 +136,8 @@ extension _opaque_Entity {
             return false
         }
     }
+}
+
+fileprivate enum _opaque_EntityError: _SwiftDB_Error {
+    case failedToResolveDatabaseRecordProxy
 }

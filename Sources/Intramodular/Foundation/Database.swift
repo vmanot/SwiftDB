@@ -70,7 +70,7 @@ extension Database {
         state: State?
     ) async throws {
         try await self.init(
-            runtime: _Default_SwiftDB_Runtime(schema: schema),
+            runtime: _SwiftDB_DefaultRuntime(schema: schema),
             schema: schema,
             configuration: configuration,
             state: state

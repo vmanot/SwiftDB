@@ -10,7 +10,7 @@ public struct AnyDatabaseRecordReference: DatabaseRecordReference {
     private let base: any DatabaseRecordReference
     
     public var recordID: RecordID {
-        AnyDatabaseRecord.ID(base: base.recordID.eraseToAnyHashable())
+        AnyDatabaseRecord.ID(erasing: base.recordID.eraseToAnyHashable())
     }
     
     init(base: any DatabaseRecordReference) {

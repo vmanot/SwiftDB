@@ -221,7 +221,7 @@ extension LocalDatabaseContainer {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension AnyDatabaseContainer {
     public enum Error: Swift.Error {

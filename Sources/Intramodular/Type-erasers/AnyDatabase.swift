@@ -69,7 +69,7 @@ public final class AnyDatabase: Database {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension AnyDatabase {
     public struct ID: Codable, Hashable {
@@ -113,7 +113,7 @@ extension AnyDatabase {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 fileprivate extension Database {
     var _opaque_context: AnyDatabase.Context {

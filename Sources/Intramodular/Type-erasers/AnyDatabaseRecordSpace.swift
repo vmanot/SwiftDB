@@ -37,8 +37,8 @@ public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
         base._opaque_execute(request)
     }
     
-    public func delete(_ record: AnyDatabaseRecord) throws {
-        try base._opaque_delete(record)
+    public func delete(_ recordID: AnyDatabaseRecord.ID) throws {
+        try base._opaque_delete(recordID)
     }
     
     @discardableResult
@@ -47,7 +47,7 @@ public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 private extension DatabaseRecordSpace {
     func _opaque_createRecord(
@@ -81,8 +81,8 @@ private extension DatabaseRecordSpace {
         }
     }
             
-    func _opaque_delete(_ record: AnyDatabaseRecord) throws {
-        let _record = try record._cast(to: Record.self)
+    func _opaque_delete(_ record: AnyDatabaseRecord.ID) throws {
+        let _record = try record._cast(to: Record.ID.self)
         
         return try delete(_record)
     }

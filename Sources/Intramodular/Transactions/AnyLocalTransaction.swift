@@ -37,36 +37,32 @@ extension AnyLocalTransaction {
                 )
             )
             
-            let recordContainer = try _DatabaseRecordProxy(
-                _SwiftDB_taskContext: context,
-                recordSchema: entity,
-                record: record
-            )
-            
-            return try entityType.init(from: recordContainer)
+            return try context.createInstance(entityType, for: record)
         }
     }
     
     public func execute<Model>(
         _ request: QueryRequest<Model>
     ) throws -> QueryRequest<Model>.Output {
-        let results = try transaction.executeSynchronously(
-            DatabaseZoneQueryRequest(
-                from: request,
-                databaseContext: _SwiftDB_taskContext.databaseContext
+        return try scope { context in
+            let results = try transaction.executeSynchronously(
+                DatabaseZoneQueryRequest(
+                    from: request,
+                    databaseContext: _SwiftDB_taskContext.databaseContext
+                )
             )
-        )
-        
-        return QueryRequest<Model>.Output(
-            results: try results.records?.map {
-                try _SwiftDB_taskContext.createInstance(Model.self, for: $0)
-            } ?? []
-        )
+            
+            return QueryRequest<Model>.Output(
+                results: try results.records?.map {
+                    try context.createInstance(Model.self, for: $0)
+                } ?? []
+            )
+        }
     }
     
     public func delete<Instance: Entity>(_ instance: Instance) throws {
         try scope { context in
-            try transaction.delete(AnyDatabaseRecord(from: instance))
+            try AnyTransaction(transaction: transaction, _SwiftDB_taskContext: context).delete(instance)
         }
     }
 }

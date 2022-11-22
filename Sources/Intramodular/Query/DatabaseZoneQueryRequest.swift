@@ -99,7 +99,7 @@ extension DatabaseZoneQueryPredicate where Database == AnyDatabase {
     ) {
         switch predicate {
             case .related(let recordID, let fieldName):
-                self = .related(to: AnyDatabaseRecord.ID(base: recordID), by: fieldName)
+                self = .related(to: AnyDatabaseRecord.ID(erasing: recordID), by: fieldName)
             case ._nsPredicate(let predicate):
                 self = ._nsPredicate(predicate)
         }

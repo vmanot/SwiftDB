@@ -21,21 +21,21 @@ public protocol DatabaseRecordRelationship<Record> {
 public protocol ToOneDatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
     
-    func getRecord() throws -> Record?
-    func setRecord(_ record: Record?) throws
+    func getRecord() throws -> Record.ID?
+    func setRecord(_ record: Record.ID?) throws
 }
 
 /// An encapsulation of a relationship from one database record to another record OR a set of records.
 public protocol ToManyDatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
     
-    func insert(_ record: Record) throws
-    func remove(_ record: Record) throws
+    func insert(_ record: Record.ID) throws
+    func remove(_ record: Record.ID) throws
     
     func all() throws -> [Record]
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 public struct NoDatabaseRecordRelationship<Record: DatabaseRecord>: DatabaseRecordRelationship {
     public func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record> {

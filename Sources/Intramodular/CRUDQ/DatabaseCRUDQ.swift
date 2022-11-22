@@ -23,9 +23,9 @@ extension DatabaseCRUDQ {
         body: (Instance) throws -> Void
     ) async throws -> Instance {
         let record = try await create(type)
-
+        
         try body(record)
-
+        
         return record
     }
 }
@@ -49,7 +49,7 @@ extension DatabaseCRUDQ {
             )
         ).results
     }
-
+    
     /// Fetch the first available entity instance.
     public func first<Instance: Entity>(
         _ type: Instance.Type
@@ -64,7 +64,7 @@ extension DatabaseCRUDQ {
         )
         .results.first
     }
-
+    
     /// Fetch the first available entity instance.
     public func first<Instance: Entity>(
         _ type: Instance.Type = Instance.self,
@@ -80,7 +80,7 @@ extension DatabaseCRUDQ {
         )
         .results.first
     }
-
+    
     public func all<Instance: Entity>(
         of type: Instance.Type
     ) async throws -> [Instance] {

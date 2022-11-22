@@ -175,12 +175,12 @@ extension _CoreData.Database {
                 
                 var migrationPolicyConfiguration = _SwiftDB_CustomEntityMigrationPolicy.Configuration(
                     sourceDatabaseContext: .init(
-                        runtime: try _Default_SwiftDB_Runtime(schema: mappingModel.source),
+                        runtime: try _SwiftDB_DefaultRuntime(schema: mappingModel.source),
                         schema: mappingModel.source,
                         schemaAdaptor: _CoreData.Database.SchemaAdaptor(schema: mappingModel.source)
                     ),
                     destinationDatabaseContext: .init(
-                        runtime: try _Default_SwiftDB_Runtime(schema: mappingModel.destination),
+                        runtime: try _SwiftDB_DefaultRuntime(schema: mappingModel.destination),
                         schema: mappingModel.destination,
                         schemaAdaptor: _CoreData.Database.SchemaAdaptor(schema: mappingModel.destination)
                     ),
@@ -269,10 +269,11 @@ extension _CoreData.Database {
                         
             let sourceEntity = try configuration.schemaMappingModel.source.entity(withName: sInstance.entity.name.unwrap())
             
+            let sourceRecord = AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: sInstance))
             let sourceRecordProxy = try _DatabaseRecordProxy(
                 _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(fromDatabaseContext: configuration.sourceDatabaseContext),
                 recordSchema: sourceEntity,
-                record: .init(erasing: _CoreData.DatabaseRecord(rawObject: sInstance))
+                record: sourceRecord
             )
             
             try configuration.transformer(
@@ -289,21 +290,28 @@ extension _CoreData.Database {
                             forEntityName: mapping.destinationEntityName!,
                             into: manager.destinationContext
                         )
+
+                        let destinationRecord = AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: nsManagedObject))
+                        let destinationRecordProxy = try _DatabaseRecordProxy(
+                            _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(fromDatabaseContext: configuration.destinationDatabaseContext),
+                            recordSchema: destinationEntity,
+                            record: destinationRecord
+                        )
                         
-                        TODO.unimplemented
-                        /*destinationObject = UnsafeRecordMigrationDestination(
-                         schemaMappingModel: configuration.schemaMappingModel,
-                         sourceEntity: configuration.sourceEntity,
-                         destinationEntity: configuration.destinationEntity,
-                         destination: AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: nsManagedObject))
-                         )
-                         
-                         return destinationObject!*/
+                        destinationObject = UnsafeRecordMigrationDestination(
+                            schemaMappingModel: configuration.schemaMappingModel,
+                            sourceEntity: configuration.sourceEntity,
+                            destinationEntity: configuration.destinationEntity,
+                            destinationRecord: destinationRecord,
+                            destinationRecordProxy: destinationRecordProxy
+                        )
+                        
+                        return destinationObject!
                     }
                 )
             )
             
-            if let dInstance = try destinationObject.map({ try $0.destination.record._cast(to: _CoreData.DatabaseRecord.self) }) {
+            if let dInstance = try destinationObject.map({ try $0.destinationRecord._cast(to: _CoreData.DatabaseRecord.self) }) {
                 manager.associate(
                     sourceInstance: sInstance,
                     withDestinationInstance: dInstance.rawObject,

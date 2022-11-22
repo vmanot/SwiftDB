@@ -37,12 +37,12 @@ extension AnyDatabaseRecordRelationship {
             self.base = relationship
         }
         
-        func getRecord() throws -> Record? {
+        func getRecord() throws -> Record.ID? {
             try base._opaque_getRecord()
         }
         
-        func setRecord(_ record: Record?) throws {
-            try base._opaque_setRecord(record)
+        func setRecord(_ recordID: Record.ID?) throws {
+            try base._opaque_setRecord(recordID)
         }
     }
     
@@ -57,12 +57,12 @@ extension AnyDatabaseRecordRelationship {
             self.base = relationship
         }
         
-        func insert(_ record: Record) throws {
-            try base._opaque_insert(record)
+        func insert(_ recordID: Record.ID) throws {
+            try base._opaque_insert(recordID)
         }
         
-        func remove(_ record: Record) throws {
-            try base._opaque_remove(record)
+        func remove(_ recordID: Record.ID) throws {
+            try base._opaque_remove(recordID)
         }
         
         func all() throws -> [Record] {
@@ -81,25 +81,25 @@ extension DatabaseRecordRelationship {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 private extension ToOneDatabaseRecordRelationship {
-    func _opaque_getRecord() throws -> AnyDatabaseRecord? {
-        try getRecord().map({ AnyDatabaseRecord(erasing: $0) })
+    func _opaque_getRecord() throws -> AnyDatabaseRecord.ID? {
+        try getRecord().map({ AnyDatabaseRecord.ID(erasing: $0) })
     }
     
-    func _opaque_setRecord(_ record: AnyDatabaseRecord?) throws {
-        try setRecord(record?._cast(to: Record.self))
+    func _opaque_setRecord(_ recordID: AnyDatabaseRecord.ID?) throws {
+        try setRecord(recordID?._cast(to: Record.ID.self))
     }
 }
 
 private extension ToManyDatabaseRecordRelationship {
-    func _opaque_insert(_ record: AnyDatabaseRecord) throws {
-        try insert(record._cast(to: Record.self))
+    func _opaque_insert(_ recordID: AnyDatabaseRecord.ID) throws {
+        try insert(recordID._cast(to: Record.ID.self))
     }
     
-    func _opaque_remove(_ record: AnyDatabaseRecord) throws {
-        try remove(record._cast(to: Record.self))
+    func _opaque_remove(_ recordID: AnyDatabaseRecord.ID) throws {
+        try remove(recordID._cast(to: Record.ID.self))
     }
     
     func _opaque_all() throws -> [AnyDatabaseRecord] {

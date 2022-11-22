@@ -11,7 +11,7 @@ public protocol DatabaseRecordReference {
     var recordID: RecordID { get }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 public struct NoDatabaseRecordReference<RecordID: Hashable>: DatabaseRecordReference {
     public var recordID: RecordID {

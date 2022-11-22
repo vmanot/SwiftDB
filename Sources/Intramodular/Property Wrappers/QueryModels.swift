@@ -85,7 +85,7 @@ extension QueryModels {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension QueryModels {
     fileprivate class RequestOutputCoordinator: Loggable, ObservableObject, @unchecked Sendable {

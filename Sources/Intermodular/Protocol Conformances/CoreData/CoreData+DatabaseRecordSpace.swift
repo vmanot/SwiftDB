@@ -82,8 +82,8 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
         return object
     }
 
-    public func delete(_ object: Record) throws {
-        nsManagedObjectContext.delete(object.rawObject)
+    public func delete(_ object: Record.ID) throws {
+        try nsManagedObjectContext.deleteObject(withPermanentID: object.nsManagedObjectID)
     }
 
     public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {

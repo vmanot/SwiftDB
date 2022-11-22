@@ -12,26 +12,33 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
         .many
     }
     
-    let transactionContext: _SwiftDB_TaskContext?
+    let _SwiftDB_taskContext: _SwiftDB_TaskContext?
     let relationship: AnyDatabaseRecordRelationship
     
     init(
-        transactionContext: _SwiftDB_TaskContext,
+        _SwiftDB_taskContext: _SwiftDB_TaskContext,
         relationship: AnyDatabaseRecordRelationship
     ) {
-        self.transactionContext = transactionContext
+        self._SwiftDB_taskContext = _SwiftDB_taskContext
         self.relationship = relationship
     }
     
     public init(noRelatedModels: Void) {
-        self.transactionContext = nil
+        self._SwiftDB_taskContext = nil
         self.relationship = .init(erasing: NoDatabaseRecordRelationship<AnyDatabaseRecord>())
     }
     
     public func makeIterator() -> AnyIterator<Model> {
         do {
-            return try _withSwiftDBTaskContext(transactionContext) { context in
-                AnyIterator(try relationship.toManyRelationship().all().map({ try Model(from: context._recordProxy(for: $0)) }).makeIterator())
+            return try _withSwiftDBTaskContext(_SwiftDB_taskContext) { context in
+                AnyIterator(
+                    try relationship.toManyRelationship()
+                        .all()
+                        .map { record in
+                            try context.createInstance(Model.self, for: record)
+                        }
+                        .makeIterator()
+                )
             }
         } catch {
             assertionFailure()
@@ -54,12 +61,14 @@ extension RelatedModels: EntityRelatable {
         from container: _DatabaseRecordProxy,
         forKey key: CodingKey
     ) throws -> Self {
-        try _withSwiftDBTaskContext { context in
-            self.init(
-                transactionContext: context,
-                relationship: try container.relationship(for: key)
-            )
-        }
+        TODO.unimplemented
+        
+        /*try _withSwiftDBTaskContext { context in
+         self.init(
+         transactionContext: context,
+         relationship: try container.relationship(for: key)
+         )
+         }*/
     }
     
     public func encode(to record: _DatabaseRecordProxy, forKey key: CodingKey) throws {
@@ -70,7 +79,7 @@ extension RelatedModels: EntityRelatable {
 extension RelatedModels {
     public func insert(_ model: Model) {
         do {
-            try relationship.toManyRelationship().insert(model._databaseRecordProxy.unwrap().record)
+            try relationship.toManyRelationship().insert(model._databaseRecordProxy.recordID)
         } catch {
             assertionFailure()
         }
@@ -78,7 +87,7 @@ extension RelatedModels {
     
     public func remove(_ model: Model) {
         do {
-            try relationship.toManyRelationship().remove(model._databaseRecordProxy.unwrap().record)
+            try relationship.toManyRelationship().remove(model._databaseRecordProxy.recordID)
         } catch {
             assertionFailure()
         }
@@ -90,7 +99,7 @@ extension RelatedModels {
         
         for model in models {
             do {
-                try relationship.toManyRelationship().remove(AnyDatabaseRecord(from: model))
+                try relationship.toManyRelationship().remove(model._databaseRecordProxy.recordID)
             } catch {
                 assertionFailure()
             }

@@ -30,12 +30,18 @@ extension _CoreData.DatabaseRecord {
         let record: Record
         let key: CodingKey
         
-        public func getRecord() throws -> _CoreData.DatabaseRecord? {
-            _CoreData.DatabaseRecord(rawObject: try cast(record.unsafeDecodeValue(forKey: key), to: NSManagedObject.self))
+        public func getRecord() throws -> _CoreData.DatabaseRecord.ID? {
+            _CoreData.DatabaseRecord(rawObject: try cast(record.unsafeDecodeValue(forKey: key), to: NSManagedObject.self)).id
         }
         
-        public func setRecord(_ other: Record?) throws {
-            try record.unsafeEncodeValue(other?.rawObject, forKey: key)
+        public func setRecord(_ otherRecordID: Record.ID?) throws {
+            if let otherRecordID = otherRecordID {
+                let rawObjectToSet = try record.rawObject.managedObjectContext.unwrap().object(withPermanentID: otherRecordID.nsManagedObjectID)
+                
+                try record.unsafeEncodeValue(rawObjectToSet, forKey: key)
+            } else {
+                try record.unsafeEncodeValue(nil, forKey: key)
+            }
         }
     }
 }
@@ -85,15 +91,16 @@ extension _CoreData.DatabaseRecord {
             return setOrArray
         }
         
-        public func insert(_ record: Record) throws {
+        public func insert(_ otherRecordID: Record.ID) throws {
+            let rawObjectToInsert = try record.rawObject.managedObjectContext.unwrap().object(withPermanentID: otherRecordID.nsManagedObjectID)
             let setOrArray = self.mutableSetOrArray()
             
             if let set = setOrArray as? NSMutableSet {
-                set.add(record.rawObject)
+                set.add(rawObjectToInsert)
             } else if let orderedSet = setOrArray as? NSMutableOrderedSet {
-                orderedSet.insert(record.rawObject, at: 0)
+                orderedSet.insert(rawObjectToInsert, at: 0)
             } else if let array = setOrArray as? NSMutableArray {
-                array.insert(record.rawObject)
+                array.insert(rawObjectToInsert)
             } else {
                 throw Error.unrecognizedRelationshipContainer(setOrArray)
             }
@@ -101,15 +108,16 @@ extension _CoreData.DatabaseRecord {
             record.objectWillChange.send()
         }
         
-        public func remove(_ record: Record) throws {
+        public func remove(_ otherRecordID: Record.ID) throws {
+            let rawObjectToRemove = try record.rawObject.managedObjectContext.unwrap().object(withPermanentID: otherRecordID.nsManagedObjectID)
             let setOrArray = self.mutableSetOrArray()
             
             if let set = setOrArray as? NSMutableSet {
-                set.remove(record.rawObject)
+                set.remove(rawObjectToRemove)
             } else if let orderedSet = setOrArray as? NSMutableOrderedSet {
-                orderedSet.remove(record.rawObject)
+                orderedSet.remove(rawObjectToRemove)
             } else if let array = setOrArray as? NSMutableArray {
-                array.remove(record.rawObject)
+                array.remove(rawObjectToRemove)
             } else {
                 throw Error.unrecognizedRelationshipContainer(setOrArray)
             }

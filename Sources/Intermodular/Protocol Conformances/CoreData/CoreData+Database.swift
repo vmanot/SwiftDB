@@ -252,7 +252,7 @@ extension _CoreData.Database: Named {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension _CoreData.Database {
     public var sqliteStoreURL: URL? {

@@ -30,26 +30,28 @@ extension EntityRelatable where Self: Entity {
     }
     
     public init(noRelatedModels: Void) {
-        try! self.init(from: nil) // FIXME!!!
+        try! self.init(_databaseRecordProxy: nil) // FIXME!!!
     }
     
     public static func decode(
         from container: _DatabaseRecordProxy,
         forKey key: CodingKey
     ) throws -> Self {
-        try _withSwiftDBTaskContext { context in
+        TODO.unimplemented
+        /*try _withSwiftDBTaskContext { context in
             let record = try container.relationship(for: key).toOneRelationship().getRecord().unwrap()
             
             return try context.createInstance(Self.self, for: record)
-        }
+        }*/
     }
     
     public func encode(to container: _DatabaseRecordProxy, forKey key: CodingKey) throws {
-        try _withSwiftDBTaskContext { context in
+        TODO.unimplemented
+        /*try _withSwiftDBTaskContext { context in
             let relationship = try container.relationship(for: key).toOneRelationship()
             
             try relationship.setRecord(try _databaseRecordProxy.unwrap().record)
-        }
+        }*/
     }
 }
 

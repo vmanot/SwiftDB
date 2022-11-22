@@ -9,15 +9,15 @@ public struct _SwiftDB_TaskContext {
         case transactionMissing
         case crossTransactionOperationDetected
     }
-
+    
     let databaseContext: AnyDatabase.Context
     let _taskRuntime: (any _SwiftDB_TaskRuntime)?
-
+    
     public func validate(_ link: _SwiftDB_TaskRuntimeLink) throws {
         guard let _taskRuntime = _taskRuntime else {
             throw Error.transactionMissing
         }
-
+        
         guard link.parentID == _taskRuntime.id else {
             throw Error.crossTransactionOperationDetected
         }
@@ -53,14 +53,14 @@ extension _SwiftDB_TaskContext {
         for record: AnyDatabaseRecord
     ) throws -> _DatabaseRecordProxy {
         let recordSchema = try databaseContext.recordSchema(forRecordType: record.recordType)
-
+        
         return try .init(
             _SwiftDB_taskContext: self,
             recordSchema: recordSchema,
             record: record
         )
     }
-
+    
     public func createInstance<Instance>(
         _ instanceType: Instance.Type,
         for record: AnyDatabaseRecord
@@ -68,20 +68,20 @@ extension _SwiftDB_TaskContext {
         if instanceType == Any.self {
             return try cast(try _createInstance(for: record), to: Instance.self)
         } else if let instanceType = instanceType as? any Entity.Type {
-            return try cast(instanceType.init(from: _recordProxy(for: record)), to: Instance.self)
+            return try cast(instanceType.init(_databaseRecordProxy: _recordProxy(for: record)), to: Instance.self)
         } else {
             TODO.unimplemented
         }
     }
-
+    
     private func _createInstance(
         for record: AnyDatabaseRecord
     ) throws -> any Entity {
         let schema = databaseContext.schema
         let entity = try databaseContext.schemaAdaptor.entity(forRecordType: record.recordType).unwrap()
         let entityType = try schema.entityType(for: entity)
-
-        return try entityType.init(from: _recordProxy(for: record))
+        
+        return try entityType.init(_databaseRecordProxy: _recordProxy(for: record))
     }
 }
 

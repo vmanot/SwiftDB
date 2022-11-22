@@ -51,4 +51,8 @@ public indirect enum _RelatedPrimaryKeysOrRecordIDs: Codable, Hashable {
 public indirect enum _PrimaryKeyOrRecordID: Codable, Hashable {
     case primaryKey(value: _RecordFieldPayload)
     case recordID(value: _PersistentTypeRepresentedCodable)
+    
+    init(from recordID: AnyDatabaseRecord.ID) throws {
+        self = .recordID(value: _PersistentTypeRepresentedCodable(try cast(recordID, to: Codable.self)))
+    }
 }

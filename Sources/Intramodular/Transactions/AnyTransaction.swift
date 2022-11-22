@@ -37,19 +37,13 @@ extension AnyTransaction {
                 )
             )
             
-            let recordContainer = try _DatabaseRecordProxy(
-                _SwiftDB_taskContext: context,
-                recordSchema: entity,
-                record: record
-            )
-            
-            return try entityType.init(from: recordContainer)
+            return try _SwiftDB_taskContext.createInstance(entityType, for: record)
         }
     }
     
     public func delete<Instance: Entity>(_ instance: Instance) throws {
         try scope { context in
-            try transaction.delete(AnyDatabaseRecord(from: instance))
+            try transaction.delete(instance._databaseRecordProxy.recordID)
         }
     }
 }

@@ -9,12 +9,12 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
     public struct ID: Hashable {
         private let base: AnyHashable
         
-        init(base: AnyHashable) {
+        init<T: Hashable>(erasing base: T) {
             self.base = base
         }
         
-        public func _cast<T: Hashable>(to type: T.Type) throws -> T {
-            try cast(base, to: type)
+        public func _cast<T>(to type: T.Type) throws -> T {
+            try cast(base.base, to: type)
         }
     }
     
@@ -31,7 +31,7 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
     }
     
     public var id: ID {
-        .init(base: base.id.eraseToAnyHashable())
+        .init(erasing: base.id)
     }
     
     public var objectWillChange: AnyObjectWillChangePublisher {
@@ -83,7 +83,7 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
 
 extension AnyDatabaseRecord {
     public convenience init<E: Entity>(from entity: E) throws {
-        try self.init(base: entity._databaseRecordProxy.unwrap().record.base)
+        try self.init(base: entity._databaseRecordProxy.record.base)
     }
     
     public func _cast<Record: DatabaseRecord>(to recordType: Record.Type) throws -> Record {

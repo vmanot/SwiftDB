@@ -3,14 +3,27 @@
 //
 
 import CorePersistence
+import Merge
 import Swallow
 
 public protocol _DatabaseRecordProxyBase {
+    var allKeys: [CodingKey] { get }
     
+    func containsValue(forKey key: CodingKey) throws -> Bool
+    func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
+    func encode<Value>(_ value: Value, forKey key: CodingKey) throws
+    func removeValueOrRelationship(forKey key: CodingKey) throws
+    func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws
+    
+    func decodeFieldValue(forKey key: CodingKey) throws -> Any?
+    func encodeFieldValue(_ payload: Any?, forKey key: CodingKey) throws
+    
+    func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload?
+    func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID
 }
 
 /// A proxy to a record container OR snapshot.
-public final class _DatabaseRecordProxy: ObservableObject {
+public final class _DatabaseRecordProxy: CancellablesHolder, ObservableObject {
     private enum OperationType {
         case read
         case write
@@ -50,12 +63,6 @@ extension _DatabaseRecordProxy {
 }
 
 extension _DatabaseRecordProxy {
-    private enum DecodingError: Error {
-        case entitySchemaRequired
-        case failedToResolvePrimaryKey
-        case unknownPropertyType(Any, forKey: CodingKey)
-    }
-    
     public var allKeys: [CodingKey] {
         base.allKeys
     }
@@ -80,26 +87,20 @@ extension _DatabaseRecordProxy {
         try base.setInitialValue(value(), forKey: key)
     }
     
-    public func relationship(for key: CodingKey) throws -> AnyDatabaseRecordRelationship {
-        try base.relationship(for: key)
-    }
-}
-
-extension _DatabaseRecordProxy {
-    private func recordCoder() throws -> _DatabaseRecordCoder {
-        try base.recordCoder()
+    func decodeFieldValue(forKey key: CodingKey) throws -> Any? {
+        try base.decodeFieldValue(forKey: key)
     }
     
-    func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID {
-        try recordCoder().primaryKeyOrRecordID()
+    func encodeFieldValue(_ payload: Any?, forKey key: CodingKey) throws {
+        try base.encodeFieldValue(payload, forKey: key)
     }
     
     func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload? {
-        try recordCoder().decodeFieldPayload(forKey: key)
+        try base.decodeFieldPayload(forKey: key)
     }
     
-    func encodeFieldPayload(_ payload: Any?, forKey key: CodingKey) throws {
-        try recordCoder().encodeFieldPayload(payload, forKey: key)
+    func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID {
+        try base.primaryKeyOrRecordID()
     }
 }
 

@@ -28,7 +28,17 @@ public struct _Schema: Hashable, Sendable, Versioned {
     }
     
     public init(_ schema: Schema) throws {
-        let partialEntitiesByID = Dictionary(try schema.body.map({ (key: try Entity.ID(from: $0), value: try KeyedValuesOf<Entity>(from: $0)) }), uniquingKeysWith: { lhs, rhs in lhs })
+        let partialEntitiesByID = Dictionary(
+            try schema.body.map { (entityType: any SwiftDB.Entity.Type) in
+                let key = try _Schema.Entity.ID(from: entityType)
+                let value = try KeyedValuesOf<_Schema.Entity>(from: entityType)
+                
+                return (key, value)
+            },
+            uniquingKeysWith: { lhs, rhs in
+                lhs
+            }
+        )
         
         var entitySubentityRelationshipsByID: [_Schema.Entity.ID: Set<_Schema.Entity.ID>] = [:]
         
@@ -110,7 +120,7 @@ extension _Schema: Codable {
 }
 
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension _Schema {
     private enum Error: Swift.Error {
@@ -121,9 +131,9 @@ extension _Schema {
 
 fileprivate extension KeyedValuesOf where Wrapped == _Schema.Entity {
     /// Extracts values required to construct an entity schema from an entity type.
-    init(from type: _opaque_Entity.Type) throws {
+    init(from type: any Entity.Type) throws {
         // Create an uninitialized instance.
-        let instance = try type.init(from: nil)
+        let instance = try type.init(_databaseRecordProxy: nil)
         
         self.init()
         

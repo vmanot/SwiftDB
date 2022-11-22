@@ -30,3 +30,23 @@ extension NSManagedObjectContext {
         }
     }
 }
+
+extension NSManagedObjectContext {
+    public func object(withPermanentID id: NSManagedObjectID) throws -> NSManagedObject {
+        guard !id.isTemporaryID else {
+            throw EmptyError()
+        }
+        
+        return object(with: id)
+    }
+    
+    public func deleteObject(withPermanentID id: NSManagedObjectID) throws {
+        guard !id.isTemporaryID else {
+            throw EmptyError()
+        }
+        
+        let object = try existingObject(with: id)
+        
+        delete(object)
+    }
+}

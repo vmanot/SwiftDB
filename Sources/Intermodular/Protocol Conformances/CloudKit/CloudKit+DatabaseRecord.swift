@@ -8,6 +8,7 @@ import Swallow
 
 extension _CloudKit {
     public final class DatabaseRecord {
+        // FIXME: Should Zone ID be part of this?
         public struct ID: Codable & Hashable {
             let rawValue: String
             
@@ -119,7 +120,7 @@ extension _CloudKit.DatabaseRecord: Identifiable {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 fileprivate extension Decodable where Self: Encodable {
     static func decode(from object: _CloudKit.DatabaseRecord, forKey key: CodingKey) throws -> Self {

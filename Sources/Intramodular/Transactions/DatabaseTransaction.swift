@@ -11,5 +11,5 @@ public protocol DatabaseTransaction {
     
     func createRecord(withConfiguration _: RecordConfiguration) throws -> Database.Record
     func executeSynchronously(_ request: Database.ZoneQueryRequest) throws -> Database.ZoneQueryRequest.Result
-    func delete(_: Database.Record) throws
+    func delete(_: Database.Record.ID) throws
 }

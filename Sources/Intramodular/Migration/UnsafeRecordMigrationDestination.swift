@@ -8,25 +8,30 @@ public struct UnsafeRecordMigrationDestination {
     let schemaMappingModel: _SchemaMigrationMapping
     let sourceEntity: _Schema.Entity
     let destinationEntity: _Schema.Entity
-    let destination: _DatabaseRecordProxy
+    let destinationRecord: AnyDatabaseRecord
+    let destinationRecordProxy: _DatabaseRecordProxy
     
     init(
         schemaMappingModel: _SchemaMigrationMapping,
         sourceEntity: _Schema.Entity,
         destinationEntity: _Schema.Entity,
-        destination: _DatabaseRecordProxy
+        destinationRecord: AnyDatabaseRecord,
+        destinationRecordProxy: _DatabaseRecordProxy
     ) {
         self.schemaMappingModel = schemaMappingModel
         self.sourceEntity = sourceEntity
         self.destinationEntity = destinationEntity
-        self.destination = destination
+        self.destinationRecord = destinationRecord
+        self.destinationRecordProxy = destinationRecordProxy
+        
+        assert(destinationRecord.id == destinationRecordProxy.recordID)
     }
     
     public subscript(key: String) -> Any? {
         get {
-            try! destination.decodeFieldPayload(forKey: AnyStringKey(stringValue: key))
+            try! destinationRecordProxy.decodeFieldValue(forKey: AnyStringKey(stringValue: key))
         } nonmutating set {
-            try! destination.encodeFieldPayload(newValue, forKey: AnyStringKey(stringValue: key))
+            try! destinationRecordProxy.encodeFieldValue(newValue, forKey: AnyStringKey(stringValue: key))
         }
     }
     

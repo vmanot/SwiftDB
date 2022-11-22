@@ -47,21 +47,23 @@ public final class EntityRelationship<
     
     public var wrappedValue: Value {
         get {
-            _runtimeMetadata.wrappedValueAccessToken = UUID()
+            TODO.unimplemented
+            /*_runtimeMetadata.wrappedValueAccessToken = UUID()
             
-            guard let recordContainer = _underlyingRecordProxy else {
+            guard let proxy = _underlyingRecordProxy else {
                 return .init(noRelatedModels: ())
             }
             
-            return try! recordContainer.decode(Value.self, forKey: key)
+            return try! proxy.decode(Value.self, forKey: key)*/
         } set {
-            defer {
+            TODO.unimplemented
+            /*defer {
                 _runtimeMetadata.wrappedValue_didSet_token = UUID()
             }
             
-            if let recordContainer = _underlyingRecordProxy {
-                try! recordContainer.encode(newValue, forKey: key)
-            }
+            if let proxy = _underlyingRecordProxy {
+                try! proxy.encode(newValue, forKey: key)
+            }*/
         }
     }
     

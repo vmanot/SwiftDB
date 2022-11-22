@@ -50,8 +50,8 @@ extension _CloudKit.DatabaseRecordSpace: DatabaseRecordSpace {
         return .init(ckRecord: record)
     }
     
-    public func delete(_ object: Record) throws {
-        records[object.ckRecord.recordID] = nil
+    public func delete(_ recordID: Record.ID) throws {
+        TODO.unimplemented
     }
     
     public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {
