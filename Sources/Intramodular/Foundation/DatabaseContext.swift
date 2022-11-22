@@ -33,7 +33,7 @@ public struct DatabaseContext<Database: SwiftDB.Database> {
     }
     
     public func recordSchema(
-        forRecordType recordType: Database.RecordSpace.Record.RecordType
+        forRecordType recordType: Database.Record.RecordType
     ) throws -> _Schema.Record? {
         guard let recordSchemaID = try schemaAdaptor.entity(forRecordType: recordType) else {
             return nil

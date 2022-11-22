@@ -36,11 +36,11 @@ extension EntityPropertyAccessorModifier  {
         }
     }
     
-    public var _underlyingRecordContainer: _DatabaseRecordContainer? {
+    public var _underlyingRecordProxy: _DatabaseRecordProxy? {
         get {
-            base._underlyingRecordContainer
+            base._underlyingRecordProxy
         } set {
-            base._underlyingRecordContainer = newValue
+            base._underlyingRecordProxy = newValue
         }
     }
     
@@ -56,7 +56,7 @@ extension EntityPropertyAccessorModifier  {
         try base.schema()
     }
     
-    public func initialize(with container: _DatabaseRecordContainer) throws {
+    public func initialize(with container: _DatabaseRecordProxy) throws {
         try base.initialize(with: container)
     }
 }

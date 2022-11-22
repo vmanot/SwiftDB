@@ -12,11 +12,11 @@ public struct _DatabaseRecordDump: Codable, Hashable, Identifiable {
     public let fields: [String: _RecordFieldPayload?]
 }
 
-extension _DatabaseRecordContainer {
+extension _DatabaseRecordProxy {
     public func _dumpRecord() throws -> _DatabaseRecordDump {
         .init(
             id: try primaryKeyOrRecordID(),
-            fields: try Dictionary(uniqueKeysWithValues: record.allKeys.map({ key in
+            fields: try Dictionary(uniqueKeysWithValues: allKeys.map({ key in
                 try (key.stringValue, decodeFieldPayload(forKey: key))
             }))
         )

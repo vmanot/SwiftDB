@@ -27,12 +27,14 @@ public protocol Database: Named, Identifiable where ID: Codable {
     associatedtype SchemaAdaptor: DatabaseSchemaAdaptor where SchemaAdaptor.Database == Self
     associatedtype Zone: DatabaseZone
     associatedtype Record: DatabaseRecord
+    associatedtype TransactionExecutor: DatabaseTransactionExecutor
+    associatedtype QuerySubscription: DatabaseQuerySubscription where QuerySubscription.Database == Self
     associatedtype RecordSpace: DatabaseRecordSpace where RecordSpace.Zone == Zone, RecordSpace.Record == Record
-    
-    typealias Context = DatabaseContext<Self>
-    
-    typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
 
+    typealias Transaction = TransactionExecutor.Transaction
+    typealias Context = DatabaseContext<Self>
+    typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
+    
     /// The configuration used to initialize the database.
     var configuration: Configuration { get }
     
@@ -52,12 +54,11 @@ public protocol Database: Named, Identifiable where ID: Codable {
     @discardableResult
     func fetchAllAvailableZones() -> AnyTask<[Zone], Error>
     
-    func recordSpace(forZones _: [Zone]?) throws -> RecordSpace
+    func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription
+
+    func transactionExecutor() throws -> TransactionExecutor
     
-    /// Erase all data in the database.
-    ///
-    /// This operation is always an atomic operation.
-    func delete() -> AnyTask<Void, Error>
+    func recordSpace(forZones _: [Zone]?) throws -> RecordSpace
 }
 
 // MARK: - Extensions -
@@ -74,5 +75,11 @@ extension Database {
             configuration: configuration,
             state: state
         )
+    }
+}
+
+extension Database {
+    public func fetchAllAvailableZones() async throws -> [Zone] {
+        try await fetchAllAvailableZones().value
     }
 }

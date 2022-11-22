@@ -16,7 +16,7 @@ public protocol Entity: _opaque_Entity, EntityRelatable, PredicateExpressionPrim
 
 extension Entity {
     public func toPredicateExpressionPrimitive() -> PredicateExpressionPrimitive {
-        guard let container = _underlyingDatabaseRecordContainer else {
+        guard let container = _databaseRecordProxy else {
             assertionFailure()
             
             return NilPredicateExpressionValue(nilLiteral: ())

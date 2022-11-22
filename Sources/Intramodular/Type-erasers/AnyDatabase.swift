@@ -10,6 +10,7 @@ public final class AnyDatabase: Database {
     public typealias SchemaAdaptor = AnyDatabaseSchemaAdaptor
     public typealias Zone = AnyDatabaseZone
     public typealias Record = AnyDatabaseRecord
+    public typealias TransactionExecutor = AnyDatabaseTransactionExecutor
     public typealias RecordSpace = AnyDatabaseRecordSpace
     
     private let base: any Database
@@ -34,8 +35,12 @@ public final class AnyDatabase: Database {
         base._opaque_context
     }
     
-    public init<D: Database>(_ database: D) {
-        self.base = database
+    public init<D: Database>(erasing database: D) {
+        if let database = database as? AnyDatabase {
+            self.base = database.base
+        } else {
+            self.base = database
+        }
     }
     
     public init(
@@ -47,16 +52,20 @@ public final class AnyDatabase: Database {
         throw Never.Reason.unsupported
     }
     
+    public func querySubscription(for request: ZoneQueryRequest) throws -> AnyDatabaseQuerySubscription {
+        try base._opaque_querySubscription(for: request)
+    }
+
+    public func transactionExecutor() throws -> TransactionExecutor {
+        try .init(erasing: base.transactionExecutor())
+    }
+    
     public func fetchAllAvailableZones() -> AnyTask<[AnyDatabaseZone], Error> {
         base._opaque_fetchAllAvailableZones()
     }
-        
+    
     public func recordSpace(forZones zones: [AnyDatabaseZone]?) throws -> AnyDatabaseRecordSpace {
         try base._opaque_recordSpace(forZones: zones)
-    }
-    
-    public func delete() -> AnyTask<Void, Error> {
-        base.delete()
     }
 }
 
@@ -110,7 +119,13 @@ fileprivate extension Database {
     var _opaque_context: AnyDatabase.Context {
         context.eraseToAnyDatabaseContext()
     }
-    
+
+    func _opaque_querySubscription(
+        for request: AnyDatabase.ZoneQueryRequest
+    ) throws -> AnyDatabaseQuerySubscription {
+        try .init(erasing: querySubscription(for: request._cast(to: ZoneQueryRequest.self)))
+    }
+
     func _opaque_fetchAllAvailableZones() -> AnyTask<[AnyDatabaseZone], Error> {
         fetchAllAvailableZones()
             .successPublisher

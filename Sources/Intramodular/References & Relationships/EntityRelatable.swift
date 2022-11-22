@@ -16,10 +16,10 @@ public protocol EntityRelatable {
     init(noRelatedModels: ())
     
     /// Creates a new instance by decoding from the given database reference.
-    static func decode(from _: _DatabaseRecordContainer, forKey _: CodingKey) throws -> Self
+    static func decode(from _: _DatabaseRecordProxy, forKey _: CodingKey) throws -> Self
     
     /// Encodes a relationship to this instance's related models into the given database reference.
-    func encode(to _: _DatabaseRecordContainer, forKey _: CodingKey) throws
+    func encode(to _: _DatabaseRecordProxy, forKey _: CodingKey) throws
 }
 
 // MARK: - Implementation -
@@ -34,22 +34,22 @@ extension EntityRelatable where Self: Entity {
     }
     
     public static func decode(
-        from container: _DatabaseRecordContainer,
+        from container: _DatabaseRecordProxy,
         forKey key: CodingKey
     ) throws -> Self {
-        try _withRuntimeTaskContext { context in
-            try context.validate(container.transactionLink)
-            
+        try _withSwiftDBTaskContext { context in
             let record = try container.relationship(for: key).toOneRelationship().getRecord().unwrap()
             
             return try context.createInstance(Self.self, for: record)
         }
     }
     
-    public func encode(to container: _DatabaseRecordContainer, forKey key: CodingKey) throws {
-        let relationship = try container.relationship(for: key).toOneRelationship()
-        
-        try relationship.setRecord(try _underlyingDatabaseRecordContainer.unwrap().record)
+    public func encode(to container: _DatabaseRecordProxy, forKey key: CodingKey) throws {
+        try _withSwiftDBTaskContext { context in
+            let relationship = try container.relationship(for: key).toOneRelationship()
+            
+            try relationship.setRecord(try _databaseRecordProxy.unwrap().record)
+        }
     }
 }
 
@@ -65,7 +65,7 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     }
     
     public static func decode(
-        from container: _DatabaseRecordContainer,
+        from container: _DatabaseRecordProxy,
         forKey key: CodingKey
     ) throws -> Optional<Wrapped> {
         if try container.containsValue(forKey: key) {
@@ -76,7 +76,7 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     }
     
     public func encode(
-        to container: _DatabaseRecordContainer,
+        to container: _DatabaseRecordProxy,
         forKey key: CodingKey
     ) throws {
         if let wrappedValue = self {

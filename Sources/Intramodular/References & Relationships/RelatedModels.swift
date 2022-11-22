@@ -12,11 +12,11 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
         .many
     }
     
-    let transactionContext: _SwiftDB_RuntimeTaskContext?
+    let transactionContext: _SwiftDB_TaskContext?
     let relationship: AnyDatabaseRecordRelationship
     
     init(
-        transactionContext: _SwiftDB_RuntimeTaskContext,
+        transactionContext: _SwiftDB_TaskContext,
         relationship: AnyDatabaseRecordRelationship
     ) {
         self.transactionContext = transactionContext
@@ -30,8 +30,8 @@ public struct RelatedModels<Model: Entity & Identifiable>: Sequence {
     
     public func makeIterator() -> AnyIterator<Model> {
         do {
-            return try _withRuntimeTaskContext(transactionContext) { context in
-                AnyIterator(try relationship.toManyRelationship().all().map({ try Model(from: context._recordContainer(for: $0)) }).makeIterator())
+            return try _withSwiftDBTaskContext(transactionContext) { context in
+                AnyIterator(try relationship.toManyRelationship().all().map({ try Model(from: context._recordProxy(for: $0)) }).makeIterator())
             }
         } catch {
             assertionFailure()
@@ -51,10 +51,10 @@ extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
     
     public static func decode(
-        from container: _DatabaseRecordContainer,
+        from container: _DatabaseRecordProxy,
         forKey key: CodingKey
     ) throws -> Self {
-        try _withRuntimeTaskContext { context in
+        try _withSwiftDBTaskContext { context in
             self.init(
                 transactionContext: context,
                 relationship: try container.relationship(for: key)
@@ -62,7 +62,7 @@ extension RelatedModels: EntityRelatable {
         }
     }
     
-    public func encode(to record: _DatabaseRecordContainer, forKey key: CodingKey) throws {
+    public func encode(to record: _DatabaseRecordProxy, forKey key: CodingKey) throws {
         fatalError()
     }
 }
@@ -70,7 +70,7 @@ extension RelatedModels: EntityRelatable {
 extension RelatedModels {
     public func insert(_ model: Model) {
         do {
-            try relationship.toManyRelationship().insert(model._underlyingDatabaseRecordContainer.unwrap().record)
+            try relationship.toManyRelationship().insert(model._databaseRecordProxy.unwrap().record)
         } catch {
             assertionFailure()
         }
@@ -78,7 +78,7 @@ extension RelatedModels {
     
     public func remove(_ model: Model) {
         do {
-            try relationship.toManyRelationship().remove(model._underlyingDatabaseRecordContainer.unwrap().record)
+            try relationship.toManyRelationship().remove(model._databaseRecordProxy.unwrap().record)
         } catch {
             assertionFailure()
         }

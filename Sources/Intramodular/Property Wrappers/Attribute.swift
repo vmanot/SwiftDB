@@ -26,7 +26,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     let makeInitialValue: (() -> Value?)?
     var assignedInitialValue: Value?
     
-    public var _underlyingRecordContainer: _DatabaseRecordContainer?
+    public var _underlyingRecordProxy: _DatabaseRecordProxy?
     
     public var isOptional: Bool {
         Value.self is _opaque_Optional.Type
@@ -36,7 +36,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         get {
             _runtimeMetadata.wrappedValueAccessToken = UUID()
             
-            guard let recordContainer = _underlyingRecordContainer else {
+            guard let recordContainer = _underlyingRecordProxy else {
                 if let value = assignedInitialValue {
                     return value
                 } else if let makeInitialValue = makeInitialValue {
@@ -74,7 +74,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
                 objectWillChange.send()
             }
             
-            if let recordContainer = _underlyingRecordContainer {
+            if let recordContainer = _underlyingRecordProxy {
                 try! recordContainer.encode(newValue, forKey: key)
             } else {
                 assignedInitialValue = newValue
@@ -136,8 +136,8 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         )
     }
     
-    public func initialize(with container: _DatabaseRecordContainer) throws {
-        self._underlyingRecordContainer = container
+    public func initialize(with container: _DatabaseRecordProxy) throws {
+        self._underlyingRecordProxy = container
         
         _ = try encodeDefaultValueIfNecessary(into: container)
     }
@@ -145,23 +145,23 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     /// Encode the `defaultValue` if necessary.
     /// Needed for required attributes, otherwise the underlying object crashes on save.
     func encodeDefaultValueIfNecessary(
-        into _underlyingRecordContainer: _DatabaseRecordContainer
+        into _underlyingRecordProxy: _DatabaseRecordProxy
     ) throws -> Value? {
         if let assignedInitialValue = assignedInitialValue {
             let initialValue = assignedInitialValue
             
-            try _underlyingRecordContainer.setInitialValue(initialValue, forKey: key)
+            try _underlyingRecordProxy.setInitialValue(initialValue, forKey: key)
             
             return initialValue
         } else if let makeInitialValue = makeInitialValue {
             let initialValue = makeInitialValue()
             
-            try _underlyingRecordContainer.setInitialValue(initialValue, forKey: key)
+            try _underlyingRecordProxy.setInitialValue(initialValue, forKey: key)
             
             return initialValue
         }
         
-        if try !isOptional && (try _underlyingRecordContainer.containsValue(forKey: key)) {
+        if try !isOptional && (try _underlyingRecordProxy.containsValue(forKey: key)) {
             _ = self.wrappedValue // force an evaluation
         }
         

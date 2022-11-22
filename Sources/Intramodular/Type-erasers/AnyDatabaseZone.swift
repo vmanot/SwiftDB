@@ -5,27 +5,27 @@
 import Swallow
 
 /// A type-erased wrapper for a database zone.
-public struct AnyDatabaseZone: DatabaseZone {
-    let base: Any
+public struct AnyDatabaseZone: DatabaseZone  {
+    let base: any DatabaseZone
     
-    public let name: String
-    public let id: ID
+    public var id: ID {
+        ID(erasing: base._opaque_zoneID)
+    }
     
     init<T: DatabaseZone>(base zone: T) {
         self.base = zone
-        
-        self.name = zone.name
-        self.id = ID(base: zone.id)
     }
 }
 
+// MARK: - Auxiliary Implementation -
+
 extension AnyDatabaseZone {
     public struct ID: Codable, Hashable {
-        let base: Any & Encodable
+        let base: Codable & Encodable
         
         private let hashImpl: (inout Hasher) -> Void
         
-        init<ID: Codable & Hashable>(base id: ID) {
+        init<ID: Codable & Hashable>(erasing id: ID) {
             self.base = id
             self.hashImpl = id.hash(into:)
         }
@@ -45,5 +45,11 @@ extension AnyDatabaseZone {
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.hashValue == rhs.hashValue
         }
+    }
+}
+
+fileprivate extension DatabaseZone {
+    var _opaque_zoneID: AnyDatabaseZone.ID {
+        .init(erasing: id)
     }
 }

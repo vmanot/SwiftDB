@@ -25,7 +25,7 @@ extension _CoreData.Database {
         ) {
             return .init(zonesToMigrate: [])
         } else {
-            return DatabaseMigrationCheck(zonesToMigrate: [.fileURL(url: fileURL)])
+            return DatabaseMigrationCheck(zonesToMigrate: [.init(_fileURL: fileURL)])
         }
     }
     

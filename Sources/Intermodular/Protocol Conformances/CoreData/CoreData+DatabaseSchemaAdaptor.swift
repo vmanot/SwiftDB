@@ -7,8 +7,8 @@ import CoreData
 import Merge
 import Swallow
 
-extension _CoreData {
-    public struct DatabaseSchemaAdaptor: SwiftDB.DatabaseSchemaAdaptor {
+extension _CoreData.Database {
+    public struct SchemaAdaptor: SwiftDB.DatabaseSchemaAdaptor {
         public typealias Database = _CoreData.Database
         
         private let schema: _Schema
@@ -40,7 +40,7 @@ extension _CoreData {
     }
 }
 
-extension _CoreData.DatabaseSchemaAdaptor {
+extension _CoreData.Database.SchemaAdaptor {
     private enum Error: Swift.Error {
         case defaultRecordTypeUnavailable
     }

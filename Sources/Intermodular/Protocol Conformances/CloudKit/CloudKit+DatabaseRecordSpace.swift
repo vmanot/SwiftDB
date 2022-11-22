@@ -57,28 +57,7 @@ extension _CloudKit.DatabaseRecordSpace: DatabaseRecordSpace {
     public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {
         fatalError(reason: .unimplemented)
     }
-    
-    public final class QuerySubscription: DatabaseQuerySubscription {
-        public typealias Database = _CloudKit.Database
         
-        public typealias Output = [Database.Record]
-        public typealias Failure = Error
-        
-        fileprivate init() {
-            TODO.unimplemented
-        }
-        
-        public func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, [Database.Record] == S.Input {
-            fatalError()
-        }
-    }
-    
-    public func querySubscription(
-        for request: Database.ZoneQueryRequest
-    ) throws -> QuerySubscription {
-        TODO.unimplemented
-    }
-    
     public func save() -> AnyTask<Void, SaveError> {
         let ckDatabase = self.ckDatabase
         let records = self.records

@@ -171,13 +171,18 @@ extension _CoreData.Database {
                 entityMapping.destinationEntityVersionHash = destinationEntity.versionHash
                 entityMapping.mappingType = .customEntityMappingType
                 entityMapping.sourceExpression = expression(forSource: sourceEntity)
-                entityMapping.entityMigrationPolicyClassName = NSStringFromClass(CustomEntityMigrationPolicy.self)
+                entityMapping.entityMigrationPolicyClassName = NSStringFromClass(_SwiftDB_CustomEntityMigrationPolicy.self)
                 
-                var migrationPolicyConfiguration = CustomEntityMigrationPolicy.Configuration(
-                    databaseContext: .init(
+                var migrationPolicyConfiguration = _SwiftDB_CustomEntityMigrationPolicy.Configuration(
+                    sourceDatabaseContext: .init(
+                        runtime: try _Default_SwiftDB_Runtime(schema: mappingModel.source),
+                        schema: mappingModel.source,
+                        schemaAdaptor: _CoreData.Database.SchemaAdaptor(schema: mappingModel.source)
+                    ),
+                    destinationDatabaseContext: .init(
                         runtime: try _Default_SwiftDB_Runtime(schema: mappingModel.destination),
                         schema: mappingModel.destination,
-                        schemaAdaptor: _CoreData.DatabaseSchemaAdaptor(schema: mappingModel.destination)
+                        schemaAdaptor: _CoreData.Database.SchemaAdaptor(schema: mappingModel.destination)
                     ),
                     schemaMappingModel: mappingModel,
                     sourceEntity: sourceSchemaEntity,
@@ -227,7 +232,7 @@ extension _CoreData.Database {
                     return relationshipMappings
                 }
                 entityMapping.userInfo = [
-                    CustomEntityMigrationPolicy.UserInfoKey.configuration: migrationPolicyConfiguration
+                    _SwiftDB_CustomEntityMigrationPolicy.UserInfoKey.configuration: migrationPolicyConfiguration
                 ]
                 entityMappings.append(entityMapping)
             }
@@ -240,9 +245,10 @@ extension _CoreData.Database {
 }
 
 extension _CoreData.Database {
-    final class CustomEntityMigrationPolicy: NSEntityMigrationPolicy {
+    final class _SwiftDB_CustomEntityMigrationPolicy: NSEntityMigrationPolicy {
         struct Configuration {
-            let databaseContext: _CoreData.Database.Context
+            let sourceDatabaseContext: _CoreData.Database.Context
+            let destinationDatabaseContext: _CoreData.Database.Context
             let schemaMappingModel: _SchemaMigrationMapping
             let sourceEntity: _Schema.Entity
             let destinationEntity: _Schema.Entity
@@ -260,32 +266,18 @@ extension _CoreData.Database {
             let userInfo = mapping.userInfo!
             let configuration = userInfo[UserInfoKey.configuration]! as! Configuration
             var destinationObject: UnsafeRecordMigrationDestination?
-            
-            let destinationContext = _CoreData.DatabaseRecordSpace(
-                databaseContext: configuration.databaseContext,
-                managedObjectContext: manager.destinationContext,
-                affectedStores: manager.destinationContext.persistentStoreCoordinator?.persistentStores
-            )
-            
-            let transactionContext = _SwiftDB_RuntimeTaskContext(
-                databaseContext: configuration.databaseContext.eraseToAnyDatabaseContext(),
-                transaction: _AnyRecordSpaceTransaction(
-                    databaseContext: configuration.databaseContext.eraseToAnyDatabaseContext(),
-                    recordSpace: AnyDatabaseRecordSpace(erasing: destinationContext)
-                )
-            )
-            
+                        
             let sourceEntity = try configuration.schemaMappingModel.source.entity(withName: sInstance.entity.name.unwrap())
             
-            let sourceRecordContainer = try _DatabaseRecordContainer(
-                transactionContext: transactionContext,
+            let sourceRecordProxy = try _DatabaseRecordProxy(
+                _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(fromDatabaseContext: configuration.sourceDatabaseContext),
                 recordSchema: sourceEntity,
                 record: .init(erasing: _CoreData.DatabaseRecord(rawObject: sInstance))
             )
             
             try configuration.transformer(
                 .init(
-                    source: sourceRecordContainer,
+                    source: sourceRecordProxy,
                     createDestination: {
                         if let destinationObject = destinationObject {
                             return destinationObject
@@ -327,7 +319,7 @@ extension _CoreData.Database {
         
         
         fileprivate enum UserInfoKey {
-            fileprivate static let configuration = "com.vmanot.SwiftDB.CustomEntityMigrationPolicy.configuration"
+            fileprivate static let configuration = "com.vmanot.SwiftDB._SwiftDB_CustomEntityMigrationPolicy.configuration"
         }
     }
 }

@@ -5,19 +5,21 @@
 import Runtime
 import Swallow
 
-struct _TransactionID: Hashable {
+struct _SwiftDB_TaskRuntimeID: Hashable {
     private let rawValue: AnyHashable
     
-    init(rawValue: AnyHashable) {
+    private init(rawValue: AnyHashable) {
         self.rawValue = rawValue
+    }
+
+    public init() {
+        self.init(rawValue: UUID())
     }
 }
 
 /// An internal representation of a SwiftDB encapsulated database transaction.
-protocol _Transaction: AnyObject, DatabaseCRUDQ, Identifiable where ID == _TransactionID {
-    func commit() async throws
-    
-    func scope<T>(_ context: (_SwiftDB_RuntimeTaskContext) throws -> T) throws -> T
+protocol _SwiftDB_TaskRuntime: AnyObject, Identifiable where ID == _SwiftDB_TaskRuntimeID {    
+    func scope<T>(_ context: (_SwiftDB_TaskContext) throws -> T) throws -> T
     
     func _scopeRecordMutation<T>(_ body: () throws -> T) throws -> T
 }
@@ -26,13 +28,13 @@ protocol _Transaction: AnyObject, DatabaseCRUDQ, Identifiable where ID == _Trans
 ///
 /// This is needed to implement special transaction types (such as `_AutoCommittingTransaction`).
 /// The runtime uses this to ensure that the interposed transaction is used over the base transacton.
-protocol _TransactionInterposer: _Transaction {
-    var interposedTransactionID: _TransactionID { get }
+protocol _SwiftDB_TaskRuntimeInterposer: _SwiftDB_TaskRuntime {
+    var interposee: _SwiftDB_TaskRuntimeID { get }
 }
 
 // MARK: - Implementation -
 
-extension _Transaction {
+extension _SwiftDB_TaskRuntime {
     public func _scopeRecordMutation<T>(_ body: () throws -> T) throws -> T {
         try body()
     }
@@ -40,12 +42,11 @@ extension _Transaction {
 
 // MARK: - Supplementary API -
 
-/// A link to a database transaction.
-public final class _TransactionLink {
-    public let transactionID: AnyHashable
+public final class _SwiftDB_TaskRuntimeLink {
+    public let parentID: AnyHashable
     
-    init(from transaction: any _Transaction) {
-        self.transactionID = transaction.id
+    init(from parent: any _SwiftDB_TaskRuntime) {
+        self.parentID = parent.id
         
         /*asObjCObject(transaction).keepAlive(ExecuteClosureOnDeinit { [weak self] in
          if self != nil {

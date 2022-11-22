@@ -32,7 +32,7 @@ public final class EntityRelationship<
         }
     }
     
-    public var _underlyingRecordContainer: _DatabaseRecordContainer?
+    public var _underlyingRecordProxy: _DatabaseRecordProxy?
     public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     
     public var name: String?
@@ -49,7 +49,7 @@ public final class EntityRelationship<
         get {
             _runtimeMetadata.wrappedValueAccessToken = UUID()
             
-            guard let recordContainer = _underlyingRecordContainer else {
+            guard let recordContainer = _underlyingRecordProxy else {
                 return .init(noRelatedModels: ())
             }
             
@@ -59,7 +59,7 @@ public final class EntityRelationship<
                 _runtimeMetadata.wrappedValue_didSet_token = UUID()
             }
             
-            if let recordContainer = _underlyingRecordContainer {
+            if let recordContainer = _underlyingRecordProxy {
                 try! recordContainer.encode(newValue, forKey: key)
             }
         }
@@ -75,8 +75,8 @@ public final class EntityRelationship<
         self.traits = traits
     }
     
-    public func initialize(with container: _DatabaseRecordContainer) {
-        self._underlyingRecordContainer = container
+    public func initialize(with container: _DatabaseRecordProxy) {
+        self._underlyingRecordProxy = container
     }
 }
 

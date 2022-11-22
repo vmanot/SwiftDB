@@ -61,7 +61,9 @@ extension _CloudKit.Database: Database {
     public typealias RecordSpace = _CloudKit.DatabaseRecordSpace
 
     public func fetchAllAvailableZones() -> AnyTask<[Zone], Error> {
-        let operation = CKFetchRecordZonesOperation()
+        TODO.unimplemented
+
+        /*let operation = CKFetchRecordZonesOperation()
 
         let result = PassthroughTask<[Zone], Error>()
 
@@ -76,15 +78,25 @@ extension _CloudKit.Database: Database {
             }
         }
 
-        return result.handleEvents(receiveStart: { operation.start() }).eraseToAnyTask()
+        return result.handleEvents(receiveStart: { operation.start() }).eraseToAnyTask()*/
     }
     
+    public func querySubscription(
+        for request: ZoneQueryRequest
+    ) throws -> QuerySubscription {
+        TODO.unimplemented
+    }
+    
+    public func transactionExecutor() throws -> TransactionExecutor {
+        TODO.unimplemented
+    }
+
     public func recordSpace(forZones zones: [Zone]?) throws -> RecordSpace {
         .init(parent: self, zones: try zones.unwrap())
     }
 
     public func delete() -> AnyTask<Void, Error> {
-        fatalError(reason: .unimplemented)
+        TODO.unimplemented
     }
 }
 
@@ -97,5 +109,24 @@ extension _CloudKit.Database: Identifiable {
 extension _CloudKit.Database: Named {
     public var name: String {
         ""
+    }
+}
+
+// MARK: - Auxiliary -
+
+extension _CloudKit.Database {
+    public final class QuerySubscription: DatabaseQuerySubscription {
+        public typealias Database = _CloudKit.Database
+        
+        public typealias Output = [Database.Record]
+        public typealias Failure = Error
+        
+        fileprivate init() {
+            TODO.unimplemented
+        }
+        
+        public func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, [Database.Record] == S.Input {
+            fatalError()
+        }
     }
 }

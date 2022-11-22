@@ -10,109 +10,110 @@ import Merge
 import Swallow
 
 extension _CoreData {
-    public final class Database: CancellablesHolder, SwiftDB.Database, ObservableObject {
-        private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
-        private let setupTasksQueue = TaskQueue()
-                        
-        public typealias SchemaAdaptor = DatabaseSchemaAdaptor
-        public typealias Record = _CoreData.DatabaseRecord
-        public typealias RecordSpace = _CoreData.DatabaseRecordSpace
+    public typealias Database = CoreDataDatabase
+}
+
+public final class CoreDataDatabase: CancellablesHolder, SwiftDB.LocalDatabase, ObservableObject {
+    private let logger = os.Logger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
+    private let setupTasksQueue = TaskQueue()
+    
+    public typealias Record = _CoreData.DatabaseRecord
+    public typealias RecordSpace = _CoreData.DatabaseRecordSpace
+    
+    let schema: _Schema
+    
+    public let configuration: Configuration
+    public var state: State
+    public let context: Context
+    
+    public var mainRecordSpace: _CoreData.DatabaseRecordSpace?
+    
+    public var nsPersistentContainer: NSPersistentContainer!
+    
+    public init(
+        runtime: _SwiftDB_Runtime,
+        schema: _Schema?,
+        configuration: Configuration,
+        state: State?
+    ) throws {
+        self.schema = try schema.unwrap()
+        self.configuration = configuration
+        self.state = state ?? .init()
+        self.context = .init(runtime: runtime, schema: self.schema, schemaAdaptor: .init(schema: self.schema))
         
-        let schema: _Schema
+        try createFoldersIfNecessary()
         
-        public let configuration: Configuration
-        public var state: State
-        public let context: Context
-         
-        public var viewContext: DatabaseRecordSpace?
+        self.nsPersistentContainer = .init(
+            name: configuration.name,
+            managedObjectModel: try schema.map({ try .init($0) })
+        )
         
-        public var nsPersistentContainer: NSPersistentContainer!
-        
-        public init(
-            runtime: _SwiftDB_Runtime,
-            schema: _Schema?,
-            configuration: Configuration,
-            state: State?
-        ) throws {
-            self.schema = try schema.unwrap()
-            self.configuration = configuration
-            self.state = state ?? .init()
-            self.context = .init(runtime: runtime, schema: self.schema, schemaAdaptor: .init(schema: self.schema))
+        try setupPersistentStoreDescription()
+    }
+    
+    private func createFoldersIfNecessary() throws {
+        if let location = configuration.location {
+            guard location.pathExtension == "sqlite" else {
+                throw ConfigurationError.customLocationPathExtensionMissing
+            }
             
-            try createFoldersIfNecessary()
+            let locationContainer = location.deletingLastPathComponent()
             
-            self.nsPersistentContainer = .init(
-                name: configuration.name,
-                managedObjectModel: try schema.map({ try .init($0) })
-            )
-            
-            try setupPersistentStoreDescription()
-        }
-        
-        private func createFoldersIfNecessary() throws {
-            if let location = configuration.location {
-                guard location.pathExtension == "sqlite" else {
-                    throw ConfigurationError.customLocationPathExtensionMissing
-                }
-                
-                let locationContainer = location.deletingLastPathComponent()
-                
-                if !FileManager.default.directoryExists(at: locationContainer) {
-                    try FileManager.default.createDirectory(at: locationContainer, withIntermediateDirectories: true, attributes: nil)
-                }
+            if !FileManager.default.directoryExists(at: locationContainer) {
+                try FileManager.default.createDirectory(at: locationContainer, withIntermediateDirectories: true, attributes: nil)
             }
         }
+    }
+    
+    private func loadPersistentStoresIfNeeded() async throws {
+        try setupPersistentStoreDescription()
         
-        private func loadPersistentStoresIfNeeded() async throws {
-            try setupPersistentStoreDescription()
-            
-            guard nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty else {
-                return
-            }
-            
-            try createFoldersIfNecessary()
-            
-            try await nsPersistentContainer.loadPersistentStores()
-            
-            nsPersistentContainer.viewContext.automaticallyMergesChangesFromParent = true
-            
-            viewContext = DatabaseRecordSpace(
-                databaseContext: context,
-                managedObjectContext: self.nsPersistentContainer.viewContext,
-                affectedStores: nil
-            )
-            
-            objectWillChange.send()
+        guard nsPersistentContainer.persistentStoreCoordinator.persistentStores.isEmpty else {
+            return
         }
         
-        private func setupPersistentStoreDescription() throws {
-            // Clear default store descriptions if an explicit location has been provided.
-            if configuration.location != nil {
-                nsPersistentContainer.persistentStoreDescriptions = []
-            }
+        try createFoldersIfNecessary()
+        
+        try await nsPersistentContainer.loadPersistentStores()
+        
+        nsPersistentContainer.viewContext.automaticallyMergesChangesFromParent = true
+        
+        mainRecordSpace = RecordSpace(
+            databaseContext: context,
+            managedObjectContext: self.nsPersistentContainer.viewContext,
+            affectedStores: nil
+        )
+        
+        objectWillChange.send()
+    }
+    
+    private func setupPersistentStoreDescription() throws {
+        // Clear default store descriptions if an explicit location has been provided.
+        if configuration.location != nil {
+            nsPersistentContainer.persistentStoreDescriptions = []
+        }
+        
+        guard nsPersistentContainer.persistentStoreDescriptions.isEmpty else {
+            return
+        }
+        
+        if let sqliteStoreURL = sqliteStoreURL {
+            let storeDescription = NSPersistentStoreDescription(url: sqliteStoreURL)
             
-            guard nsPersistentContainer.persistentStoreDescriptions.isEmpty else {
-                return
-            }
+            storeDescription.shouldInferMappingModelAutomatically = true
+            storeDescription.shouldMigrateStoreAutomatically = true
+            storeDescription.type = NSSQLiteStoreType
             
-            if let sqliteStoreURL = sqliteStoreURL {
-                let storeDescription = NSPersistentStoreDescription(url: sqliteStoreURL)
-                
-                storeDescription.shouldInferMappingModelAutomatically = true
-                storeDescription.shouldMigrateStoreAutomatically = true
-                storeDescription.type = NSSQLiteStoreType
-                
-                nsPersistentContainer.persistentStoreDescriptions = [storeDescription]
-            }
+            nsPersistentContainer.persistentStoreDescriptions = [storeDescription]
+        }
+        
+        let description = try nsPersistentContainer.persistentStoreDescriptions.first.unwrap()
+        
+        if let cloudKitContainerIdentifier = configuration.cloudKitContainerIdentifier {
+            description.cloudKitContainerOptions = .init(containerIdentifier: cloudKitContainerIdentifier)
             
-            let description = try nsPersistentContainer.persistentStoreDescriptions.first.unwrap()
-            
-            if let cloudKitContainerIdentifier = configuration.cloudKitContainerIdentifier {
-                description.cloudKitContainerOptions = .init(containerIdentifier: cloudKitContainerIdentifier)
-                
-                description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-                description.setOption(true as NSObject, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
-            }
+            description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+            description.setOption(true as NSObject, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
         }
     }
 }
@@ -139,7 +140,7 @@ extension _CoreData.Database {
             self.cloudKitContainerIdentifier = cloudKitContainerIdentifier
         }
     }
-
+    
     public struct State: Codable, Equatable, Sendable {
         public var schemaHistory: _SchemaHistory
         
@@ -155,10 +156,14 @@ extension _CoreData.Database {
                 try await self.loadPersistentStoresIfNeeded()
             }
             
-            return nsPersistentContainer
+            return try nsPersistentContainer
                 .persistentStoreCoordinator
                 .persistentStores
-                .map({ _CoreData.Database.Zone(persistentStore: $0) })
+                .map { store in
+                    let description = try nsPersistentContainer.persistentStoreDescription(for: store).unwrap()
+                    
+                    return try _CoreData.Database.Zone(persistentStoreDescription: description)
+                }
         }
         .convertToObservableTask()
     }
@@ -167,22 +172,43 @@ extension _CoreData.Database {
     public func fetchAllAvailableZones() async throws -> [Zone] {
         try await fetchAllAvailableZones().value
     }
-        
+    
+    public func querySubscription(
+        for request: ZoneQueryRequest
+    ) throws -> QuerySubscription {
+        try .init(recordSpace: mainRecordSpace.unwrap(), queryRequest: request)
+    }
+
+    public func transactionExecutor() throws -> TransactionExecutor {
+        try .init(recordSpace: mainRecordSpace.unwrap())
+    }
+    
     public func recordSpace(forZones zones: [Zone]?) throws -> RecordSpace {
-        .init(
+        RecordSpace(
             databaseContext: context,
             managedObjectContext: nsPersistentContainer.viewContext,
-            affectedStores: zones?.map({ $0.persistentStore })
+            affectedStores: zones?.map({ $0.id })
         )
     }
     
     public func delete() -> AnyTask<Void, Error> {
+        @Sendable
+        func deleteAllStoreFiles() throws {
+            let allStoreFiles = self.allStoreFiles
+            
+            try allStoreFiles.forEach { url in
+                if FileManager.default.fileExists(at: url) {
+                    try FileManager.default.removeItem(at: url)
+                }
+            }
+        }
+        
         return Task { @MainActor in
             await MainActor.run {
                 objectWillChange.send()
             }
             
-            self.viewContext = nil
+            self.mainRecordSpace = nil
             
             if nsPersistentContainer.viewContext.hasChanges {
                 nsPersistentContainer.viewContext.rollback()
@@ -200,18 +226,16 @@ extension _CoreData.Database {
         }
         .convertToObservableTask()
     }
-    
-    public func delete() async throws {
-        try await delete().value
+
+    private func allZones() throws -> [Zone] {
+        try nsPersistentContainer.persistentStoreDescriptions.map({ try .init(persistentStoreDescription: $0) })
     }
-    
-    private func deleteAllStoreFiles() throws {
-        let allStoreFiles = self.allStoreFiles
-        
-        try allStoreFiles.forEach { url in
-            if FileManager.default.fileExists(at: url) {
-                try FileManager.default.removeItem(at: url)
-            }
+}
+
+extension _CoreData.Database: FolderEnclosable {
+    public var topLevelFileContents: [URL.PathComponent] {
+        get throws {
+            try allZones().flatMap({ $0.topLevelFileContents }).distinct()
         }
     }
 }
@@ -242,12 +266,14 @@ extension _CoreData.Database {
     public var allStoreFiles: [URL] {
         var result: [URL] = []
         
-        if let sqliteStoreURL = sqliteStoreURL {
-            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".com.apple.mobile_container_manager.metadata.plist"))
-            result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-wal"))
-            result.append(sqliteStoreURL.deletingPathExtension().appendingPathExtension("sqlite-shm"))
-            result.append(sqliteStoreURL.deletingLastPathComponent().appendingPathComponent(".\(nsPersistentContainer.name)_SUPPORT/"))
-            result.append(sqliteStoreURL)
+        if let fileURL = sqliteStoreURL {
+            let externalStorageFolderName = ".\(fileURL.deletingPathExtension().lastPathComponent)_SUPPORT"
+
+            result.append(fileURL.deletingLastPathComponent().appendingPathComponent(".com.apple.mobile_container_manager.metadata.plist"))
+            result.append(fileURL.deletingPathExtension().appendingPathExtension("sqlite-wal"))
+            result.append(fileURL.deletingPathExtension().appendingPathExtension("sqlite-shm"))
+            result.append(fileURL.deletingLastPathComponent().appendingPathComponent(externalStorageFolderName, isDirectory: true))
+            result.append(fileURL)
         }
         
         return result

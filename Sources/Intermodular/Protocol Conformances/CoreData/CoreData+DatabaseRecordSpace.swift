@@ -10,53 +10,50 @@ import Swallow
 
 extension _CoreData {
     public final class DatabaseRecordSpace: ObservableObject, @unchecked Sendable {
+        private let cancellables = Cancellables()
+
         public let databaseContext: DatabaseContext<Database>
-        
+
         let notificationCenter: NotificationCenter = .default
         let nsManagedObjectContext: NSManagedObjectContext
-        let affectedStores: [NSPersistentStore]?
-        
+        let affectedStores: [_CoreData.Database.Zone.ID]?
+        let managedObjectsObserver: NSManagedObjectContext.ObjectsObserver
+
         init(
             databaseContext: DatabaseContext<Database>,
             managedObjectContext: NSManagedObjectContext,
-            affectedStores: [NSPersistentStore]?
+            affectedStores: [_CoreData.Database.Zone.ID]?
         ) {
             self.databaseContext = databaseContext
             self.nsManagedObjectContext = managedObjectContext
             self.affectedStores = affectedStores
-            
-            notificationCenter.addObserver(self, selector: #selector(managedObjectContextObjectsDidChange), name: .NSManagedObjectContextObjectsDidChange, object: managedObjectContext)
-            notificationCenter.addObserver(self, selector: #selector(managedObjectContextObjectsDidChange), name: .NSManagedObjectContextWillSave, object: managedObjectContext)
-            notificationCenter.addObserver(self, selector: #selector(managedObjectContextObjectsDidChange), name: .NSManagedObjectContextDidSave, object: managedObjectContext)
-        }
-        
-        deinit {
-            NotificationCenter.default.removeObserver(self)
-        }
-        
-        /// Check if the context needs to publish changes, publish if necessary.
-        @objc private func managedObjectContextObjectsDidChange(notification: NSNotification) {
-            guard let userInfo = notification.userInfo else {
-                return
+            self.managedObjectsObserver = .init(managedObjectContext: managedObjectContext)
+
+            self.managedObjectsObserver.sink { events in
+                do {
+                    var insertedObjects: [NSManagedObject] = []
+
+                    for event in events {
+                        switch event {
+                            case .inserted(let object):
+                                insertedObjects.append(object)
+                            default:
+                                break
+                        }
+                    }
+
+                    try managedObjectContext.obtainPermanentIDs(for: insertedObjects)
+                } catch {
+                    assertionFailure(error)
+                }
+
+                if !events.isEmpty {
+                    MainThreadScheduler.shared.schedule {
+                        self.objectWillChange.send()
+                    }
+                }
             }
-            
-            var triggerObjectWillChange: Bool = false
-            
-            if let insertedObjects = userInfo[NSInsertedObjectsKey] as? Set<NSManagedObject>, !insertedObjects.isEmpty {
-                triggerObjectWillChange = true
-            }
-            
-            if let updatedObjects = userInfo[NSUpdatedObjectsKey] as? Set<NSManagedObject>, !updatedObjects.isEmpty {
-                triggerObjectWillChange = true
-            }
-            
-            if let deletedObjects = userInfo[NSDeletedObjectsKey] as? Set<NSManagedObject>, !deletedObjects.isEmpty {
-                triggerObjectWillChange = true
-            }
-            
-            if triggerObjectWillChange {
-                objectWillChange.send()
-            }
+            .store(in: cancellables)
         }
     }
 }
@@ -77,22 +74,22 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
                 into: nsManagedObjectContext
             )
         )
-        
+
         if let zone = configuration.zone {
-            nsManagedObjectContext.assign(object.rawObject, to: zone.persistentStore)
+            nsManagedObjectContext.assign(object.rawObject, to: try nsPersistentStore(for: zone.id))
         }
-        
+
         return object
     }
-        
+
     public func delete(_ object: Record) throws {
         nsManagedObjectContext.delete(object.rawObject)
     }
-    
+
     public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {
         do {
             let nsFetchRequests = try request.toNSFetchRequests(recordSpace: self)
-            
+
             if request.sortDescriptors.isNil {
                 return Task {
                     try await nsManagedObjectContext.perform { [nsManagedObjectContext] in
@@ -107,11 +104,11 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
                 .map({ Database.ZoneQueryRequest.Result(records: $0) })
                 .convertToTask()
             }
-            
+
             return PassthroughTask<Database.ZoneQueryRequest.Result, Error> { attemptToFulfill -> Void in
                 do {
                     var fetchedNSManagedObjects: [NSManagedObject] = []
-                    
+
                     for nsFetchRequest in nsFetchRequests {
                         let fetchedResultsController = NSFetchedResultsController<NSManagedObject>(
                             fetchRequest: nsFetchRequest,
@@ -119,12 +116,12 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
                             sectionNameKeyPath: nil,
                             cacheName: nil
                         )
-                        
+
                         try fetchedResultsController.performFetch()
-                        
+
                         fetchedNSManagedObjects.append(contentsOf: fetchedResultsController.fetchedObjects ?? [])
                     }
-                    
+
                     attemptToFulfill(.success(Database.ZoneQueryRequest.Result(records: fetchedNSManagedObjects.map({ Record(rawObject: $0) }))))
                 } catch {
                     attemptToFulfill(.failure(error))
@@ -135,12 +132,6 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
             return .failure(error)
         }
     }
-    
-    public func querySubscription(
-        for request: Database.ZoneQueryRequest
-    ) throws -> QuerySubscription {
-        try .init(recordSpace: self, queryRequest: request)
-    }
 
     public func save() -> AnyTask<Void, SaveError> {
         return Task { @Sendable in
@@ -148,11 +139,11 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
             func save() -> Result<Void, SaveError> {
                 do {
                     try self.nsManagedObjectContext.save()
-                    
+
                     return .success(())
                 } catch {
                     let error = error as NSError
-                    
+
                     return .failure(
                         SaveError(
                             description: error.description,
@@ -161,11 +152,11 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
                     )
                 }
             }
-            
+
             guard nsManagedObjectContext.hasChanges else {
                 return .success(())
             }
-            
+
             if nsManagedObjectContext.concurrencyType == .mainQueueConcurrencyType {
                 return await MainActor.run {
                     save()
@@ -175,6 +166,14 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
             }
         }
         .convertToObservableTask()
+    }
+
+    // MARK: - Internal -
+
+    func nsPersistentStore(for zoneID: _CoreData.Database.Zone.ID) throws -> NSPersistentStore {
+        let persistentStoreCoordinator = try nsManagedObjectContext.persistentStoreCoordinator.unwrap()
+
+        return try persistentStoreCoordinator.persistentStore(for: zoneID.fileURL).unwrap()
     }
 }
 
@@ -193,17 +192,17 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
         guard !filters.recordTypes.isEmpty else {
             throw _CoreData.DatabaseRecordSpace.DatabaseZoneQueryRequestError.atLeastOneRecordTypeRequired
         }
-        
+
         guard filters.recordTypes.count == 1 else {
             throw _CoreData.DatabaseRecordSpace.DatabaseZoneQueryRequestError.multipleRecordTypesUnsupported
         }
-        
+
         var nsFetchRequests: [NSFetchRequest<NSManagedObject>] = []
-        
+
         for recordType in filters.recordTypes {
-            
+
             let nsFetchRequest = NSFetchRequest<NSManagedObject>(entityName: recordType.rawValue)
-            
+
             switch self.predicate {
                 case .related(_, _):
                     TODO.unimplemented
@@ -212,11 +211,16 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
                 case .none:
                     nsFetchRequest.predicate = nil
             }
-            
+
             nsFetchRequest.sortDescriptors = self.sortDescriptors.map({ $0.map({ $0 as NSSortDescriptor }) })
-            nsFetchRequest.affectedStores = recordSpace.affectedStores?.filter({ (self.filters.zones?.contains(_CoreData.Database.Zone(persistentStore: $0).id) ?? false) })
+
+            nsFetchRequest.affectedStores = try recordSpace
+                .affectedStores?
+                .filter({ (self.filters.zones?.contains($0) ?? false) })
+                .map({ try recordSpace.nsPersistentStore(for: $0) })
+
             nsFetchRequest.includesSubentities = filters.includesSubentities
-            
+
             if let cursor = cursor {
                 if case .offset(let offset) = cursor {
                     nsFetchRequest.fetchOffset = offset
@@ -224,7 +228,7 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
                     throw Never.Reason.illegal
                 }
             }
-            
+
             if let fetchLimit = fetchLimit {
                 switch fetchLimit {
                     case .cursor(.offset(let offset)):
@@ -235,10 +239,10 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
                         fatalError(reason: .unimplemented)
                 }
             }
-            
+
             nsFetchRequests.append(nsFetchRequest)
         }
-        
+
         return nsFetchRequests
     }
 }

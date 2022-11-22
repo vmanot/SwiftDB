@@ -5,7 +5,7 @@
 import FoundationX
 import Swallow
 
-extension DatabaseContainer {
+extension LocalDatabaseContainer {
     public convenience init(name: String, schema: Schema) throws {
         try self.init(
             name: name,

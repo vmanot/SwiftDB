@@ -8,13 +8,13 @@ public struct UnsafeRecordMigrationDestination {
     let schemaMappingModel: _SchemaMigrationMapping
     let sourceEntity: _Schema.Entity
     let destinationEntity: _Schema.Entity
-    let destination: _DatabaseRecordContainer
+    let destination: _DatabaseRecordProxy
     
     init(
         schemaMappingModel: _SchemaMigrationMapping,
         sourceEntity: _Schema.Entity,
         destinationEntity: _Schema.Entity,
-        destination: _DatabaseRecordContainer
+        destination: _DatabaseRecordProxy
     ) {
         self.schemaMappingModel = schemaMappingModel
         self.sourceEntity = sourceEntity

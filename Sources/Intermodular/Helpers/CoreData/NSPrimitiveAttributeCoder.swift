@@ -17,7 +17,7 @@ extension NSPrimitiveAttributeCoder {
         try cast(object.primitiveValue(forKey: key.stringValue), to: Self.self)
     }
     
-    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoding, forKey key: Key) throws -> Self {
         let key = key.stringValue
         
         if let object = object as? NSManagedObject {
@@ -41,7 +41,7 @@ extension NSPrimitiveAttributeCoder {
         return object.setPrimitiveValue(self, forKey: key.stringValue)
     }
     
-    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) {
+    public func encode<Key: CodingKey>(to object: KeyValueCoding, forKey key: Key) {
         let key = key.stringValue
         
         if let object = object as? NSManagedObject {
@@ -101,7 +101,7 @@ extension Character: NSPrimitiveAttributeCoder {
         try .init(String.primitivelyDecode(from: object, forKey: key))
     }
     
-    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoding, forKey key: Key) throws -> Self {
         try .init(String.decode(from: object, forKey: key))
     }
     
@@ -109,7 +109,7 @@ extension Character: NSPrimitiveAttributeCoder {
         try stringValue.primitivelyEncode(to: object, forKey: key)
     }
     
-    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) {
+    public func encode<Key: CodingKey>(to object: KeyValueCoding, forKey key: Key) {
         stringValue.encode(to: object, forKey: key)
     }
 }

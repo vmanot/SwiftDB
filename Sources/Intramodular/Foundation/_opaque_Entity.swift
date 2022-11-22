@@ -10,7 +10,7 @@ import Swallow
 public protocol _opaque_Entity: _opaque_ObservableObject, Initiable {
     static var _opaque_ParentEntity: (any Entity.Type)? { get }
     
-    var _underlyingDatabaseRecordContainer: _DatabaseRecordContainer? { get }
+    var _databaseRecordProxy: _DatabaseRecordProxy? { get }
 }
 
 extension _opaque_Entity where Self: Entity {
@@ -27,7 +27,7 @@ extension _opaque_Entity  {
     }
     
     mutating func _runtime_configurePropertyAccessors(
-        recordContainer: _DatabaseRecordContainer?
+        recordContainer: _DatabaseRecordProxy?
     ) throws {
         var instance = AnyNominalOrTupleMirror(self)!
         
@@ -48,7 +48,7 @@ extension _opaque_Entity  {
         self = try cast(instance.value, to: Self.self)
     }
     
-    init(from recordContainer: _DatabaseRecordContainer?) throws {
+    init(from recordContainer: _DatabaseRecordProxy?) throws {
         self.init()
         
         try _runtime_configurePropertyAccessors(recordContainer: recordContainer)
@@ -66,23 +66,23 @@ extension _opaque_Entity where Self: Entity {
     public static var _opaque_ParentEntity: (any Entity.Type)? {
         return nil
     }
-        
+    
     public var _opaque_id: AnyHashable? {
         nil
     }
     
     public var _opaque_objectWillChange: AnyObjectWillChangePublisher {
-        _underlyingDatabaseRecordContainer?.objectWillChange ?? .empty
+        _databaseRecordProxy?.objectWillChange ?? .empty
     }
     
     public func _opaque_objectWillChange_send() throws {
         
     }
     
-    public var _underlyingDatabaseRecordContainer: _DatabaseRecordContainer? {
+    public var _databaseRecordProxy: _DatabaseRecordProxy? {
         for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
             if let value = value as? any EntityPropertyAccessor {
-                return value._underlyingRecordContainer
+                return value._underlyingRecordProxy
             }
         }
         
@@ -95,7 +95,6 @@ extension _opaque_Entity where Self: Entity & AnyObject {
         ObjCClass(Self.self).superclass?.value as? any Entity.Type
     }
 }
-
 
 extension _opaque_Entity where Self: Entity & ObservableObject {
     public static var _opaque_ParentEntity: (any Entity.Type)? {

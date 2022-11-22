@@ -9,10 +9,10 @@ import Swallow
 /// A CoreData attribute coder.
 public protocol NSAttributeCoder {
     static func primitivelyDecode<Key: CodingKey>(from _: NSManagedObject, forKey _: Key) throws -> Self
-    static func decode<Key: CodingKey>(from _: KeyValueCoder, forKey _: Key) throws -> Self
+    static func decode<Key: CodingKey>(from _: KeyValueCoding, forKey _: Key) throws -> Self
     
     func primitivelyEncode<Key: CodingKey>(to _: NSManagedObject, forKey _: Key) throws
-    func encode<Key: CodingKey>(to _: KeyValueCoder, forKey _: Key) throws
+    func encode<Key: CodingKey>(to _: KeyValueCoding, forKey _: Key) throws
     
     func getNSAttributeType() -> NSAttributeType
     
@@ -70,7 +70,7 @@ extension Optional: NSAttributeCoder where Wrapped: NSAttributeCoder {
         }
     }
     
-    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoding, forKey key: Key) throws -> Self {
         if object.value(forKey: key.stringValue) == nil {
             return .none
         } else {
@@ -86,7 +86,7 @@ extension Optional: NSAttributeCoder where Wrapped: NSAttributeCoder {
         }
     }
     
-    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+    public func encode<Key: CodingKey>(to object: KeyValueCoding, forKey key: Key) throws {
         if let value = self {
             try value.encode(to: object, forKey: key)
         } else {
@@ -174,7 +174,7 @@ struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Loggable {
         .init(try ObjectDecoder().decode(T.self, from: object.primitiveValue(forKey: key.stringValue).unwrap()))
     }
     
-    static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+    static func decode<Key: CodingKey>(from object: KeyValueCoding, forKey key: Key) throws -> Self {
         let value = object.value(forKey: key.stringValue)
         
         if value == nil, let _T = T.self as? _opaque_Optional.Type {
@@ -192,7 +192,7 @@ struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Loggable {
         object.setPrimitiveValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
     }
     
-    func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+    func encode<Key: CodingKey>(to object: KeyValueCoding, forKey key: Key) throws {
         if let object = object as? NSManagedObject {
             guard object.managedObjectContext != nil else {
                 assertionFailure()
@@ -226,7 +226,7 @@ struct _OptionalCodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
         return .init(try ObjectDecoder().decode(T.self, from: primitiveValue))
     }
     
-    static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+    static func decode<Key: CodingKey>(from object: KeyValueCoding, forKey key: Key) throws -> Self {
         guard let value = object.value(forKey: key.stringValue) else {
             return .init(nil)
         }
@@ -246,7 +246,7 @@ struct _OptionalCodableToNSAttributeCoder<T: Codable>: NSAttributeCoder {
         object.setPrimitiveValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
     }
     
-    func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+    func encode<Key: CodingKey>(to object: KeyValueCoding, forKey key: Key) throws {
         if let object = object as? NSManagedObject {
             guard object.managedObjectContext != nil else {
                 return
@@ -270,7 +270,7 @@ extension NSObject: NSAttributeCoder {
         try cast(object.primitiveValue(forKey: key.stringValue), to: Self.self)
     }
     
-    public static func decode<Key: CodingKey>(from object: KeyValueCoder, forKey key: Key) throws -> Self {
+    public static func decode<Key: CodingKey>(from object: KeyValueCoding, forKey key: Key) throws -> Self {
         try cast(object.value(forKey: key.stringValue), to: Self.self)
     }
     
@@ -278,7 +278,7 @@ extension NSObject: NSAttributeCoder {
         object.setPrimitiveValue(self, forKey: key.stringValue)
     }
     
-    public func encode<Key: CodingKey>(to object: KeyValueCoder, forKey key: Key) throws {
+    public func encode<Key: CodingKey>(to object: KeyValueCoding, forKey key: Key) throws {
         object.setValue(self, forKey: key.stringValue)
     }
     

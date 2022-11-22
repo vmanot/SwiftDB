@@ -12,7 +12,7 @@ public final class AnyDatabaseQuerySubscription: DatabaseQuerySubscription {
     public typealias Failure = Swift.Error
     
     private let base: AnyPublisher<[Database.Record], Swift.Error>
-        
+    
     public init<Publisher: DatabaseQuerySubscription>(erasing publisher: Publisher) {
         self.base = publisher.eraseError().map {
             $0.map({ AnyDatabaseRecord(erasing: $0) })

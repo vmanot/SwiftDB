@@ -17,7 +17,7 @@ extension _CoreData.DatabaseRecord {
         }
         
         public var zoneID: RecordSpace.Zone.ID {
-            _CoreData.Database.Zone(persistentStore: nsManagedObject.objectID.persistentStore!).id
+            _CoreData.Database.Zone.ID(from: nsManagedObject.objectID.persistentStore!) // FIXME
         }
         
         init(managedObject: NSManagedObject) {

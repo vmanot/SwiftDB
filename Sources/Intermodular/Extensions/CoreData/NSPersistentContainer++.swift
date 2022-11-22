@@ -36,8 +36,22 @@ extension NSPersistentContainer {
         }
     }
     
+    func persistentStoreDescription(
+        for store: NSPersistentStore
+    ) -> NSPersistentStoreDescription? {
+        persistentStoreDescriptions.first(where: { store.url == $0.url })
+    }
+    
+    func persistentStore(
+        for description: NSPersistentStoreDescription
+    ) -> NSPersistentStore? {
+        persistentStoreCoordinator.persistentStores.first(where: { description.configuration == $0.configurationName && description.url == $0.url })
+    }
+    
     @discardableResult
-    func performBackgroundTaskAndSave(_ closure: @escaping (NSManagedObjectContext) -> Void) -> Future<Void, Error> {
+    func performBackgroundTaskAndSave(
+        _ closure: @escaping (NSManagedObjectContext) -> Void
+    ) -> Future<Void, Error> {
         .init { attemptToFulfill in
             self.performBackgroundTask { context in
                 closure(context)

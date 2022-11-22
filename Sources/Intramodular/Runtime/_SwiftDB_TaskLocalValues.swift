@@ -5,19 +5,19 @@
 import Swallow
 
 private struct _SwiftDB_TaskLocalValues {
-    @TaskLocal static var transactionContext: _SwiftDB_RuntimeTaskContext?
+    @TaskLocal static var transactionContext: _SwiftDB_TaskContext?
 }
 
-func _withRuntimeTaskContext<T>(
-    _ context: _SwiftDB_RuntimeTaskContext? = nil,
-    perform operation: (_SwiftDB_RuntimeTaskContext) throws -> T
+func _withSwiftDBTaskContext<T>(
+    _ context: _SwiftDB_TaskContext? = nil,
+    perform operation: (_SwiftDB_TaskContext) throws -> T
 ) throws -> T {
     if let context = context {
-        if let existingContext = _SwiftDB_TaskLocalValues.transactionContext, let transactionInterposer = existingContext.transaction as? any _TransactionInterposer {
-            if transactionInterposer.interposedTransactionID == (try context.transaction.unwrap()).id {
-                let newContext = _SwiftDB_RuntimeTaskContext(
+        if let existingContext = _SwiftDB_TaskLocalValues.transactionContext, let transactionInterposer = existingContext._taskRuntime as? any _SwiftDB_TaskRuntimeInterposer {
+            if transactionInterposer.interposee == (try context._taskRuntime.unwrap()).id {
+                let newContext = _SwiftDB_TaskContext(
                     databaseContext: existingContext.databaseContext,
-                    transaction: transactionInterposer
+                    _taskRuntime: transactionInterposer
                 )
                 
                 return try _SwiftDB_TaskLocalValues.$transactionContext.withValue(newContext) {
@@ -33,19 +33,5 @@ func _withRuntimeTaskContext<T>(
         }
     } else {
         return try operation(try _SwiftDB_TaskLocalValues.transactionContext.unwrap())
-    }
-}
-
-func _with_Transaction<T>(
-    _ transaction: any _Transaction,
-    perform operation: (_SwiftDB_RuntimeTaskContext) throws -> T
-) throws -> T {
-    try _withRuntimeTaskContext { context in
-        let newTransactionContext = _SwiftDB_RuntimeTaskContext(
-            databaseContext: context.databaseContext,
-            transaction: transaction
-        )
-        
-        return try _withRuntimeTaskContext(newTransactionContext, perform: operation)
     }
 }

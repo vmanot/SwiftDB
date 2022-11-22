@@ -7,10 +7,14 @@ import Swallow
 
 public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
     public struct ID: Hashable {
-        public let base: AnyHashable
+        private let base: AnyHashable
         
         init(base: AnyHashable) {
             self.base = base
+        }
+        
+        public func _cast<T: Hashable>(to type: T.Type) throws -> T {
+            try cast(base, to: type)
         }
     }
     
@@ -57,7 +61,7 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         try base.encode(value, forKey: key)
     }
-        
+    
     public func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
         try base.decode(type, forKey: key)
     }
@@ -79,7 +83,7 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
 
 extension AnyDatabaseRecord {
     public convenience init<E: Entity>(from entity: E) throws {
-        try self.init(base: entity._underlyingDatabaseRecordContainer.unwrap().record.base)
+        try self.init(base: entity._databaseRecordProxy.unwrap().record.base)
     }
     
     public func _cast<Record: DatabaseRecord>(to recordType: Record.Type) throws -> Record {

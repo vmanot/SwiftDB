@@ -8,48 +8,8 @@ import Merge
 import Swallow
 import SwiftUIX
 
-/// A type-erased database container.
-///
-/// Use this type to propagate a reference to your database container in your SwiftUI hierarchy.
-public class AnyDatabaseContainer: CustomReflectable, Loggable, ObservableObject, @unchecked Sendable {
-    public enum Status: String, CustomStringConvertible {
-        case uninitialized
-        case initializing
-        case initialized
-        case deinitializing
-        case migrationCheckFailed
-        case migrationRequired
-        
-        public var description: String {
-            rawValue
-        }
-    }
-    
-    public private(set) var liveAccess = LiveAccess()
-    
-    public var customMirror: Mirror {
-        Mirror(self, children: [])
-    }
-    
-    @Published fileprivate(set) public var status: Status = .uninitialized
-    
-    public func load() async throws {
-        fatalError(reason: .abstract)
-    }
-    
-    public func transact<R>(
-        _ body: (DatabaseCRUDQ) async throws -> R
-    ) async throws -> R {
-        fatalError(reason: .abstract)
-    }
-        
-    public func reset() async throws {
-        fatalError(reason: .abstract)
-    }
-}
-
 /// A container that encapsulates a database stack in your app.
-public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer {
+public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer {
     private enum Tasks: Hashable {
         case initialize
         case load
@@ -71,7 +31,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     fileprivate var database: _CoreData.Database?
     
     private var mainContext: AnyDatabaseRecordSpace? {
-        database?.viewContext.map(AnyDatabaseRecordSpace.init)
+        database?.mainRecordSpace.map(AnyDatabaseRecordSpace.init)
     }
     
     public override var customMirror: Mirror {
@@ -97,7 +57,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
         
         logger.dumpToConsole = true
     }
-        
+    
     @MainActor
     override public func load() async throws {
         try await taskGraph.insert(.load, policy: .useExisting) {
@@ -114,18 +74,13 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
                 
                 _ = try await database.fetchAllAvailableZones()
                 
-                guard let mainContext = mainContext else {
+                guard mainContext != nil else {
                     status = .uninitialized
                     
                     return assertionFailure()
                 }
                 
-                liveAccess.setBaseTransaction(
-                    _AnyRecordSpaceTransaction(
-                        databaseContext: database.context.eraseToAnyDatabaseContext(),
-                        recordSpace: mainContext
-                    )
-                )
+                liveAccess.setBase(AnyDatabase(erasing: database))
             } catch {
                 logger.error(error)
                 
@@ -136,28 +91,21 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
     
     @MainActor
     public override func transact<R>(
-        _ body: (DatabaseCRUDQ) async throws -> R
+        _ body: @escaping (AnyLocalTransaction) throws -> R
     ) async throws -> R {
         let database = try await loadedDatabase()
         
-        let transaction = _AnyRecordSpaceTransaction(
-            databaseContext: database.context.eraseToAnyDatabaseContext(),
-            recordSpace: .init(erasing: try database.viewContext.unwrap())
-        )
+        let executor = try database.transactionExecutor()
         
-        let result: R
-        
-        do {
-            result = try await body(transaction)
-        } catch {
-            assertionFailure(error)
+        return try await executor.execute { transaction in
+            let localTransaction = AnyLocalTransaction(
+                transaction: .init(erasing: transaction),
+                _SwiftDB_taskContext: .defaultContext(for: database)
+            )
             
-            throw error
+            return try body(localTransaction)
+            
         }
-        
-        try await transaction.commit()
-        
-        return result
     }
     
     @MainActor
@@ -166,7 +114,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
         
         objectWillChange.send()
         
-        try await database.delete()
+        try await database.delete().value
         
         self.database = try await _CoreData.Database(
             schema: database.schema,
@@ -182,7 +130,7 @@ public final class DatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContain
 
 // MARK: - Internal -
 
-extension DatabaseContainer {
+extension LocalDatabaseContainer {
     @MainActor
     private func loadedDatabase() async throws -> _CoreData.Database {
         guard status == .initialized else {
@@ -234,7 +182,7 @@ extension DatabaseContainer {
             }
         }
     }
-
+    
     @MainActor
     private func performMigrationCheck(database: _CoreData.Database) async throws {
         do {
