@@ -17,7 +17,7 @@ extension _CoreData {
         let notificationCenter: NotificationCenter = .default
         let nsManagedObjectContext: NSManagedObjectContext
         let affectedStores: [_CoreData.Database.Zone.ID]?
-        let managedObjectsObserver: NSManagedObjectContext.ObjectsObserver
+        let mocChangesPublisher: NSManagedObjectContext.ChangesPublisher
 
         init(
             databaseContext: DatabaseContext<Database>,
@@ -27,24 +27,30 @@ extension _CoreData {
             self.databaseContext = databaseContext
             self.nsManagedObjectContext = managedObjectContext
             self.affectedStores = affectedStores
-            self.managedObjectsObserver = .init(managedObjectContext: managedObjectContext)
+            self.mocChangesPublisher = .init(managedObjectContext: managedObjectContext)
 
-            self.managedObjectsObserver.sink { events in
+            self.mocChangesPublisher.sink { events in
                 do {
-                    var insertedObjects: [NSManagedObject] = []
+                    var _insertedObjects: [NSManagedObject] = []
 
                     for event in events {
                         switch event {
                             case .inserted(let object):
-                                insertedObjects.append(object)
+                                _insertedObjects.append(object)
                             default:
                                 break
                         }
                     }
+                    
+                    let insertedObjects = _insertedObjects
 
-                    try managedObjectContext.obtainPermanentIDs(for: insertedObjects)
-                } catch {
-                    assertionFailure(error)
+                    Task.detached {
+                        do {
+                            try managedObjectContext.obtainPermanentIDs(for: insertedObjects)
+                        } catch {
+                            assertionFailure(error)
+                        }
+                    }
                 }
 
                 if !events.isEmpty {
@@ -83,7 +89,7 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
     }
 
     public func delete(_ object: Record.ID) throws {
-        try nsManagedObjectContext.deleteObject(withPermanentID: object.nsManagedObjectID)
+        try nsManagedObjectContext.deleteObject(with: object.nsManagedObjectID)
     }
 
     public func execute(_ request: Database.ZoneQueryRequest) -> AnyTask<Database.ZoneQueryRequest.Result, Error> {
@@ -200,8 +206,9 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
         var nsFetchRequests: [NSFetchRequest<NSManagedObject>] = []
 
         for recordType in filters.recordTypes {
-
             let nsFetchRequest = NSFetchRequest<NSManagedObject>(entityName: recordType.rawValue)
+
+            nsFetchRequest.resultType = .managedObjectResultType
 
             switch self.predicate {
                 case .related(_, _):
@@ -212,7 +219,7 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
                     nsFetchRequest.predicate = nil
             }
 
-            nsFetchRequest.sortDescriptors = self.sortDescriptors.map({ $0.map({ $0 as NSSortDescriptor }) })
+            nsFetchRequest.sortDescriptors = self.sortDescriptors.map({ $0.map({ $0 as NSSortDescriptor }) }) ?? []
 
             nsFetchRequest.affectedStores = try recordSpace
                 .affectedStores?

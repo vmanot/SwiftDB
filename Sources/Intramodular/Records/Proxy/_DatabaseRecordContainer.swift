@@ -73,7 +73,7 @@ extension _DatabaseRecordContainer: _DatabaseRecordProxyBase {
     public func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
         try scope(.read) { _ in
             if let type = type as? any EntityRelatable.Type {
-                return try cast(try type.decode(from: _DatabaseRecordProxy(base: self), forKey: key), to: Value.self)
+                return try cast(try type.decode(from: self, forKey: key), to: Value.self)
             } else {
                 return try recordCoder().decode(type, forKey: key)
             }
@@ -83,7 +83,8 @@ extension _DatabaseRecordContainer: _DatabaseRecordProxyBase {
     public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         try scope(.write) { _ in
             if let value = value as? any EntityRelatable {
-                try value.encode(to: _DatabaseRecordProxy(base: self), forKey: key)
+                var _self: _DatabaseRecordProxyBase = self
+                try value.encode(to: &_self, forKey: key)
             } else {
                 return try recordCoder().encode(value, forKey: key)
             }
@@ -99,13 +100,7 @@ extension _DatabaseRecordContainer: _DatabaseRecordProxyBase {
             try record.removeValueOrRelationship(forKey: key)
         }
     }
-    
-    public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
-        try scope(.write) { _ in
-            try record.setInitialValue(value(), forKey: key)
-        }
-    }
-    
+        
     public func relationship(for key: CodingKey) throws -> AnyDatabaseRecordRelationship {
         try scope(.read) { _ in
             try record.relationship(for: key)
@@ -118,12 +113,12 @@ extension _DatabaseRecordContainer {
         try recordCoder().primaryKeyOrRecordID()
     }
 
-    public func decodeFieldValue(forKey key: CodingKey) throws -> Any? {
-        try recordCoder().decodeFieldValue(forKey: key)
+    public func decodeUnsafeFieldValue(forKey key: CodingKey) throws -> Any? {
+        try recordCoder().decodeUnsafeFieldValue(forKey: key)
     }
 
-    public func encodeFieldValue(_ payload: Any?, forKey key: CodingKey) throws {
-        try recordCoder().encodeFieldValue(payload, forKey: key)
+    public func encodeUnsafeFieldValue(_ payload: Any?, forKey key: CodingKey) throws {
+        try recordCoder().encodeUnsafeFieldValue(payload, forKey: key)
     }
 
     public func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload? {

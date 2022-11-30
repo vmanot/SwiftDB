@@ -11,24 +11,19 @@ import SwiftUI
 /// A property accessor for entity attributes.
 @propertyWrapper
 public final class Attribute<Value>: EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
-    enum AccessError: Error {
-        case failedToResolveInitialValue
-    }
-    
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
     
-    public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
+    public var _runtimeMetadata = EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     public var name: String?
     
-    let traits: [EntityAttributeTrait]
-    let makeInitialValue: (() -> Value?)?
-    var assignedInitialValue: Value?
+    private let traits: [EntityAttributeTrait]
+    private var initialValue: InitialValue
     
     public var _underlyingRecordProxy: _DatabaseRecordProxy?
     
-    public var isOptional: Bool {
+    private var isOptional: Bool {
         Value.self is _opaque_Optional.Type
     }
     
@@ -36,62 +31,49 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         get {
             _runtimeMetadata.wrappedValueAccessToken = UUID()
             
-            guard let recordContainer = _underlyingRecordProxy else {
-                if let value = assignedInitialValue {
-                    return value
-                } else if let makeInitialValue = makeInitialValue {
-                    let value = makeInitialValue()
+            if let recordProxy = _underlyingRecordProxy {
+                do {
+                    return try recordProxy.decode(Value.self, forKey: key)
+                } catch {
+                    assertionFailure(error)
                     
-                    assignedInitialValue = value
-                    
-                    return value!
-                } else {
-                    fatalError(AccessError.failedToResolveInitialValue)
+                    return initialValue.value()
                 }
-            }
-            
-            do {
-                if try recordContainer.containsValue(forKey: key) || isOptional {
-                    let result = try recordContainer.decode(Value.self, forKey: key)
-                    
-                    return result
-                } else {
-                    return try encodeDefaultValueIfNecessary(into: recordContainer).unwrap()
-                }
-            } catch {
-                logger.error(error)
+            } else {
+                assert(!initialValue.isResolved)
                 
-                if let initialValue = assignedInitialValue {
-                    return initialValue
-                } else if let type = Value.self as? Initiable.Type {
-                    return type.init() as! Value
-                } else {
-                    fatalError(error)
-                }
+                return initialValue.value()
             }
         } set {
             if objectWillChangeConduit != nil {
                 objectWillChange.send()
             }
             
-            if let recordContainer = _underlyingRecordProxy {
-                try! recordContainer.encode(newValue, forKey: key)
-            } else {
-                assignedInitialValue = newValue
+            do {
+                if let recordProxy = _underlyingRecordProxy {
+                    try recordProxy.encode(newValue, forKey: key)
+                } else {
+                    initialValue = .assigned(newValue)
+                }
+            } catch {
+                assertionFailure(error)
             }
         }
     }
     
     public var projectedValue: Binding<Value> {
-        .init(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
+        .init(
+            get: { self.wrappedValue },
+            set: { self.wrappedValue = $0 }
+        )
     }
     
     private init(
         traits: [EntityAttributeTrait],
-        makeInitialValue: (() -> Value?)?
+        initialValue: InitialValue
     ) {
         self.traits = traits
-        self.makeInitialValue = makeInitialValue
+        self.initialValue = initialValue
     }
     
     public static subscript<EnclosingSelf: Entity>(
@@ -114,6 +96,28 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         }
     }
     
+    public func initialize(with container: _DatabaseRecordProxy) throws {
+        assert(_underlyingRecordProxy == nil)
+        
+        self._underlyingRecordProxy = container
+        
+        _ = try encodeInitialValueIfNecessary(into: container)
+    }
+    
+    /// Encode the `defaultValue` if necessary.
+    /// Needed for required attributes, otherwise the underlying object crashes on save.
+    func encodeInitialValueIfNecessary(
+        into _underlyingRecordProxy: _DatabaseRecordProxy
+    ) throws {
+        guard try !_underlyingRecordProxy.containsValue(forKey: key), !initialValue.isResolved else {
+            return
+        }
+        
+        let value = initialValue.resolve()
+        
+        try _underlyingRecordProxy.encode(value, forKey: key)
+    }
+    
     public func schema() throws -> _Schema.Entity.Property {
         let valueType = (Value.self as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? Value.self
         
@@ -123,49 +127,17 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
             attributeConfiguration: .init(
                 type: _Schema.Entity.AttributeType(from: valueType),
                 traits: traits,
-                defaultValue: assignedInitialValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
+                defaultValue: initialValue._nonLazyValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
                     do {
                         return try AnyCodableOrNSCodingValue(from: value)
                     } catch {
-                        assertionFailure(String(describing: error))
+                        assertionFailure(error)
                         
                         return nil
                     }
                 })
             )
         )
-    }
-    
-    public func initialize(with container: _DatabaseRecordProxy) throws {
-        self._underlyingRecordProxy = container
-        
-        _ = try encodeDefaultValueIfNecessary(into: container)
-    }
-    
-    /// Encode the `defaultValue` if necessary.
-    /// Needed for required attributes, otherwise the underlying object crashes on save.
-    func encodeDefaultValueIfNecessary(
-        into _underlyingRecordProxy: _DatabaseRecordProxy
-    ) throws -> Value? {
-        if let assignedInitialValue = assignedInitialValue {
-            let initialValue = assignedInitialValue
-            
-            try _underlyingRecordProxy.setInitialValue(initialValue, forKey: key)
-            
-            return initialValue
-        } else if let makeInitialValue = makeInitialValue {
-            let initialValue = makeInitialValue()
-            
-            try _underlyingRecordProxy.setInitialValue(initialValue, forKey: key)
-            
-            return initialValue
-        }
-        
-        if try !isOptional && (try _underlyingRecordProxy.containsValue(forKey: key)) {
-            _ = self.wrappedValue // force an evaluation
-        }
-        
-        return nil
     }
     
     // MARK: - Initializers -
@@ -176,7 +148,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     ) {
         self.init(
             traits: traits,
-            makeInitialValue: wrappedValue
+            initialValue: .lazy(wrappedValue)
         )
     }
     
@@ -186,7 +158,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     ) {
         self.init(
             traits: traits,
-            makeInitialValue: wrappedValue
+            initialValue: .lazy(wrappedValue)
         )
     }
     
@@ -194,19 +166,78 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     public convenience init(defaultValue: Value, traits: [EntityAttributeTrait] = []) {
         self.init(
             traits: traits,
-            makeInitialValue: nil
+            initialValue: .default(defaultValue)
         )
-        
-        assignedInitialValue = defaultValue
     }
     
     @_disfavoredOverload
     public convenience init(defaultValue: Value, _ traits: EntityAttributeTrait...) {
         self.init(
             traits: traits,
-            makeInitialValue: nil
+            initialValue: .default(defaultValue)
         )
-        
-        assignedInitialValue = defaultValue
     }
 }
+
+// MARK: - Auxiliary -
+
+extension Attribute {
+    enum AccessError: _SwiftDB_Error {
+        case failedToResolveInitialValue
+    }
+    
+    fileprivate enum InitialValue {
+        case lazy(() -> Value)
+        case `default`(Value)
+        case assigned(Value)
+        
+        case resolved(Value)
+        
+        var isResolved: Bool {
+            if case .resolved = self {
+                return true
+            } else {
+                return false
+            }
+        }
+        
+        var _nonLazyValue: Value? {
+            switch self {
+                case .lazy:
+                    return nil
+                case .default(let value):
+                    return value
+                case .assigned(let value):
+                    return value
+                case .resolved(let value):
+                    return value
+            }
+        }
+        
+        func value() -> Value {
+            switch self {
+                case .lazy(let makeValue):
+                    return makeValue()
+                case .default(let value):
+                    return value
+                case .assigned(let value):
+                    return value
+                case .resolved(let value):
+                    return value
+            }
+        }
+        
+        mutating func resolve() -> Value {
+            guard !isResolved else {
+                return value()
+            }
+            
+            let value = self.value()
+            
+            self = .resolved(value)
+            
+            return value
+        }
+    }
+}
+

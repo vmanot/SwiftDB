@@ -8,9 +8,8 @@ import CoreData
 import Swift
 
 extension NSManagedObjectContext {
-    public class ObjectsObserver {
+    public class ChangesPublisher {
         private let eventsPublisher = PassthroughSubject<[Event], Never>()
-
         private let managedObjectContext: NSManagedObjectContext
 
         private weak var persistentStoreCoordinator: NSPersistentStoreCoordinator?
@@ -64,7 +63,7 @@ extension NSManagedObjectContext {
 
 // MARK: - Conformances -
 
-extension NSManagedObjectContext.ObjectsObserver: Publisher {
+extension NSManagedObjectContext.ChangesPublisher: Publisher {
     public typealias Output = [Event]
     public typealias Failure = Never
 
@@ -75,22 +74,7 @@ extension NSManagedObjectContext.ObjectsObserver: Publisher {
 
 // MARK: - Auxiliary -
 
-extension NSManagedObjectContext.ObjectsObserver {
-    public struct ObjectEventTypes: OptionSet {
-        public let rawValue: Int
-
-        public init(rawValue: Int) {
-            self.rawValue = rawValue
-        }
-
-        public static let inserted = Self(rawValue: 1 << 0)
-        public static let updated = Self(rawValue: 1 << 1)
-        public static let deleted = Self(rawValue: 1 << 2)
-        public static let refreshed = Self(rawValue: 1 << 3)
-
-        public static let all: Self  = [.inserted, .updated, .deleted, .refreshed]
-    }
-
+extension NSManagedObjectContext.ChangesPublisher {
     public enum Event {
         case updated(NSManagedObject)
         case refreshed(NSManagedObject)

@@ -9,7 +9,6 @@ import Swift
 /// A database record.
 public protocol DatabaseRecord: ObservableObject, Identifiable, CancellablesHolder {
     associatedtype RecordType: Codable & Hashable & LosslessStringConvertible
-    associatedtype Reference: DatabaseRecordReference
     associatedtype Relationship: DatabaseRecordRelationship = NoDatabaseRecordRelationship<Self>
 
     var recordType: RecordType { get }
@@ -39,12 +38,6 @@ public protocol DatabaseRecord: ObservableObject, Identifiable, CancellablesHold
     ///
     /// - parameter key: The key to remove the value or relationship for.
     func removeValueOrRelationship(forKey key: CodingKey) throws
-
-    /// Sets an initial value for the given key.
-    ///
-    /// - parameter value: An initial value to encode.
-    /// - parameter key: The key to associate the initial value with.
-    func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws
 
     /// The relationship container for a given key./Users/vmanot/Downloads/GitHub/vmanot/Applications/Lists/Targets/Lists/Files/App.swift
     func relationship(for key: CodingKey) throws -> Relationship

@@ -33,7 +33,7 @@ public final class EntityRelationship<
     }
     
     public var _underlyingRecordProxy: _DatabaseRecordProxy?
-    public var _runtimeMetadata = _opaque_EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
+    public var _runtimeMetadata = EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
     
     public var name: String?
     
@@ -47,23 +47,24 @@ public final class EntityRelationship<
     
     public var wrappedValue: Value {
         get {
-            TODO.unimplemented
-            /*_runtimeMetadata.wrappedValueAccessToken = UUID()
+            _runtimeMetadata.wrappedValueAccessToken = UUID()
             
             guard let proxy = _underlyingRecordProxy else {
                 return .init(noRelatedModels: ())
             }
             
-            return try! proxy.decode(Value.self, forKey: key)*/
-        } set {
             TODO.unimplemented
-            /*defer {
+            
+            //return try! proxy.decode(Value.self, forKey: key)
+        } set {
+            defer {
                 _runtimeMetadata.wrappedValue_didSet_token = UUID()
             }
             
             if let proxy = _underlyingRecordProxy {
-                try! proxy.encode(newValue, forKey: key)
-            }*/
+                TODO.unimplemented
+                // try! proxy.encode(newValue, forKey: key)
+            }
         }
     }
     

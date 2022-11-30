@@ -9,7 +9,7 @@ public struct AnyLocalTransaction: LocalDatabaseCRUDQ {
     private let _SwiftDB_taskContext: _SwiftDB_TaskContext
     private let transaction: AnyDatabaseTransaction
     
-    public init(
+    init(
         transaction: AnyDatabaseTransaction,
         _SwiftDB_taskContext: _SwiftDB_TaskContext
     ) {

@@ -25,8 +25,8 @@ public struct AnyDatabaseTransaction: DatabaseTransaction {
         try base._opaque_executeSynchronously(request)
     }
     
-    public func delete(_ record: Database.Record.ID) throws {
-        try base._opaque_delete(record)
+    public func delete(_ recordID: Database.Record.ID) throws {
+        try base._opaque_delete(recordID)
     }
 }
 
@@ -55,9 +55,9 @@ fileprivate extension DatabaseTransaction {
         return .init(_erasing: try executeSynchronously(try request._cast(to: Database.ZoneQueryRequest.self)))
     }
     
-    func _opaque_delete(_ record: AnyDatabase.Record.ID) throws {
+    func _opaque_delete(_ recordID: AnyDatabase.Record.ID) throws {
         assert(!(self is AnyDatabaseTransaction))
         
-        return try delete(record._cast(to: Database.Record.ID.self))
+        return try delete(recordID._cast(to: Database.Record.ID.self))
     }
 }

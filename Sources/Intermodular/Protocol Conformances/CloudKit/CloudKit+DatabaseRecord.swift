@@ -71,24 +71,7 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
     public func removeValueOrRelationship(forKey key: CodingKey) throws {
         ckRecord.removeObject(forKey: key.stringValue)
     }
-    
-    public func setInitialValue<Value>(
-        _ value: @autoclosure () -> Value,
-        forKey key: CodingKey
-    ) throws {
-        guard !containsValue(forKey: key) else {
-            return
-        }
         
-        let value = value()
-        
-        try encode(value, forKey: key)
-    }
-    
-    fileprivate enum DecodingError: Error {
-        case some
-    }
-    
     public func unsafeDecodeValue(forKey key: CodingKey) -> Any? {
         ckRecord.value(forKey: key.stringValue)
     }
@@ -104,14 +87,6 @@ extension _CloudKit.DatabaseRecord: DatabaseRecord, ObservableObject {
             throw DecodingError.some
         }
     }
-    
-    public func reference(forKey key: CodingKey) throws -> Reference? {
-        Reference(reference: try cast(try ckRecord.value(forKey: key.stringValue).unwrap(), to: CKRecord.Reference.self))
-    }
-    
-    public func setReference(_ reference: Reference?, forKey key: CodingKey) throws  {
-        ckRecord.setValue(reference?.ckReference, forKey: key.stringValue)
-    }
 }
 
 extension _CloudKit.DatabaseRecord: Identifiable {
@@ -121,6 +96,12 @@ extension _CloudKit.DatabaseRecord: Identifiable {
 }
 
 // MARK: - Auxiliary -
+
+extension _CloudKit.DatabaseRecord {
+    fileprivate enum DecodingError: Error {
+        case some
+    }
+}
 
 fileprivate extension Decodable where Self: Encodable {
     static func decode(from object: _CloudKit.DatabaseRecord, forKey key: CodingKey) throws -> Self {

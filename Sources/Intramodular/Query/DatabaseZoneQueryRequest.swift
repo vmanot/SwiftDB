@@ -18,7 +18,7 @@ public enum DatabaseZoneQueryPredicate<Database: SwiftDB.Database>: Hashable, NS
     public func toNSPredicate(context: NSPredicateConversionContext) throws -> NSPredicate {
         switch self {
             case .related:
-                throw Never.Reason.unsupported
+                TODO.unimplemented
             case ._nsPredicate(let predicate):
                 return predicate
         }

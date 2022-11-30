@@ -65,26 +65,18 @@ extension _CoreData.Database {
         }
         
         public func execute<R>(_ body: @escaping (Transaction) throws -> R) async throws -> R {
-            let nsManagedObjectContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
-            
-            nsManagedObjectContext.parent = recordSpace.nsManagedObjectContext
-            
-            let childRecordSpace = RecordSpace(
-                databaseContext: recordSpace.databaseContext,
-                managedObjectContext: nsManagedObjectContext,
-                affectedStores: recordSpace.affectedStores
-            )
-            
-            do {
-                let result = try await nsManagedObjectContext.perform {
-                    let result = try body(Transaction(recordSpace: childRecordSpace))
-                    
-                    try nsManagedObjectContext.save()
-                    
+            try await _withTemporaryRecordSpace { space in
+                do {
+                    let result = try await space.nsManagedObjectContext.perform {
+                        let result = try body(Transaction(recordSpace: space))
+
+                        try space.nsManagedObjectContext.save()
+
+                        return result
+                    }
+
                     return result
                 }
-                
-                return result
             }
         }
         

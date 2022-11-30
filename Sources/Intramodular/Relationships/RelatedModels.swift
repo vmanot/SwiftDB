@@ -58,7 +58,7 @@ extension RelatedModels: EntityRelatable {
     public typealias RelatableEntityType = Model
     
     public static func decode(
-        from container: _DatabaseRecordProxy,
+        from container: _DatabaseRecordProxyBase,
         forKey key: CodingKey
     ) throws -> Self {
         TODO.unimplemented
@@ -71,8 +71,11 @@ extension RelatedModels: EntityRelatable {
          }*/
     }
     
-    public func encode(to record: _DatabaseRecordProxy, forKey key: CodingKey) throws {
-        fatalError()
+    public func encode(
+        to record: inout _DatabaseRecordProxyBase,
+        forKey key: CodingKey
+    ) throws {
+        TODO.unimplemented
     }
 }
 
@@ -81,7 +84,7 @@ extension RelatedModels {
         do {
             try relationship.toManyRelationship().insert(model._databaseRecordProxy.recordID)
         } catch {
-            assertionFailure()
+            assertionFailure(error)
         }
     }
     
@@ -89,7 +92,7 @@ extension RelatedModels {
         do {
             try relationship.toManyRelationship().remove(model._databaseRecordProxy.recordID)
         } catch {
-            assertionFailure()
+            assertionFailure(error)
         }
     }
     

@@ -89,7 +89,6 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
         }
     }
     
-    @MainActor
     public override func transact<R>(
         _ body: @escaping (AnyLocalTransaction) throws -> R
     ) async throws -> R {
@@ -106,6 +105,14 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
             return try body(localTransaction)
             
         }
+    }
+
+    public func querySubscription<T>(
+        for queryRequest: QueryRequest<T>
+    ) async throws -> QuerySubscription<T> {
+        let database = try await loadedDatabase()
+
+        return try AnyDatabase(erasing: database).querySubscription(for: queryRequest)
     }
     
     @MainActor

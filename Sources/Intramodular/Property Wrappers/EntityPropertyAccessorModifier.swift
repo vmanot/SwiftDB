@@ -28,7 +28,7 @@ extension EntityPropertyAccessorModifier {
 }
 
 extension EntityPropertyAccessorModifier  {
-    public var _runtimeMetadata: _opaque_EntityPropertyAccessorRuntimeMetadata {
+    public var _runtimeMetadata: EntityPropertyAccessorRuntimeMetadata {
         get {
             base._runtimeMetadata
         } set {

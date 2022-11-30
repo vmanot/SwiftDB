@@ -4,7 +4,7 @@
 
 import Swallow
 
-public struct _SwiftDB_TaskContext {
+struct _SwiftDB_TaskContext {
     private enum Error: Swift.Error {
         case transactionMissing
         case crossTransactionOperationDetected
@@ -13,7 +13,7 @@ public struct _SwiftDB_TaskContext {
     let databaseContext: AnyDatabase.Context
     let _taskRuntime: (any _SwiftDB_TaskRuntime)?
     
-    public func validate(_ link: _SwiftDB_TaskRuntimeLink) throws {
+    func validate(_ link: _SwiftDB_TaskRuntimeLink) throws {
         guard let _taskRuntime = _taskRuntime else {
             throw Error.transactionMissing
         }
@@ -25,7 +25,7 @@ public struct _SwiftDB_TaskContext {
 }
 
 extension _SwiftDB_TaskContext {
-    public static func defaultContext<Database: SwiftDB.Database>(
+    static func defaultContext<Database: SwiftDB.Database>(
         for database: Database
     ) -> Self {
         let database = AnyDatabase(erasing: database)
@@ -36,7 +36,7 @@ extension _SwiftDB_TaskContext {
         )
     }
     
-    public static func defaultContext<Database: SwiftDB.Database>(
+    static func defaultContext<Database: SwiftDB.Database>(
         fromDatabaseContext context: Database.Context
     ) -> Self {
         let databaseContext = context.eraseToAnyDatabaseContext()
@@ -49,7 +49,7 @@ extension _SwiftDB_TaskContext {
 }
 
 extension _SwiftDB_TaskContext {
-    public func _recordProxy(
+    func _recordProxy(
         for record: AnyDatabaseRecord
     ) throws -> _DatabaseRecordProxy {
         let recordSchema = try databaseContext.recordSchema(forRecordType: record.recordType)
@@ -61,7 +61,7 @@ extension _SwiftDB_TaskContext {
         )
     }
     
-    public func createInstance<Instance>(
+    func createInstance<Instance>(
         _ instanceType: Instance.Type,
         for record: AnyDatabaseRecord
     ) throws -> Instance {

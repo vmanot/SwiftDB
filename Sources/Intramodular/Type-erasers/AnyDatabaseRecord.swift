@@ -5,33 +5,21 @@
 import Merge
 import Swallow
 
-public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
-    public struct ID: Hashable {
-        private let base: AnyHashable
-        
-        init<T: Hashable>(erasing base: T) {
-            self.base = base
-        }
-        
-        public func _cast<T>(to type: T.Type) throws -> T {
-            try cast(base.base, to: type)
-        }
-    }
-    
-    public typealias Reference = NoDatabaseRecordReference<ID> // FIXME!!!
-    
+public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {    
     fileprivate let base: any DatabaseRecord
     
-    private init(base: any DatabaseRecord) {
-        self.base = base
+    public init<Record: DatabaseRecord>(erasing record: Record) {
+        assert(!(record is AnyDatabaseRecord))
+        
+        self.base = record
     }
     
-    public convenience init<Record: DatabaseRecord>(erasing record: Record) {
-        self.init(base: record)
+    public convenience init(_ record: AnyDatabaseRecord) {
+        self.init(erasing: record.base)
     }
     
     public var id: ID {
-        .init(erasing: base.id)
+        base._opaque_recordID
     }
     
     public var objectWillChange: AnyObjectWillChangePublisher {
@@ -69,24 +57,39 @@ public class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableObject {
     public func removeValueOrRelationship(forKey key: CodingKey) throws {
         try base.removeValueOrRelationship(forKey: key)
     }
-    
-    public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
-        try base.setInitialValue(value(), forKey: key)
-    }
-    
+        
     public func relationship(for key: CodingKey) throws -> AnyDatabaseRecordRelationship {
         try base.relationship(for: key).eraseToAnyDatabaseRelationship()
     }
 }
 
-// MARK: - Supplementary API -
+// MARK: - Auxiliary -
 
 extension AnyDatabaseRecord {
-    public convenience init<E: Entity>(from entity: E) throws {
-        try self.init(base: entity._databaseRecordProxy.record.base)
+    public struct ID: Hashable {
+        private let base: AnyHashable
+        
+        init<T: Hashable>(erasing base: T) {
+            assert(!(base is ObjectIdentifier))
+            
+            self.base = base
+        }
+        
+        public func _cast<T>(to type: T.Type) throws -> T {
+            try cast(base.base, to: type)
+        }
     }
-    
-    public func _cast<Record: DatabaseRecord>(to recordType: Record.Type) throws -> Record {
+}
+
+extension AnyDatabaseRecord {
+    func _cast<Record: DatabaseRecord>(to recordType: Record.Type) throws -> Record {
         try cast(base, to: recordType)
+    }
+}
+
+extension DatabaseRecord {
+    /// Needed because otherwise the compile resolves the default `ObjectIdentifier` `Identifiable.id` implementation.
+    var _opaque_recordID: AnyDatabaseRecord.ID {
+        .init(erasing: id)
     }
 }

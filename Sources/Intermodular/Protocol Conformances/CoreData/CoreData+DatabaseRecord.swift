@@ -87,34 +87,7 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
     public func removeValueOrRelationship(forKey key: CodingKey) throws {
         try unsafeEncodeValue(nil, forKey: key)
     }
-    
-    public func setInitialValue<Value>(
-        _ value: @autoclosure () -> Value,
-        forKey key: CodingKey
-    ) throws {
-        if !containsValue(forKey: key) {
-            let value = value()
             
-            if let value = (value as? _opaque_Optional), value._opaque_Optional_flattening() == nil {
-                return
-            } else if let value = value as? NSAttributeCoder {
-                try value.primitivelyEncode(to: rawObject, forKey: key)
-            } else if let value = value as? Codable {
-                try value.primitivelyEncode(to: self, forKey: key)
-            } else {
-                assertionFailure()
-            }
-        }
-    }
-    
-    public func reference(forKey key: CodingKey) throws -> Reference? {
-        if let value = rawObject.value(forKey: key.stringValue) {
-            return try Reference(managedObject: cast(value, to: NSManagedObject.self))
-        } else {
-            return nil
-        }
-    }
-    
     public func relationship(for key: CodingKey) throws -> Relationship {
         Relationship(record: self, key: key)
     }

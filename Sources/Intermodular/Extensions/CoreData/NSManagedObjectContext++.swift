@@ -32,17 +32,27 @@ extension NSManagedObjectContext {
 }
 
 extension NSManagedObjectContext {
+    private enum _FetchDeleteError: Error {
+        case objectIdentifierIsNotPermanent(NSManagedObjectID)
+    }
+    
     public func object(withPermanentID id: NSManagedObjectID) throws -> NSManagedObject {
         guard !id.isTemporaryID else {
-            throw EmptyError()
+            throw _FetchDeleteError.objectIdentifierIsNotPermanent(id)
         }
         
         return object(with: id)
     }
     
+    public func deleteObject(with id: NSManagedObjectID) throws {
+        let object = try existingObject(with: id)
+        
+        delete(object)
+    }
+
     public func deleteObject(withPermanentID id: NSManagedObjectID) throws {
         guard !id.isTemporaryID else {
-            throw EmptyError()
+            throw _FetchDeleteError.objectIdentifierIsNotPermanent(id)
         }
         
         let object = try existingObject(with: id)

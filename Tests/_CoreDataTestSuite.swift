@@ -10,28 +10,9 @@ import FoundationX
 import Merge
 import System
 
-@available(iOS 16.0, *)
 final class _CoreDataTestSuite: XCTestCase {
     public var database: LocalDatabaseContainer<TestORMSchema> = {
-        let tempDir = FilePath(URL.temporaryDirectory)!
-
-        if FileManager.default.directoryExists(at: tempDir) {
-            for suburl in try! FileManager.default.contentsOfDirectory(at: tempDir) {
-                try! FileManager.default.removeItem(at: suburl)
-            }
-
-            try! FileManager.default.removeItemIfNecessary(at: tempDir)
-        }
-
-        let randomDatabaseName = UUID().uuidString
-
-        let database = try! LocalDatabaseContainer(
-            name: randomDatabaseName,
-            schema: TestORMSchema(),
-            location: URL(filePath: tempDir.appending("\(randomDatabaseName).sqlite"))
-        )
-
-        return database
+        _CoreDataTestSuite.createTestDatabase()
     }()
 
     func testDatabaseLoad() async throws {
@@ -131,32 +112,95 @@ final class _CoreDataTestSuite: XCTestCase {
             try transaction.delete(foo)
         }
     }
-}
 
-@available(iOS 16.0, *)
-extension _CoreDataTestSuite {
-    func testRelationships() async throws {
+    func testQuerySubscription() async throws {
         try await database.load()
 
-        let schemaEntity = try database.schema.entity(forModelType: TestORMSchema.ChildParentEntity.self).unwrap()
+        let numberOfEvents = _AsyncValueBox(value: 0)
 
-        guard let property = schemaEntity.properties.first(where: { $0.name == "parent" }) as? _Schema.Entity.Relationship else {
-            XCTFail()
-            return
+        let subscription = try await database.querySubscription(for: QueryRequest<TestORMSchema.EntityWithSimpleRequiredProperty>())
+
+        let countTask = Task {
+            for await _ in subscription.discardError().values.prefix(4) {
+                await numberOfEvents.mutate {
+                    $0 += 1
+                }
+            }
         }
 
-        XCTAssert(property.relationshipConfiguration.cardinality == .manyToOne)
+        try await Task.sleep(.seconds(1))
 
         try await database.transact { transaction in
-            let parent = try transaction.create(TestORMSchema.ChildParentEntity.self)
+            _ = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
+        }
 
-            for _ in 0..<10 {
-                let child = try transaction.create(TestORMSchema.ChildParentEntity.self)
+        try await database.transact { transaction in
+            let instance = try transaction.first(TestORMSchema.EntityWithSimpleRequiredProperty.self)!
 
-                parent.children.insert(child)
+            instance.foo += 1
+        }
+
+        try await database.transact { transaction in
+            let instance = try transaction.first(TestORMSchema.EntityWithSimpleRequiredProperty.self)!
+
+            try transaction.delete(instance)
+        }
+
+        await countTask.value
+
+        let numEvents = await numberOfEvents.value
+
+        XCTAssertEqual(numEvents, 4)
+    }
+}
+
+extension _CoreDataTestSuite {
+    /*func testRelationships() async throws {
+     try await database.load()
+
+     let schemaEntity = try database.schema.entity(forModelType: TestORMSchema.ChildParentEntity.self).unwrap()
+
+     guard let property = schemaEntity.properties.first(where: { $0.name == "parent" }) as? _Schema.Entity.Relationship else {
+     XCTFail()
+     return
+     }
+
+     XCTAssert(property.relationshipConfiguration.cardinality == .manyToOne)
+
+     try await database.transact { transaction in
+     let parent = try transaction.create(TestORMSchema.ChildParentEntity.self)
+
+     for _ in 0..<10 {
+     let child = try transaction.create(TestORMSchema.ChildParentEntity.self)
+
+     parent.children.insert(child)
+     }
+
+     XCTAssert(Array(parent.children).count == 10)
+     }
+     }*/
+}
+
+extension _CoreDataTestSuite {
+    private static func createTestDatabase() -> LocalDatabaseContainer<TestORMSchema> {
+        let tempDir = FilePath(URL.temporaryDirectory)!
+
+        if FileManager.default.directoryExists(at: tempDir) {
+            for suburl in try! FileManager.default.contentsOfDirectory(at: tempDir) {
+                try! FileManager.default.removeItem(at: suburl)
             }
 
-            XCTAssert(Array(parent.children).count == 10)
+            try! FileManager.default.removeItemIfNecessary(at: tempDir)
         }
+
+        let randomDatabaseName = UUID().uuidString
+
+        let database = try! LocalDatabaseContainer(
+            name: randomDatabaseName,
+            schema: TestORMSchema(),
+            location: URL(filePath: tempDir.appending("\(randomDatabaseName).sqlite"))
+        )
+
+        return database
     }
 }

@@ -16,10 +16,10 @@ public protocol EntityRelatable {
     init(noRelatedModels: ())
     
     /// Creates a new instance by decoding from the given database reference.
-    static func decode(from _: _DatabaseRecordProxy, forKey _: CodingKey) throws -> Self
+    static func decode(from _: _DatabaseRecordProxyBase, forKey _: CodingKey) throws -> Self
     
     /// Encodes a relationship to this instance's related models into the given database reference.
-    func encode(to _: _DatabaseRecordProxy, forKey _: CodingKey) throws
+    func encode(to _: inout _DatabaseRecordProxyBase, forKey _: CodingKey) throws
 }
 
 // MARK: - Implementation -
@@ -34,7 +34,7 @@ extension EntityRelatable where Self: Entity {
     }
     
     public static func decode(
-        from container: _DatabaseRecordProxy,
+        from container: _DatabaseRecordProxyBase,
         forKey key: CodingKey
     ) throws -> Self {
         TODO.unimplemented
@@ -45,7 +45,10 @@ extension EntityRelatable where Self: Entity {
         }*/
     }
     
-    public func encode(to container: _DatabaseRecordProxy, forKey key: CodingKey) throws {
+    public func encode(
+        to container: inout _DatabaseRecordProxyBase,
+        forKey key: CodingKey
+    ) throws {
         TODO.unimplemented
         /*try _withSwiftDBTaskContext { context in
             let relationship = try container.relationship(for: key).toOneRelationship()
@@ -67,7 +70,7 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     }
     
     public static func decode(
-        from container: _DatabaseRecordProxy,
+        from container: _DatabaseRecordProxyBase,
         forKey key: CodingKey
     ) throws -> Optional<Wrapped> {
         if try container.containsValue(forKey: key) {
@@ -78,11 +81,11 @@ extension Optional: EntityRelatable where Wrapped: EntityRelatable {
     }
     
     public func encode(
-        to container: _DatabaseRecordProxy,
+        to container: inout _DatabaseRecordProxyBase,
         forKey key: CodingKey
     ) throws {
         if let wrappedValue = self {
-            try wrappedValue.encode(to: container, forKey: key)
+            try wrappedValue.encode(to: &container, forKey: key)
         } else {
             try container.removeValueOrRelationship(forKey: key)
         }

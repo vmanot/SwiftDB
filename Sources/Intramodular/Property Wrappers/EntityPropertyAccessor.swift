@@ -6,7 +6,7 @@ import Foundation
 import Runtime
 import Swallow
 
-public struct _opaque_EntityPropertyAccessorRuntimeMetadata {
+public struct EntityPropertyAccessorRuntimeMetadata {
     let valueType: Any.Type
     
     var wrappedValueAccessToken: AnyHashable?
@@ -16,7 +16,7 @@ public struct _opaque_EntityPropertyAccessorRuntimeMetadata {
 // MARK: - Extensions -
 
 public protocol EntityPropertyAccessor: _opaque_ObservableObject, ObservableObject, PropertyWrapper {
-    var _runtimeMetadata: _opaque_EntityPropertyAccessorRuntimeMetadata { get set }
+    var _runtimeMetadata: EntityPropertyAccessorRuntimeMetadata { get set }
     
     var _underlyingRecordProxy: _DatabaseRecordProxy? { get set }
     

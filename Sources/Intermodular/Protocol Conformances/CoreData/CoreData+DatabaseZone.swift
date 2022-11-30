@@ -10,7 +10,7 @@ extension _CoreData.Database {
     public struct Zone: DatabaseZone, Identifiable {
         public struct ID: Codable, Hashable {
             let fileURL: URL
-                        
+            
             init(_fileURL: URL) {
                 self.fileURL = _fileURL
             }
@@ -29,13 +29,13 @@ extension _CoreData.Database {
         public let id: ID
         public let name: String?
         public let fileURL: URL?
-
+        
         init(persistentStoreDescription: NSPersistentStoreDescription) throws {
             let fileURL = persistentStoreDescription.url
             
             self.nsPersistentStoreDescription = persistentStoreDescription
             self.id = .init(from: persistentStoreDescription)
-            self.name = try persistentStoreDescription.configuration
+            self.name = persistentStoreDescription.configuration
             self.fileURL = fileURL
         }
     }

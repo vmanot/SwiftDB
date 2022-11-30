@@ -31,30 +31,62 @@ extension _CoreData.Database {
         public func receive<S: Subscriber>(
             subscriber: S
         ) where S.Input == Output, S.Failure == Failure {
-            if let recordID = queryRequest.singleRecordID {
-                
+            let managedObjectContext = recordSpace.nsManagedObjectContext
+
+            if let recordID = queryRequest._decomposeToSingleRecordIDIfPossible() {
+                NSManagedObjectContext.ChangesPublisher(managedObjectContext: managedObjectContext)
+                    .compactMap { events in
+                        events.first(where: { .init(managedObjectID: $0.managedObject().objectID) == recordID })
+                    }
+                    .map { event in
+                        switch event {
+                            case let .updated(object):
+                                return [object]
+                            case let .inserted(object):
+                                return [object]
+                            case let .refreshed(object):
+                                return [object]
+                            case .deleted:
+                                return []
+                        }
+                    }
+                    .tryMap({ $0.map(_CoreData.DatabaseRecord.init(rawObject:)) })
+                    .receive(subscriber: subscriber)
             } else {
                 do {
                     guard queryRequest.filters.recordIDs == nil else {
-                        subscriber.receive(completion: .failure(Never.Reason.unimplemented))
-
-                        return
+                        TODO.unimplemented
                     }
 
-                    try queryRequest.toNSFetchRequests(recordSpace: recordSpace).map {
-                        NSFetchedResultsPublisher(
-                            fetchRequest: $0,
-                            managedObjectContext: recordSpace.nsManagedObjectContext
-                        )
+                    guard (queryRequest.sortDescriptors ?? []).isEmpty else {
+                        TODO.unimplemented
                     }
-                    .reduce(AnyPublisher<[Database.Record], Error>.just([])) { partialResult, publisher in
-                        // FIXME: This doesn't account for `queryRequest`'s sort descriptors.
-                        partialResult
-                            .zip(publisher)
-                            .map({ $0.0.appending(contentsOf: $0.1.map({ Database.Record(rawObject: $0) })) })
+
+                    // FIXME: This doesn't account for `queryRequest`'s sort descriptors.
+                    let publisher = try queryRequest.toNSFetchRequests(recordSpace: recordSpace)
+                        .map { fetchRequest -> AnyPublisher<[Database.Record], Error> in
+                            NSFetchedResultsPublisher(
+                                fetchRequest: fetchRequest,
+                                managedObjectContext: recordSpace.nsManagedObjectContext
+                            )
+                            .map({ $0.map(Database.Record.init(rawObject:)) })
+                            .eraseError()
                             .eraseToAnyPublisher()
+                        }
+                        .reduce { (partialResult, publisher) in
+                            partialResult
+                                .combineLatest(publisher)
+                                .map({ $0.0.appending(contentsOf: $0.1) })
+                                .eraseToAnyPublisher()
+                        }
+
+                    if let publisher {
+                        publisher.receive(subscriber: subscriber)
+                    } else {
+                        assertionFailure()
+
+                        subscriber.receive(completion: .failure(Never.Reason.unavailable))
                     }
-                    .receive(subscriber: subscriber)
                 } catch {
                     subscriber.receive(completion: .failure(error))
                 }
@@ -103,7 +135,7 @@ extension NSFetchedResultsPublisher {
         private var fetchedResultsController: NSFetchedResultsController<NSManagedObject>?
 
         /// Internal buffer of the latest set of entities of the fetched results controller
-        private var subject = CurrentValueSubject<[NSManagedObject], Never>([])
+        private var subject = CurrentValueSubject<[NSManagedObject]?, Never>(nil)
 
         init(
             subscriber: SubscriberType,
@@ -119,25 +151,32 @@ extension NSFetchedResultsPublisher {
             setUpFetchedResultsController()
 
             subjectCancellable = subject
-                .sink { [weak self] in
+                .compactMap({ $0 })
+                .sink { [weak self] value in
                     guard let self = self, let subscriber = self.subscriber else {
                         assertionFailure()
+
                         return
                     }
-                    _ = subscriber.receive($0)
+
+                    managedObjectContext.perform {
+                        withExtendedLifetime(subscriber) {
+                            _ = subscriber.receive(value)
+                        }
+                    }
                 }
         }
 
         func request(_ demand: Subscribers.Demand) {
-            // When a demand is sent this means we should re-send the latest buffer, since subscribing can happen later after the initialization.
-            subject.send(subject.value)
+            if let value = subject.value {
+                subject.send(value)
+            }
         }
 
         func cancel() {
             subjectCancellable?.cancel()
             subjectCancellable = nil
 
-            // Clean up any strong references
             fetchedResultsController = nil
             managedObjectContext = nil
             subscriber = nil
@@ -148,24 +187,30 @@ extension NSFetchedResultsPublisher {
                 preconditionFailure("The managed object context should only be nil after cancelling the subscription.")
             }
 
-            let fetchedResultsController = NSFetchedResultsController(
-                fetchRequest: fetchRequest,
-                managedObjectContext: managedObjectContext,
-                sectionNameKeyPath: nil,
-                cacheName: nil
-            )
+            managedObjectContext.perform {
+                let fetchedResultsController = NSFetchedResultsController(
+                    fetchRequest: self.fetchRequest,
+                    managedObjectContext: managedObjectContext,
+                    sectionNameKeyPath: nil,
+                    cacheName: nil
+                )
 
-            fetchedResultsController.delegate = self
+                fetchedResultsController.delegate = self
 
-            self.fetchedResultsController = fetchedResultsController
+                self.fetchedResultsController = fetchedResultsController
 
-            do {
-                try fetchedResultsController.performFetch()
-                let fetchedObjects = fetchedResultsController.fetchedObjects
+                do {
+                    try fetchedResultsController.performFetch()
+                    let fetchedObjects = fetchedResultsController.fetchedObjects
 
-                subject.send(fetchedObjects ?? [])
-            } catch {
-                assertionFailure(error)
+                    guard let fetchedObjects = fetchedObjects else {
+                        return
+                    }
+
+                    self.subject.send(fetchedObjects)
+                } catch {
+                    assertionFailure(error)
+                }
             }
         }
 
@@ -184,7 +229,7 @@ extension NSFetchedResultsPublisher {
 // MARK: - Helpers -
 
 extension DatabaseZoneQueryRequest {
-    var singleRecordID: Database.Record.ID? {
+    fileprivate func _decomposeToSingleRecordIDIfPossible() -> Database.Record.ID? {
         guard filters.zones == nil else {
             return nil
         }

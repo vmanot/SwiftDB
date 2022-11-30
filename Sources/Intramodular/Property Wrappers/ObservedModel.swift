@@ -10,9 +10,9 @@ import SwiftUIX
 
 public final class UpdatingSnapshot<Model>: ObservableObject {
     private let querySubscription: QuerySubscription<Model>
-
+    
     @Published private(set) var snapshot: RecordSnapshot<Model>
-
+    
     init(
         database: AnyDatabaseContainer.LiveAccess,
         snapshot: RecordSnapshot<Model>
@@ -27,7 +27,7 @@ public final class UpdatingSnapshot<Model>: ObservableObject {
                 )
             )
         )
-
+        
         self.snapshot = snapshot
     }
 }
@@ -36,23 +36,23 @@ public final class UpdatingSnapshot<Model>: ObservableObject {
 @propertyWrapper
 public struct ObservedModel<Model: Entity>: DynamicProperty {
     @Environment(\.database) var database
-
+    
     private let initialValue: RecordSnapshot<Model>
-
+    
     public var wrappedValue: RecordSnapshot<Model> {
         get {
             initialValue
         }
     }
-
+    
     public var projectedValue: Binding<Model> {
         fatalError(reason: .unimplemented)
     }
-
+    
     public func update() {
-
+        
     }
-
+    
     public init(wrappedValue: RecordSnapshot<Model>) {
         self.initialValue = wrappedValue
     }

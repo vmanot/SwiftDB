@@ -11,12 +11,13 @@ public protocol _DatabaseRecordProxyBase {
     
     func containsValue(forKey key: CodingKey) throws -> Bool
     func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
-    func encode<Value>(_ value: Value, forKey key: CodingKey) throws
-    func removeValueOrRelationship(forKey key: CodingKey) throws
-    func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws
     
-    func decodeFieldValue(forKey key: CodingKey) throws -> Any?
-    func encodeFieldValue(_ payload: Any?, forKey key: CodingKey) throws
+    mutating func encode<Value>(_ value: Value, forKey key: CodingKey) throws
+    mutating func removeValueOrRelationship(forKey key: CodingKey) throws
+    
+    func decodeUnsafeFieldValue(forKey key: CodingKey) throws -> Any?
+    
+    mutating func encodeUnsafeFieldValue(_ payload: Any?, forKey key: CodingKey) throws
     
     func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload?
     func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID
@@ -29,70 +30,55 @@ public final class _DatabaseRecordProxy: CancellablesHolder, ObservableObject {
         case write
     }
     
+    public private(set) var base: _DatabaseRecordProxyBase
+    
     public let recordID: AnyDatabaseRecord.ID
     
-    private let base: _DatabaseRecordContainer
-    
-    public var objectWillChange: AnyObjectWillChangePublisher {
-        base.objectWillChange
-    }
-    
-    init(base: _DatabaseRecordContainer) {
-        self.recordID = base.record.id
-        self.base = base
-    }
+    public lazy var objectWillChange: AnyObjectWillChangePublisher = {
+        (base as? _DatabaseRecordContainer)?.objectWillChange ?? .init(erasing: ObservableObjectPublisher())
+    }()
     
     init(
         _SwiftDB_taskContext: _SwiftDB_TaskContext,
         recordSchema: _Schema.Record?,
         record: AnyDatabaseRecord
     ) throws {
-        self.recordID = record.id
-        self.base = try .init(
+        self.base = try _DatabaseRecordContainer(
             _SwiftDB_taskContext: _SwiftDB_taskContext,
             recordSchema: recordSchema,
             record: record
         )
+        self.recordID = record.id
     }
 }
 
 extension _DatabaseRecordProxy {
-    public var record: AnyDatabaseRecord {
-        base.record
-    }
-}
-
-extension _DatabaseRecordProxy {
-    public var allKeys: [CodingKey] {
+    var allKeys: [CodingKey] {
         base.allKeys
     }
     
-    public func containsValue(forKey key: CodingKey) throws -> Bool {
+    func containsValue(forKey key: CodingKey) throws -> Bool {
         try base.containsValue(forKey: key)
     }
     
-    public func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
+    func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
         try base.decode(type, forKey: key)
     }
     
-    public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
+    func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
         try base.encode(value, forKey: key)
     }
     
-    public func removeValueOrRelationship(forKey key: CodingKey) throws {
+    func removeValueOrRelationship(forKey key: CodingKey) throws {
         try base.removeValueOrRelationship(forKey: key)
     }
     
-    public func setInitialValue<Value>(_ value: @autoclosure () -> Value, forKey key: CodingKey) throws {
-        try base.setInitialValue(value(), forKey: key)
+    func decodeUnsafeFieldValue(forKey key: CodingKey) throws -> Any? {
+        try base.decodeUnsafeFieldValue(forKey: key)
     }
     
-    func decodeFieldValue(forKey key: CodingKey) throws -> Any? {
-        try base.decodeFieldValue(forKey: key)
-    }
-    
-    func encodeFieldValue(_ payload: Any?, forKey key: CodingKey) throws {
-        try base.encodeFieldValue(payload, forKey: key)
+    func encodeUnsafeFieldValue(_ payload: Any?, forKey key: CodingKey) throws {
+        try base.encodeUnsafeFieldValue(payload, forKey: key)
     }
     
     func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload? {

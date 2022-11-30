@@ -39,6 +39,15 @@ public struct QueryRequest<Model> {
             scope: scope
         )
     }
+
+    public init() {
+        self.init(
+            predicate: nil,
+            sortDescriptors: nil,
+            fetchLimit: nil,
+            scope: nil
+        )
+    }
 }
 
 extension QueryRequest {

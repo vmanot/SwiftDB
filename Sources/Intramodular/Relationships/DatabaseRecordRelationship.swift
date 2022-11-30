@@ -13,14 +13,14 @@ public enum DatabaseRecordRelationshipType {
 /// An encapsulation of a relationship from one database record to another/set of other records.
 public protocol DatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
-    
+
     func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record>
     func toManyRelationship() throws -> any ToManyDatabaseRecordRelationship<Record>
 }
 
 public protocol ToOneDatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
-    
+
     func getRecord() throws -> Record.ID?
     func setRecord(_ record: Record.ID?) throws
 }
@@ -28,10 +28,10 @@ public protocol ToOneDatabaseRecordRelationship<Record> {
 /// An encapsulation of a relationship from one database record to another record OR a set of records.
 public protocol ToManyDatabaseRecordRelationship<Record> {
     associatedtype Record: DatabaseRecord
-    
+
     func insert(_ record: Record.ID) throws
     func remove(_ record: Record.ID) throws
-    
+
     func all() throws -> [Record]
 }
 
@@ -41,7 +41,7 @@ public struct NoDatabaseRecordRelationship<Record: DatabaseRecord>: DatabaseReco
     public func toOneRelationship() throws -> any ToOneDatabaseRecordRelationship<Record> {
         throw Never.Reason.unavailable
     }
-    
+
     public func toManyRelationship() throws -> any ToManyDatabaseRecordRelationship<Record> {
         throw Never.Reason.unavailable
     }
