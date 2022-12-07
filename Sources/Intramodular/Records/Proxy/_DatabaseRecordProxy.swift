@@ -7,93 +7,99 @@ import Merge
 import Swallow
 
 public protocol _DatabaseRecordProxyBase {
-    var allKeys: [CodingKey] { get }
-    
-    func containsValue(forKey key: CodingKey) throws -> Bool
-    func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
-    
-    mutating func encode<Value>(_ value: Value, forKey key: CodingKey) throws
-    mutating func removeValueOrRelationship(forKey key: CodingKey) throws
-    
-    func decodeUnsafeFieldValue(forKey key: CodingKey) throws -> Any?
-    
-    mutating func encodeUnsafeFieldValue(_ payload: Any?, forKey key: CodingKey) throws
-    
-    func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload?
-    func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID
+    var allKeys: [AnyCodingKey] { get }
+
+    func containsValue(forKey key: AnyCodingKey) throws -> Bool
+
+    func decode<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value
+    func encode<Value>(_ value: Value, forKey key: AnyCodingKey) throws
+
+    func unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any?
+    func unsafeEncodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws
 }
 
 /// A proxy to a record container OR snapshot.
-public final class _DatabaseRecordProxy: CancellablesHolder, ObservableObject {
+public final class _DatabaseRecordProxy: CancellablesHolder {
     private enum OperationType {
         case read
         case write
     }
-    
+
     public private(set) var base: _DatabaseRecordProxyBase
-    
+
     public let recordID: AnyDatabaseRecord.ID
-    
-    public lazy var objectWillChange: AnyObjectWillChangePublisher = {
-        (base as? _DatabaseRecordContainer)?.objectWillChange ?? .init(erasing: ObservableObjectPublisher())
-    }()
-    
-    init(
+
+    private init(base: _DatabaseRecordProxyBase, recordID: AnyDatabaseRecord.ID) {
+        self.base = base
+        self.recordID = recordID
+    }
+
+    static func snapshot(
         _SwiftDB_taskContext: _SwiftDB_TaskContext,
         recordSchema: _Schema.Record?,
         record: AnyDatabaseRecord
-    ) throws {
-        self.base = try _DatabaseRecordContainer(
-            _SwiftDB_taskContext: _SwiftDB_taskContext,
-            recordSchema: recordSchema,
-            record: record
+    ) throws -> Self {
+        self.init(
+            base: try _DatabaseRecordSnapshot(
+                from: try _DatabaseRecordDataDecoder(
+                    recordSchema: recordSchema,
+                    record: record
+                )
+            ),
+            recordID: record.id
         )
-        self.recordID = record.id
+    }
+
+    static func transactionScoped(
+        _SwiftDB_taskContext: _SwiftDB_TaskContext,
+        recordSchema: _Schema.Record?,
+        record: AnyDatabaseRecord,
+        transaction: AnyDatabaseTransaction
+    ) throws -> Self {
+        self.init(
+            base: try _TransactionScopedRecord(
+                _SwiftDB_taskContext: _SwiftDB_taskContext,
+                recordSchema: recordSchema,
+                record: record,
+                transaction: transaction
+            ),
+            recordID: record.id
+        )
     }
 }
 
 extension _DatabaseRecordProxy {
-    var allKeys: [CodingKey] {
+    var allKeys: [AnyCodingKey] {
         base.allKeys
     }
-    
-    func containsValue(forKey key: CodingKey) throws -> Bool {
+
+    func containsValue(forKey key: AnyCodingKey) throws -> Bool {
         try base.containsValue(forKey: key)
     }
-    
-    func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value {
+
+    func decode<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
         try base.decode(type, forKey: key)
     }
-    
-    func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
+
+    func encode<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
         try base.encode(value, forKey: key)
     }
-    
-    func removeValueOrRelationship(forKey key: CodingKey) throws {
-        try base.removeValueOrRelationship(forKey: key)
+
+    func unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any? {
+        try base.unsafeDecodeValue(forKey: key)
     }
-    
-    func decodeUnsafeFieldValue(forKey key: CodingKey) throws -> Any? {
-        try base.decodeUnsafeFieldValue(forKey: key)
-    }
-    
-    func encodeUnsafeFieldValue(_ payload: Any?, forKey key: CodingKey) throws {
-        try base.encodeUnsafeFieldValue(payload, forKey: key)
-    }
-    
-    func decodeFieldPayload(forKey key: CodingKey) throws -> _RecordFieldPayload? {
-        try base.decodeFieldPayload(forKey: key)
-    }
-    
-    func primaryKeyOrRecordID() throws -> _PrimaryKeyOrRecordID {
-        try base.primaryKeyOrRecordID()
+
+    func unsafeEncodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws {
+        try base.unsafeEncodeValue(payload, forKey: key)
     }
 }
 
-// MARK: - Auxiliary -
-
 extension _DatabaseRecordProxy {
-    enum _Error: Swift.Error {
-        
+    func decodeFieldPayload(forKey key: AnyCodingKey) throws -> _RecordFieldPayload? {
+        try cast(base, to: _TransactionScopedRecord.self).decodeFieldPayload(forKey: key)
+    }
+
+    func primaryKeyOrRecordID() throws -> _RecordFieldPayload.PrimaryKeyOrRecordID {
+        try cast(base, to: _TransactionScopedRecord.self).primaryKeyOrRecordID()
     }
 }

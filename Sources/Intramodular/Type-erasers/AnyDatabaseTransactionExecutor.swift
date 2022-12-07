@@ -19,7 +19,7 @@ public struct AnyDatabaseTransactionExecutor: DatabaseTransactionExecutor {
     ) async throws -> R {
         try await base.execute({ try body(AnyDatabaseTransaction(erasing: $0)) })
     }
-    
+
     public func execute<R>(
         queryRequest: Database.ZoneQueryRequest,
         _ body: @escaping (Database.ZoneQueryRequest.Result) throws -> R

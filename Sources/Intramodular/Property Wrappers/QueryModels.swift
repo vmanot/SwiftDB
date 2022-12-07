@@ -78,9 +78,9 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
 }
 
 extension QueryModels {
-    public func remove(atOffsets offsets: IndexSet) {
+    public func remove(atOffsets offsets: IndexSet) async throws {
         for item in offsets.map({ wrappedValue[$0] }) {
-            try! database.delete(item)
+            try await database.delete(item)
         }
     }
 }

@@ -41,7 +41,7 @@ extension _CoreData {
                                 break
                         }
                     }
-                    
+
                     let insertedObjects = _insertedObjects
 
                     Task.detached {
@@ -50,12 +50,6 @@ extension _CoreData {
                         } catch {
                             assertionFailure(error)
                         }
-                    }
-                }
-
-                if !events.isEmpty {
-                    MainThreadScheduler.shared.schedule {
-                        self.objectWillChange.send()
                     }
                 }
             }

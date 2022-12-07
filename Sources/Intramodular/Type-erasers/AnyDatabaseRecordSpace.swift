@@ -12,11 +12,7 @@ public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
     public typealias QuerySubscription = AnyDatabaseQuerySubscription
     
     private let base: any DatabaseRecordSpace
-    
-    public var objectWillChange: AnyObjectWillChangePublisher {
-        base.eraseObjectWillChangePublisher()
-    }
-    
+        
     private init(base: any DatabaseRecordSpace) {
         self.base = base
     }
@@ -53,13 +49,7 @@ private extension DatabaseRecordSpace {
     func _opaque_createRecord(
         withConfiguration configuration: AnyDatabaseRecordSpace.RecordConfiguration
     ) throws -> AnyDatabaseRecord {
-        let record = try createRecord(
-            withConfiguration: RecordConfiguration(
-                recordType: configuration.recordType?._cast(to: Record.RecordType.self),
-                recordID: configuration.recordID.map({ try $0._cast(to: Record.ID.self) }),
-                zone: configuration.zone.map({ try cast($0.base, to: Zone.self) })
-            )
-        )
+        let record = try createRecord(withConfiguration: configuration._cast(to: RecordConfiguration.self))
         
         return .init(erasing: record)
     }

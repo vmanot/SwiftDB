@@ -15,7 +15,7 @@ final class RuntimeTests: XCTestCase {
 
     func testEntityKeyPathToStringConversion() async throws {
         let fooKeyPath = try runtime.convertEntityKeyPathToString(\TestORMSchema.EntityWithSimpleRequiredProperty.foo)
-        
+
         XCTAssert(fooKeyPath == "foo")
 
         XCTAssertThrowsError(try runtime.convertEntityKeyPathToString(\TestORMSchema.EntityWithSimpleRequiredProperty.foo.description))

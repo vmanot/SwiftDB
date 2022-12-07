@@ -7,7 +7,7 @@ import Swallow
 
 struct _SwiftDB_TaskRuntimeID: Hashable {
     private let rawValue: AnyHashable
-    
+
     private init(rawValue: AnyHashable) {
         self.rawValue = rawValue
     }
@@ -18,9 +18,9 @@ struct _SwiftDB_TaskRuntimeID: Hashable {
 }
 
 /// An internal representation of a SwiftDB encapsulated database transaction.
-protocol _SwiftDB_TaskRuntime: AnyObject, Identifiable where ID == _SwiftDB_TaskRuntimeID {    
+protocol _SwiftDB_TaskRuntime: AnyObject, Identifiable where ID == _SwiftDB_TaskRuntimeID {
     func scope<T>(_ context: (_SwiftDB_TaskContext) throws -> T) throws -> T
-    
+
     func _scopeRecordMutation<T>(_ body: () throws -> T) throws -> T
 }
 
@@ -44,10 +44,10 @@ extension _SwiftDB_TaskRuntime {
 
 public final class _SwiftDB_TaskRuntimeLink {
     public let parentID: AnyHashable
-    
+
     init(from parent: any _SwiftDB_TaskRuntime) {
         self.parentID = parent.id
-        
+
         /*asObjCObject(transaction).keepAlive(ExecuteClosureOnDeinit { [weak self] in
          if self != nil {
          assertionFailure("Transaction link has outlived transaction.")

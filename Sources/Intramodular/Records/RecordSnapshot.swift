@@ -25,8 +25,11 @@ public struct RecordSnapshot<T> {
         self.base = model
     }
 
-    init(from record: AnyDatabaseRecord, context: _SwiftDB_TaskContext) throws {
-        self.base = try context.createInstance(T.self, for: record)
+    init(
+        from record: AnyDatabaseRecord,
+        context: _SwiftDB_TaskContext
+    ) throws {
+        self.base = try context.createSnapshotInstance(T.self, for: record)
     }
 
     public subscript<Value>(dynamicMember keyPath: KeyPath<T, Value>) -> Value {

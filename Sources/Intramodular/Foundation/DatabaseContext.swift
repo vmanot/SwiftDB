@@ -23,15 +23,7 @@ public struct DatabaseContext<Database: SwiftDB.Database> {
         self.schema = schema
         self.schemaAdaptor = schemaAdaptor
     }
-    
-    public func eraseToAnyDatabaseContext() -> DatabaseContext<AnyDatabase> {
-        .init(
-            runtime: runtime,
-            schema: schema,
-            schemaAdaptor: .init(erasing: schemaAdaptor)
-        )
-    }
-    
+
     public func recordSchema(
         forRecordType recordType: Database.Record.RecordType
     ) throws -> _Schema.Record? {
@@ -40,5 +32,15 @@ public struct DatabaseContext<Database: SwiftDB.Database> {
         }
         
         return schema[recordSchemaID]
+    }
+}
+
+extension DatabaseContext {
+    public func eraseToAnyDatabaseContext() -> DatabaseContext<AnyDatabase> {
+        .init(
+            runtime: runtime,
+            schema: schema,
+            schemaAdaptor: .init(erasing: schemaAdaptor)
+        )
     }
 }

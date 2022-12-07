@@ -99,7 +99,7 @@ extension _EntitySchemaMigrationMapping {
         
         try destinationObject.enumerateAttributes { attributes in
             if let sourceAttribute = attributes.sourceAttribute {
-                destinationObject[attributes.attribute] = try args.source.decodeFieldPayload(forKey: AnyStringKey(stringValue: sourceAttribute.name))
+                destinationObject[attributes.attribute] = try args.source.decodeFieldPayload(forKey: AnyCodingKey(stringValue: sourceAttribute.name))
             }
         }
     }

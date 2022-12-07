@@ -95,7 +95,6 @@ extension AttachDatabaseContainer {
             NavigationStack {
                 _MirrorSummaryView(mirror: container.customMirror)
                     .navigationTitle("Database Summary")
-                    .navigationBarTitleDisplayMode(.inline)
             }
         }
     }

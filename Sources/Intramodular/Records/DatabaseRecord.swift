@@ -7,38 +7,69 @@ import Swallow
 import Swift
 
 /// A database record.
-public protocol DatabaseRecord: ObservableObject, Identifiable, CancellablesHolder {
+public protocol DatabaseRecord: Identifiable, CancellablesHolder {
+    associatedtype Database: SwiftDB.Database where Database.Record == Self
     associatedtype RecordType: Codable & Hashable & LosslessStringConvertible
-    associatedtype Relationship: DatabaseRecordRelationship = NoDatabaseRecordRelationship<Self>
+    
+    typealias RelatedRecordIdentifiers = RelatedDatabaseRecordIdentifiers<Database>
 
     var recordType: RecordType { get }
 
-    var allReservedKeys: [CodingKey] { get }
-    var allKeys: [CodingKey] { get }
+    var allReservedKeys: [AnyCodingKey] { get }
+    var allKeys: [AnyCodingKey] { get }
 
     /// Returns a Boolean value that indicates whether a key is known to be supported by this record.
-    func contains(_ key: CodingKey) throws -> Bool
+    func containsKey(_ key: AnyCodingKey) throws -> Bool
 
     /// Returns a Boolean value that indicates whether an encoded value is present for the given key.
-    func containsValue(forKey key: CodingKey) -> Bool
-
-    /// Encodes a value for the given key.
-    ///
-    /// - parameter value: The value to encode.
-    /// - parameter key: The key to associate the value with.
-    func encode<Value>(_ value: Value, forKey key: CodingKey) throws
+    func containsValue(forKey key: AnyCodingKey) -> Bool
 
     /// Decodes a value of the given type for the given key.
     ///
     /// - parameter type: The type value to decode.
     /// - parameter key: The key that the value is associated with.
-    func decode<Value>(_ type: Value.Type, forKey key: CodingKey) throws -> Value
+    func decode<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value
 
-    /// Removes the value or relationship associated with the given key.
-    ///
-    /// - parameter key: The key to remove the value or relationship for.
-    func removeValueOrRelationship(forKey key: CodingKey) throws
+    func decodeRelationship(
+        ofType type: DatabaseRecordRelationshipType,
+        forKey key: AnyCodingKey
+    ) throws -> RelatedRecordIdentifiers
+}
 
-    /// The relationship container for a given key./Users/vmanot/Downloads/GitHub/vmanot/Applications/Lists/Targets/Lists/Files/App.swift
-    func relationship(for key: CodingKey) throws -> Relationship
+public enum DatabaseRecordRelationshipType {
+    case toOne
+    case toUnorderedMany
+    case toOrderedMany
+}
+
+public enum RelatedDatabaseRecordIdentifiers<Database: SwiftDB.Database> {
+    case toOne(Database.Record.ID?)
+    case toUnorderedMany(Set<Database.Record.ID>)
+    case toOrderedMany(Array<Database.Record.ID>)
+}
+
+extension RelatedDatabaseRecordIdentifiers where Database == AnyDatabase {
+    init<T: SwiftDB.Database>(erasing other: RelatedDatabaseRecordIdentifiers<T>) throws {
+        switch other {
+            case .toOne(let recordID):
+                self = .toOne(recordID.map({ AnyDatabaseRecord.ID(erasing: $0) }))
+            case .toUnorderedMany(let recordIDs):
+                self = .toUnorderedMany(Set(recordIDs.map(AnyDatabaseRecord.ID.init(erasing:))))
+            case .toOrderedMany(let recordIDs):
+                self = .toOrderedMany(recordIDs.map(AnyDatabaseRecord.ID.init(erasing:)))
+        }
+    }
+
+    func _cast<T: SwiftDB.Database>(
+        to other: RelatedDatabaseRecordIdentifiers<T>.Type
+    ) throws -> RelatedDatabaseRecordIdentifiers<T> {
+        switch self {
+            case .toOne(let recordID):
+                return .toOne(try recordID?._cast(to: T.Record.ID.self))
+            case .toUnorderedMany(let recordIDs):
+                return .toUnorderedMany(Set(try recordIDs.map({ try $0._cast(to: T.Record.ID.self) })))
+            case .toOrderedMany(let recordIDs):
+                return .toOrderedMany(try recordIDs.map({ try $0._cast(to: T.Record.ID.self) }))
+        }
+    }
 }

@@ -270,7 +270,7 @@ extension _CoreData.Database {
             let sourceEntity = try configuration.schemaMappingModel.source.entity(withName: sInstance.entity.name.unwrap())
             
             let sourceRecord = AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: sInstance))
-            let sourceRecordProxy = try _DatabaseRecordProxy(
+            let sourceRecordProxy = try _DatabaseRecordProxy.snapshot(
                 _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(fromDatabaseContext: configuration.sourceDatabaseContext),
                 recordSchema: sourceEntity,
                 record: sourceRecord
@@ -292,12 +292,12 @@ extension _CoreData.Database {
                         )
 
                         let destinationRecord = AnyDatabaseRecord(erasing: _CoreData.DatabaseRecord(rawObject: nsManagedObject))
-                        let destinationRecordProxy = try _DatabaseRecordProxy(
+                        let destinationRecordProxy = try _DatabaseRecordProxy.snapshot(
                             _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(fromDatabaseContext: configuration.destinationDatabaseContext),
                             recordSchema: destinationEntity,
                             record: destinationRecord
-                        )
-                        
+                        ) // FIXME!!!: FUCKING FIXME
+
                         destinationObject = UnsafeRecordMigrationDestination(
                             schemaMappingModel: configuration.schemaMappingModel,
                             sourceEntity: configuration.sourceEntity,

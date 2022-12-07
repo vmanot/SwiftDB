@@ -57,8 +57,6 @@ public protocol Database: Named, Identifiable where ID: Codable {
     func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription
 
     func transactionExecutor() throws -> TransactionExecutor
-    
-    func recordSpace(forZones _: [Zone]?) throws -> RecordSpace
 }
 
 // MARK: - Extensions -

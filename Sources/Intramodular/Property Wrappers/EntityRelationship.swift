@@ -9,11 +9,11 @@ import Swallow
 /// A property accessor for entity relationships.
 @propertyWrapper
 public final class EntityRelationship<
-    Parent: Entity & Identifiable,
+    Parent: Entity,
     Value: EntityRelatable,
-    ValueEntity: Entity & Identifiable,
+    ValueEntity: Entity,
     InverseValue: EntityRelatable,
-    InverseValueEntity: Entity & Identifiable
+    InverseValueEntity: Entity
 >: EntityPropertyAccessor, ObservableObject, PropertyWrapper {
     enum InverseKeyPath {
         case toOne(WritableKeyPath<ValueEntity, InverseValue>)

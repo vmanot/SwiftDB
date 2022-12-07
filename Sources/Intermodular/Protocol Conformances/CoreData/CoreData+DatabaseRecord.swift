@@ -8,11 +8,8 @@ import Merge
 import Swallow
 
 extension _CoreData {
-    public final class DatabaseRecord {
-        private enum Error: Swift.Error {
-            case failedToDecodeValueForKey(CodingKey)
-            case attemptedToEncodeRelationshipAsValue(CodingKey)
-        }
+    public final class DatabaseRecord: SwiftDB.DatabaseRecord {
+        public typealias Database = _CoreData.Database
         
         public lazy var cancellables = Cancellables()
         
@@ -24,7 +21,7 @@ extension _CoreData {
     }
 }
 
-extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
+extension _CoreData.DatabaseRecord {
     public var recordType: _CoreData.DatabaseRecord.RecordType {
         .init(rawValue: rawObject.entity.name!) // FIXME
     }
@@ -33,87 +30,75 @@ extension _CoreData.DatabaseRecord: DatabaseRecord, ObservableObject {
         ID(managedObjectID: rawObject.objectID)
     }
     
-    public var objectWillChange: ObservableObjectPublisher {
-        rawObject.objectWillChange
-    }
-    
-    public var isInitialized: Bool {
-        rawObject.managedObjectContext != nil
-    }
-    
-    public var allReservedKeys: [CodingKey] {
+    public var allReservedKeys: [AnyCodingKey] {
         []
     }
     
-    public var allKeys: [CodingKey] {
-        rawObject.entity.attributesByName.map({ AnyStringKey(stringValue: $0.key) })
+    public var allKeys: [AnyCodingKey] {
+        rawObject.entity.attributesByName.map({ AnyCodingKey(stringValue: $0.key) })
     }
     
-    public func contains(_ key: CodingKey) -> Bool {
+    public func containsKey(_ key: AnyCodingKey) -> Bool {
         rawObject.entity.attributesByName[key.stringValue] != nil || rawObject.entity.relationshipsByName[key.stringValue] != nil
     }
     
-    public func containsValue(forKey key: CodingKey) -> Bool {
+    public func containsValue(forKey key: AnyCodingKey) -> Bool {
         rawObject.primitiveValueExists(forKey: key.stringValue)
     }
     
     public func decode<Value>(
         _ valueType: Value.Type,
-        forKey key: CodingKey
+        forKey key: AnyCodingKey
     ) throws -> Value {
         if let valueType = valueType as? NSPrimitiveAttributeCoder.Type {
-            return try valueType.decode(from: rawObject, forKey: key) as! Value
+            return try cast(valueType.decode(from: rawObject, forKey: key), to: Value.self)
         } else if let valueType = valueType as? NSAttributeCoder.Type {
-            return try valueType.decode(from: rawObject, forKey: key) as! Value
+            return try cast(valueType.decode(from: rawObject, forKey: key), to: Value.self)
         } else if let valueType = valueType as? Codable.Type {
-            return try valueType.decode(from: self, forKey: key) as! Value
+            return try cast(valueType.decode(from: rawObject, forKey: key), to: Value.self)
         } else {
             throw Error.failedToDecodeValueForKey(key)
         }
     }
     
-    public func encode<Value>(_ value: Value, forKey key: CodingKey) throws {
-        guard rawObject.entity.relationshipsByName[key.stringValue] == nil else {
-            throw Error.attemptedToEncodeRelationshipAsValue(key)
-        }
-        
-        if let value = value as? NSAttributeCoder {
-            try value.encode(to: rawObject, forKey: key)
-        } else if let value = value as? Codable {
-            try value.encode(to: self, forKey: key)
+    public func decodeRelationship(
+        ofType type: DatabaseRecordRelationshipType,
+        forKey key: AnyCodingKey
+    ) throws -> RelatedRecordIdentifiers {
+        switch type {
+            case .toOne:
+                return .toOne(try _toOneRelatedRecordID(forKey: key))
+            case .toUnorderedMany:
+                return .toUnorderedMany(try _toUnorderedManyRelatedRecordIDs(forKey: key))
+            case .toOrderedMany:
+                return .toOrderedMany(try _toOrderedManyRelatedRecordIDs(forKey: key))
         }
     }
     
-    public func removeValueOrRelationship(forKey key: CodingKey) throws {
-        try unsafeEncodeValue(nil, forKey: key)
-    }
-            
-    public func relationship(for key: CodingKey) throws -> Relationship {
-        Relationship(record: self, key: key)
+    private func _toOneRelatedRecordID(forKey key: AnyCodingKey) throws -> _CoreData.DatabaseRecord.ID? {
+        _CoreData.DatabaseRecord(rawObject: try cast(rawObject._unsafeDecodeValue(forKey: key), to: NSManagedObject.self)).id
     }
     
-    func unsafeDecodeValue(forKey key: CodingKey) throws -> Any? {
-        let key = key.stringValue
+    private func _toUnorderedManyRelatedRecordIDs(forKey key: AnyCodingKey) throws -> Set<_CoreData.DatabaseRecord.ID> {
+        let setOrArray = rawObject._cocoaSetOrArray(forKey: key)
         
-        rawObject.willAccessValue(forKey: key)
-        
-        defer {
-            rawObject.didAccessValue(forKey: key)
+        if let setOrArray = setOrArray as? NSSet {
+            return Set(try setOrArray.map({ _CoreData.Database.Record(rawObject: try cast($0, to: NSManagedObject.self)).id }))
+        } else {
+            throw Error.unrecognizedRelationshipContainer(setOrArray, forKey: key)
         }
-        
-        return rawObject.primitiveValue(forKey: key)
     }
     
-    func unsafeEncodeValue(_ value: Any?, forKey key: CodingKey) throws  {
-        let key = key.stringValue
+    private func _toOrderedManyRelatedRecordIDs(forKey key: AnyCodingKey) throws -> [_CoreData.DatabaseRecord.ID] {
+        let setOrArray = rawObject._cocoaSetOrArray(forKey: key)
         
-        rawObject.willChangeValue(forKey: key)
-        
-        defer {
-            rawObject.didChangeValue(forKey: key)
+        if let setOrArray = setOrArray as? NSOrderedSet {
+            return try setOrArray.map({ _CoreData.Database.Record(rawObject: try cast($0, to: NSManagedObject.self)).id })
+        } else if let setOrArray = setOrArray as? NSArray {
+            return try setOrArray.map({ _CoreData.Database.Record(rawObject: try cast($0, to: NSManagedObject.self)).id })
+        } else {
+            throw Error.unrecognizedRelationshipContainer(setOrArray, forKey: key)
         }
-        
-        rawObject.setPrimitiveValue(value, forKey: key)
     }
 }
 
@@ -153,26 +138,153 @@ extension _CoreData.DatabaseRecord {
     }
 }
 
-fileprivate extension Decodable where Self: Encodable {
-    static func decode(from object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws -> Self {
+extension _CoreData.Database.Record {
+    enum Error: Swift.Error {
+        case failedToDecodeValueForKey(AnyCodingKey)
+        case attemptedToEncodeRelationshipAsValue(AnyCodingKey)
+        case unrecognizedRelationshipContainer(Any, forKey: AnyCodingKey)
+    }
+}
+
+// MARK: Encoding & Decoding
+
+extension Decodable where Self: Encodable {
+    static func decode(from object: NSManagedObject, forKey key: AnyCodingKey) throws -> Self {
         return try _CodableToNSAttributeCoder<Self>.decode(
-            from: object.rawObject,
+            from: object,
             forKey: AnyCodingKey(key)
         )
         .value
     }
     
-    func encode(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {
+    func encode(to object: NSManagedObject, forKey key: AnyCodingKey) throws  {
         try _CodableToNSAttributeCoder<Self>(self).encode(
-            to: object.rawObject,
+            to: object,
             forKey: AnyCodingKey(key)
         )
     }
+}
+
+extension NSManagedObject {
+    func _unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any? {
+        let key = key.stringValue
+        
+        willAccessValue(forKey: key)
+        
+        defer {
+            didAccessValue(forKey: key)
+        }
+        
+        return primitiveValue(forKey: key)
+    }
     
-    func primitivelyEncode(to object: _CoreData.DatabaseRecord, forKey key: CodingKey) throws  {
-        try _CodableToNSAttributeCoder<Self>(self).primitivelyEncode(
-            to: object.rawObject,
-            forKey: AnyCodingKey(key)
-        )
+    func _unsafeEncodeValue(_ value: Any?, forKey key: AnyCodingKey) throws  {
+        let key = key.stringValue
+        
+        willChangeValue(forKey: key)
+        
+        defer {
+            didChangeValue(forKey: key)
+        }
+        
+        setPrimitiveValue(value, forKey: key)
+    }
+    
+    func _cocoaSetOrArray(forKey key: AnyCodingKey) -> Any {
+        let key = key.stringValue
+        let setOrArray: Any
+        
+        if let value = value(forKey: key) {
+            setOrArray = value
+        } else {
+            setOrArray = NSMutableArray()
+            
+            setValue(setOrArray, forKey: key)
+        }
+        
+        return setOrArray
+    }
+    
+    func _cocoaMutableSetOrArray(forKey key: AnyCodingKey) -> Any {
+        var setOrArray = self._cocoaSetOrArray(forKey: key)
+        
+        let key = key.stringValue
+        
+        if setOrArray is NSSet {
+            setOrArray = mutableSetValue(forKey: key)
+        } else if setOrArray is NSOrderedSet {
+            setOrArray = mutableOrderedSetValue(forKey: key)
+        } else {
+            assertionFailure()
+        }
+        
+        return setOrArray
+    }
+    
+    func _setRelated(
+        objectID: NSManagedObjectID?,
+        forKey key: AnyCodingKey
+    ) throws {
+        if let objectID = objectID {
+            let rawObjectToSet = try managedObjectContext.unwrap().object(withPermanentID: objectID)
+            
+            try _unsafeEncodeValue(rawObjectToSet, forKey: key)
+        } else {
+            try _unsafeEncodeValue(nil, forKey: key)
+        }
+    }
+    
+    func _insertRelated(
+        objectID: NSManagedObjectID,
+        forKey key: AnyCodingKey
+    ) throws {
+        let rawObjectToInsert = try managedObjectContext.unwrap().object(withPermanentID: objectID)
+        let setOrArray = self._cocoaMutableSetOrArray(forKey: key)
+        
+        if let set = setOrArray as? NSMutableSet {
+            set.add(rawObjectToInsert)
+        } else if let orderedSet = setOrArray as? NSMutableOrderedSet {
+            orderedSet.insert(rawObjectToInsert, at: 0)
+        } else if let array = setOrArray as? NSMutableArray {
+            array.insert(rawObjectToInsert)
+        } else {
+            throw _CoreData.Database.Record.Error.unrecognizedRelationshipContainer(setOrArray, forKey: key)
+        }
+    }
+    
+    func _removeRelated(
+        objectID: NSManagedObjectID,
+        forKey key: AnyCodingKey
+    ) throws {
+        let rawObjectToRemove = try managedObjectContext.unwrap().object(withPermanentID: objectID)
+        let setOrArray = self._cocoaMutableSetOrArray(forKey: key)
+        
+        if let set = setOrArray as? NSMutableSet {
+            set.remove(rawObjectToRemove)
+        } else if let orderedSet = setOrArray as? NSMutableOrderedSet {
+            orderedSet.remove(rawObjectToRemove)
+        } else if let array = setOrArray as? NSMutableArray {
+            array.remove(rawObjectToRemove)
+        } else {
+            throw _CoreData.Database.Record.Error.unrecognizedRelationshipContainer(setOrArray, forKey: key)
+        }
+    }
+    
+    func _setRelated(
+        objectIDs: Set<NSManagedObjectID>,
+        forKey key: AnyCodingKey
+    ) throws {
+        let managedObjectsToSet = try objectIDs.map({ try managedObjectContext.unwrap().object(withPermanentID: $0) })
+        
+        setValue(NSMutableSet(array: managedObjectsToSet), forKey: key.stringValue)
+    }
+    
+    func _setRelated(
+        objectIDs: [NSManagedObjectID],
+        forKey key: AnyCodingKey
+    ) throws {
+        let managedObjectsToSet = try objectIDs.map({ try managedObjectContext.unwrap().object(withPermanentID: $0) })
+        
+        setValue(NSMutableArray(array: managedObjectsToSet), forKey: key.stringValue)
     }
 }

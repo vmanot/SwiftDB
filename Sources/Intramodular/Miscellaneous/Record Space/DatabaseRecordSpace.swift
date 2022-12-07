@@ -10,7 +10,7 @@ import SwiftUI
 /// An space to manipulate and track changes to managed database records.
 ///
 /// `DatabaseRecordSpace` is inspired from `NSManagedObjectContext`.
-public protocol DatabaseRecordSpace: ObservableObject, Sendable {
+public protocol DatabaseRecordSpace: Sendable {
     associatedtype Database: SwiftDB.Database
     associatedtype Zone: DatabaseZone where Zone == Database.Zone
     associatedtype Record: DatabaseRecord where Record == Database.Record

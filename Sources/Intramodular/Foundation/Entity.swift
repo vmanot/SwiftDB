@@ -9,7 +9,7 @@ import Swallow
 public protocol Entity: _opaque_Entity, EntityRelatable, PredicateExpressionPrimitiveConvertible {
     associatedtype RelatableEntityType = Self
     
-    typealias Relationship<Value: EntityRelatable, ValueEntity: Entity & Identifiable, InverseValue: EntityRelatable, InverseValueEntity: Entity & Identifiable> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity> where Self: Identifiable
+    typealias Relationship<Value: EntityRelatable, ValueEntity: Entity, InverseValue: EntityRelatable, InverseValueEntity: Entity> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity>
 }
 
 // MARK: - Implementation -

@@ -18,6 +18,13 @@ public struct AnyDatabaseTransaction: DatabaseTransaction {
     ) throws -> Database.Record {
         try base._opaque_createRecord(withConfiguration: configuration)
     }
+
+    public func updateRecord(
+        _ recordID: AnyDatabaseRecord.ID,
+        with update: RecordUpdate
+    ) throws {
+        try base._opaque_updateRecord(recordID, with: update)
+    }
     
     public func executeSynchronously(
         _ request: AnyDatabase.ZoneQueryRequest
@@ -37,14 +44,22 @@ fileprivate extension DatabaseTransaction {
         assert(!(self is AnyDatabaseTransaction))
         
         let record = try createRecord(
-            withConfiguration: .init(
-                recordType: configuration.recordType?._cast(to: Database.Record.RecordType.self),
-                recordID: configuration.recordID.map({ try $0._cast(to: Database.Record.ID.self) }),
-                zone: configuration.zone.map({ try cast($0.base, to: Database.Zone.self) })
-            )
+            withConfiguration: configuration._cast(to: RecordConfiguration.self)
         )
         
         return AnyDatabaseRecord(erasing: record)
+    }
+
+    func _opaque_updateRecord(
+        _ recordID: AnyDatabaseRecord.ID,
+        with update: AnyDatabaseTransaction.RecordUpdate
+    ) throws {
+        assert(!(self is AnyDatabaseTransaction))
+
+        try updateRecord(
+            recordID._cast(to: Database.Record.ID.self),
+            with: try update._cast(to: RecordUpdate.self)
+        )
     }
     
     func _opaque_executeSynchronously(

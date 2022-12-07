@@ -61,11 +61,8 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         }
     }
     
-    public var projectedValue: Binding<Value> {
-        .init(
-            get: { self.wrappedValue },
-            set: { self.wrappedValue = $0 }
-        )
+    public var projectedValue: Attribute<Value> {
+        self
     }
     
     private init(
@@ -82,14 +79,6 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Attribute>
     ) -> Value {
         get {
-            let _self = instance[keyPath: storageKeyPath]
-            
-            if _self.objectWillChangeConduit == nil {
-                _self.objectWillChangeConduit = _self.objectWillChange
-                    .publish(to: instance)
-                    .sink()
-            }
-            
             return instance[keyPath: storageKeyPath].wrappedValue
         } set {
             instance[keyPath: storageKeyPath].wrappedValue = newValue

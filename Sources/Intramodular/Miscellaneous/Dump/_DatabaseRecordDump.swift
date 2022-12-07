@@ -6,8 +6,8 @@ import CorePersistence
 import Swallow
 
 public struct _DatabaseRecordDump: Codable, Hashable, Identifiable {
-    public typealias ID = _PrimaryKeyOrRecordID
-    
+    public typealias ID = _RecordFieldPayload.PrimaryKeyOrRecordID
+
     public let id: ID
     public let fields: [String: _RecordFieldPayload?]
 }

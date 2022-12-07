@@ -31,9 +31,9 @@ public protocol EntityPropertyAccessor: _opaque_ObservableObject, ObservableObje
 // MARK: - Extensions -
 
 extension EntityPropertyAccessor {
-    var key: AnyStringKey {
+    var key: AnyCodingKey {
         get throws {
-            try name.map(AnyStringKey.init(stringValue:)).unwrap()
+            try name.map(AnyCodingKey.init(stringValue:)).unwrap()
         }
     }
 }

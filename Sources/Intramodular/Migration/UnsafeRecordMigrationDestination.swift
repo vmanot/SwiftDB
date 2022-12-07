@@ -29,9 +29,9 @@ public struct UnsafeRecordMigrationDestination {
     
     public subscript(key: String) -> Any? {
         get {
-            try! destinationRecordProxy.decodeUnsafeFieldValue(forKey: AnyStringKey(stringValue: key))
+            try! destinationRecordProxy.unsafeDecodeValue(forKey: AnyCodingKey(stringValue: key))
         } nonmutating set {
-            try! destinationRecordProxy.encodeUnsafeFieldValue(newValue, forKey: AnyStringKey(stringValue: key))
+            try! destinationRecordProxy.unsafeEncodeValue(newValue, forKey: AnyCodingKey(stringValue: key))
         }
     }
     

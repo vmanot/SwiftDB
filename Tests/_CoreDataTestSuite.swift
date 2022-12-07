@@ -41,15 +41,17 @@ final class _CoreDataTestSuite: XCTestCase {
 
             let foo = try transaction.create(TestORMSchema.EntityWithComplexProperties.self)
 
-            foo.animal = .cat
-
-            let retrievedFoo = try transaction.first(TestORMSchema.EntityWithComplexProperties.self).unwrap()
-
-            XCTAssert(retrievedFoo.animal == .cat)
-
             foo.animal = .dog
+        }
 
-            XCTAssert(retrievedFoo.animal == .dog)
+        try await database.transact { transaction in
+            let foo = try transaction.first(TestORMSchema.EntityWithComplexProperties.self).unwrap()
+
+            XCTAssert(foo.animal == .dog)
+
+            foo.animal = .lion
+
+            XCTAssert(foo.animal == .lion)
         }
     }
 
@@ -131,7 +133,7 @@ final class _CoreDataTestSuite: XCTestCase {
         try await Task.sleep(.seconds(1))
 
         try await database.transact { transaction in
-            _ = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
+            let instance = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
         }
 
         try await database.transact { transaction in

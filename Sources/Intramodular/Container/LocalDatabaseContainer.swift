@@ -29,11 +29,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
     }
     
     fileprivate var database: _CoreData.Database?
-    
-    private var mainContext: AnyDatabaseRecordSpace? {
-        database?.mainRecordSpace.map(AnyDatabaseRecordSpace.init)
-    }
-    
+
     public override var customMirror: Mirror {
         Mirror(self, children: [
             "status": status,
@@ -73,13 +69,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
                 }
                 
                 _ = try await database.fetchAllAvailableZones()
-                
-                guard mainContext != nil else {
-                    status = .uninitialized
-                    
-                    return assertionFailure()
-                }
-                
+                                
                 liveAccess.setBase(AnyDatabase(erasing: database))
             } catch {
                 logger.error(error)

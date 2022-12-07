@@ -7,7 +7,7 @@ import Runtime
 import Swallow
 
 /// A shadow protocol for `Entity`.
-public protocol _opaque_Entity: _opaque_ObservableObject, Initiable {
+public protocol _opaque_Entity: Initiable {
     static var _opaque_ParentEntity: (any Entity.Type)? { get }
     
     var _databaseRecordProxy: _DatabaseRecordProxy { get throws }
@@ -53,11 +53,6 @@ extension _opaque_Entity  {
         
         if let databaseRecordProxy = _databaseRecordProxy, type(of: self) is AnyObject.Type {
             try _runtime_configurePropertyAccessors(withRecordProxy: databaseRecordProxy)
-            
-            databaseRecordProxy
-                .objectWillChange
-                .publish(to: self)
-                .subscribe(in: databaseRecordProxy.cancellables)
         } else {
             try _runtime_configurePropertyAccessors(withRecordProxy: nil)
         }
@@ -72,17 +67,7 @@ extension _opaque_Entity where Self: Entity {
     public var _opaque_id: AnyHashable? {
         nil
     }
-    
-    public var _opaque_objectWillChange: AnyObjectWillChangePublisher {
-        do {
-            return try _databaseRecordProxy.objectWillChange
-        } catch {
-            assertionFailure(error)
-            
-            return .empty
-        }
-    }
-    
+
     public func _opaque_objectWillChange_send() throws {
         
     }
