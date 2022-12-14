@@ -8,30 +8,6 @@ import CoreData
 import Swift
 import SwiftUIX
 
-public final class UpdatingSnapshot<Model>: ObservableObject {
-    private let querySubscription: QuerySubscription<Model>
-    
-    @Published private(set) var snapshot: RecordSnapshot<Model>
-    
-    init(
-        database: AnyDatabaseContainer.LiveAccess,
-        snapshot: RecordSnapshot<Model>
-    ) throws {
-        querySubscription = try database.querySubscription(
-            for: QueryRequest<Model>(
-                predicate: nil,
-                sortDescriptors: nil,
-                fetchLimit: FetchLimit.max(1),
-                scope: .init(
-                    records: [snapshot.recordMetadata.id]
-                )
-            )
-        )
-        
-        self.snapshot = snapshot
-    }
-}
-
 // A property wrapper type that subscribes to an observable model and invalidates a view whenever the observable model changes.
 @propertyWrapper
 public struct ObservedModel<Model: Entity>: DynamicProperty {
@@ -55,5 +31,29 @@ public struct ObservedModel<Model: Entity>: DynamicProperty {
     
     public init(wrappedValue: RecordSnapshot<Model>) {
         self.initialValue = wrappedValue
+    }
+}
+
+public final class UpdatingSnapshot<Model>: ObservableObject {
+    private let querySubscription: QuerySubscription<Model>
+    
+    @Published private(set) var snapshot: RecordSnapshot<Model>
+    
+    init(
+        database: AnyDatabaseContainer.LiveAccess,
+        snapshot: RecordSnapshot<Model>
+    ) throws {
+        querySubscription = try database.querySubscription(
+            for: QueryRequest<Model>(
+                predicate: nil,
+                sortDescriptors: nil,
+                fetchLimit: FetchLimit.max(1),
+                scope: .init(
+                    records: [snapshot.instanceMetadata.recordID]
+                )
+            )
+        )
+        
+        self.snapshot = snapshot
     }
 }

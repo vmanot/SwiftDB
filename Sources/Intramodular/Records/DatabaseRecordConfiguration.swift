@@ -8,7 +8,7 @@ public struct DatabaseRecordConfiguration<Database: SwiftDB.Database> {
     public let recordType: Database.Record.RecordType?
     public let recordID: Database.Record.ID?
     public let zone: Database.Zone?
-
+    
     public init(
         recordType: Database.Record.RecordType?,
         recordID: Database.Record.ID?,

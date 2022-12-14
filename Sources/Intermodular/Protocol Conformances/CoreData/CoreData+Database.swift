@@ -178,7 +178,7 @@ extension _CoreData.Database {
     ) throws -> QuerySubscription {
         try .init(recordSpace: mainRecordSpace.unwrap(), queryRequest: request)
     }
-
+    
     public func transactionExecutor() throws -> TransactionExecutor {
         try .init(recordSpace: mainRecordSpace.unwrap())
     }
@@ -226,7 +226,7 @@ extension _CoreData.Database {
         }
         .convertToObservableTask()
     }
-
+    
     private func allZones() throws -> [Zone] {
         try nsPersistentContainer.persistentStoreDescriptions.map({ try .init(persistentStoreDescription: $0) })
     }
@@ -268,7 +268,7 @@ extension _CoreData.Database {
         
         if let fileURL = sqliteStoreURL {
             let externalStorageFolderName = ".\(fileURL.deletingPathExtension().lastPathComponent)_SUPPORT"
-
+            
             result.append(fileURL.deletingLastPathComponent().appendingPathComponent(".com.apple.mobile_container_manager.metadata.plist"))
             result.append(fileURL.deletingPathExtension().appendingPathExtension("sqlite-wal"))
             result.append(fileURL.deletingPathExtension().appendingPathExtension("sqlite-shm"))

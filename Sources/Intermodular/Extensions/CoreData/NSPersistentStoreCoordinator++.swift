@@ -13,7 +13,7 @@ struct NSPersistentStoreMetadata {
     let storeModelVersionHashes: [String: Data]
     let autoVacuumLevel: String
     let storeType: String
-
+    
     init(from metadata: [String: Any]) throws {
         persistenceFrameworkVersion = try cast(metadata["NSPersistenceFrameworkVersion"])
         storeUUID = try UUID(uuidString: try cast(metadata["NSStoreUUID"], to: String.self)).unwrap()
@@ -38,7 +38,7 @@ extension NSPersistentStoreCoordinator {
         
         return model.isConfiguration(withName: configurationName, compatibleWithStoreMetadata: metadata)
     }
-
+    
     func destroyAll() throws {
         for store in persistentStores {
             try store.destroy(persistentStoreCoordinator: self)

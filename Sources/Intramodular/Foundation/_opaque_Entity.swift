@@ -67,10 +67,6 @@ extension _opaque_Entity where Self: Entity {
     public var _opaque_id: AnyHashable? {
         nil
     }
-
-    public func _opaque_objectWillChange_send() throws {
-        
-    }
     
     public var _databaseRecordProxy: _DatabaseRecordProxy {
         get throws {

@@ -29,7 +29,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
     }
     
     fileprivate var database: _CoreData.Database?
-
+    
     public override var customMirror: Mirror {
         Mirror(self, children: [
             "status": status,
@@ -69,7 +69,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
                 }
                 
                 _ = try await database.fetchAllAvailableZones()
-                                
+                
                 liveAccess.setBase(AnyDatabase(erasing: database))
             } catch {
                 logger.error(error)
@@ -96,12 +96,12 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
             
         }
     }
-
+    
     public func querySubscription<T>(
         for queryRequest: QueryRequest<T>
     ) async throws -> QuerySubscription<T> {
         let database = try await loadedDatabase()
-
+        
         return try AnyDatabase(erasing: database).querySubscription(for: queryRequest)
     }
     

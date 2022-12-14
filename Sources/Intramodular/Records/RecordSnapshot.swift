@@ -5,33 +5,31 @@
 import FoundationX
 import Swallow
 
-public struct RecordMetadata<T> {
-    public let id: AnyDatabaseRecord.ID
+public struct RecordInstanceMetadata {
+    public let recordID: AnyDatabaseRecord.ID
+    
+    public static func from(instance: Any) throws -> Self {
+        if let instance = instance as? _opaque_Entity {
+            return try .init(
+                recordID: instance._databaseRecordProxy.recordID
+            )
+        } else {
+            throw EmptyError()
+        }
+    }
 }
 
 @dynamicMemberLookup
 public struct RecordSnapshot<T> {
     fileprivate let base: T
-
-    public var recordMetadata: RecordMetadata<T> {
-        let recordProxy = try! cast(base, to: (any Entity).self)._databaseRecordProxy
-
-        return .init(
-            id: recordProxy.recordID
-        )
+    
+    let instanceMetadata: RecordInstanceMetadata
+    
+    init(from instance: T) throws {
+        self.base = instance
+        self.instanceMetadata = try .from(instance: instance)
     }
-
-    init(from model: T, context: _SwiftDB_TaskContext) {
-        self.base = model
-    }
-
-    init(
-        from record: AnyDatabaseRecord,
-        context: _SwiftDB_TaskContext
-    ) throws {
-        self.base = try context.createSnapshotInstance(T.self, for: record)
-    }
-
+    
     public subscript<Value>(dynamicMember keyPath: KeyPath<T, Value>) -> Value {
         base[keyPath: keyPath]
     }

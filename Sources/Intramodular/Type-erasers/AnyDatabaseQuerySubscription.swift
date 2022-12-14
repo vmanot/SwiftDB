@@ -7,12 +7,12 @@ import Swallow
 
 public final class AnyDatabaseQuerySubscription: DatabaseQuerySubscription {
     public typealias Database = AnyDatabase
-
+    
     public typealias Output = [Database.Record]
     public typealias Failure = Swift.Error
-
+    
     private let base: AnyPublisher<[Database.Record], Swift.Error>
-
+    
     public init<Publisher: DatabaseQuerySubscription>(erasing publisher: Publisher) {
         self.base = publisher
             .eraseError()
@@ -21,7 +21,7 @@ public final class AnyDatabaseQuerySubscription: DatabaseQuerySubscription {
             }
             .eraseToAnyPublisher()
     }
-
+    
     public func receive<S: Subscriber>(
         subscriber: S
     ) where S.Input == Output, S.Failure == Failure {

@@ -12,7 +12,7 @@ public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
     public typealias QuerySubscription = AnyDatabaseQuerySubscription
     
     private let base: any DatabaseRecordSpace
-        
+    
     private init(base: any DatabaseRecordSpace) {
         self.base = base
     }
@@ -70,7 +70,7 @@ private extension DatabaseRecordSpace {
             return .failure(error)
         }
     }
-            
+    
     func _opaque_delete(_ record: AnyDatabaseRecord.ID) throws {
         let _record = try record._cast(to: Record.ID.self)
         

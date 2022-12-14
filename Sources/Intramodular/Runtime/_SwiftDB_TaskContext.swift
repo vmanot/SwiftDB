@@ -49,18 +49,6 @@ extension _SwiftDB_TaskContext {
 }
 
 extension _SwiftDB_TaskContext {
-    func _createSnapshotRecordProxy(
-        for record: AnyDatabaseRecord
-    ) throws -> _DatabaseRecordProxy {
-        let recordSchema = try databaseContext.recordSchema(forRecordType: record.recordType)
-
-        return try .snapshot(
-            _SwiftDB_taskContext: self,
-            recordSchema: recordSchema,
-            record: record
-        )
-    }
-
     func _createTransactionScopedRecordProxy(
         for record: AnyDatabaseRecord,
         transaction: AnyDatabaseTransaction
@@ -73,21 +61,6 @@ extension _SwiftDB_TaskContext {
             record: record,
             transaction: transaction
         )
-    }
-
-    func createSnapshotInstance<Instance>(
-        _ instanceType: Instance.Type,
-        for record: AnyDatabaseRecord
-    ) throws -> Instance {
-        if instanceType == Any.self {
-            return try cast(try _createSnapshotRecordProxy(for: record), to: Instance.self)
-        } else if let instanceType = instanceType as? any Entity.Type {
-            let instance = try instanceType.init(_databaseRecordProxy: try _createSnapshotRecordProxy(for: record))
-
-            return try cast(instance, to: Instance.self)
-        } else {
-            TODO.unimplemented
-        }
     }
 
     func createTransactionScopedInstance<Instance>(
@@ -128,6 +101,49 @@ extension _SwiftDB_TaskContext {
                 for: record,
                 transaction: transaction
             )
+        )
+    }
+}
+
+extension _SwiftDB_TaskContext {
+    func _createSnapshotRecordProxy(
+        for record: AnyDatabaseRecord
+    ) throws -> _DatabaseRecordProxy {
+        let recordSchema = try databaseContext.recordSchema(forRecordType: record.recordType)
+        
+        return try .snapshot(
+            _SwiftDB_taskContext: self,
+            recordSchema: recordSchema,
+            record: record
+        )
+    }
+    
+    func createSnapshotInstance<Instance>(
+        _ instanceType: Instance.Type,
+        for record: AnyDatabaseRecord
+    ) throws -> Instance {
+        if instanceType == Any.self {
+            return try cast(try _createSnapshotRecordProxy(for: record), to: Instance.self)
+        } else if let instanceType = instanceType as? any Entity.Type {
+            let instance = try instanceType.init(
+                _databaseRecordProxy: try _createSnapshotRecordProxy(for: record)
+            )
+            
+            return try cast(instance, to: Instance.self)
+        } else {
+            TODO.unimplemented
+        }
+    }
+    
+    func createSnapshotInstance(
+        for record: AnyDatabaseRecord
+    ) throws -> any Entity {
+        let schema = databaseContext.schema
+        let entity = try databaseContext.schemaAdaptor.entity(forRecordType: record.recordType).unwrap()
+        let entityType = try schema.entityType(for: entity)
+        
+        return try entityType.init(
+            _databaseRecordProxy: _createSnapshotRecordProxy(for: record)
         )
     }
 }

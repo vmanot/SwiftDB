@@ -12,19 +12,25 @@ import Swallow
 public final class QuerySubscription<Model>: ObservableObject {
     private let base: AnyDatabaseQuerySubscription
     private var baseSubscription: AnyCancellable?
-
+    
     private let resultsPublisher = ReplaySubject<Output, Error>(bufferSize: 1)
-
+    
     @Published private(set) var results: [RecordSnapshot<Model>]?
-
+    
     init(
         from base: AnyDatabaseQuerySubscription,
         context: _SwiftDB_TaskContext
     ) {
         self.base = base
-
+        
         baseSubscription = base
-            .tryMap({ try $0.map({ try RecordSnapshot<Model>(from: $0, context: context) }) })
+            .tryMap { records in
+                try records.map { record -> RecordSnapshot<Model> in
+                    let instance = try context.createSnapshotInstance(Model.self, for: record)
+                    
+                    return try RecordSnapshot(from: instance)
+                }
+            }
             .stopExecutionOnError()
             .sink { completion in
                 switch completion {
@@ -35,7 +41,7 @@ public final class QuerySubscription<Model>: ObservableObject {
                 }
             } receiveValue: { value in
                 self.resultsPublisher.send(value)
-
+                
                 MainThreadScheduler.shared.schedule {
                     self.results = value
                 }
@@ -48,7 +54,7 @@ public final class QuerySubscription<Model>: ObservableObject {
 extension QuerySubscription: Publisher {
     public typealias Output = [RecordSnapshot<Model>]
     public typealias Failure = Swift.Error
-
+    
     public func receive<S: Subscriber>(
         subscriber: S
     ) where S.Input == Output, S.Failure == Failure {

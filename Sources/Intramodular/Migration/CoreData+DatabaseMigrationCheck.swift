@@ -16,7 +16,7 @@ extension _CoreData.Database {
         guard FileManager.default.fileExists(at: fileURL) else {
             return .init(zonesToMigrate: [])
         }
-
+        
         if try NSPersistentStoreCoordinator.isStore(
             ofType: NSSQLiteStoreType,
             at: fileURL,
@@ -102,13 +102,13 @@ extension _CoreData.Database {
                 destinationType: storeType,
                 destinationOptions: nil
             )
-           /* let temporaryStorage = SQLiteStore(
-                fileURL: temporaryFileURL,
-                configuration: storage.configuration,
-                migrationMappingProviders: storage.migrationMappingProviders,
-                localStorageOptions: storage.localStorageOptions
-            )
-            try temporaryStorage.cs_finalizeStorageAndWait(soureModelHint: destinationModel)*/
+            /* let temporaryStorage = SQLiteStore(
+             fileURL: temporaryFileURL,
+             configuration: storage.configuration,
+             migrationMappingProviders: storage.migrationMappingProviders,
+             localStorageOptions: storage.localStorageOptions
+             )
+             try temporaryStorage.cs_finalizeStorageAndWait(soureModelHint: destinationModel)*/
         } catch {
             _ = try? fileManager.removeItem(at: temporaryFileURL)
             
@@ -139,7 +139,7 @@ extension _CoreData.Database {
         } catch {
             _ = try? fileManager.removeItem(at: temporaryFileURL)
             _ = try? fileManager.removeItem(at: temporaryExternalStorageURL)
-
+            
             throw error
         }
     }

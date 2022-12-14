@@ -14,7 +14,7 @@ extension DatabaseRecordUpdate {
         public enum Data {
             case setValue(Any)
             case removeValue
-
+            
             var value: Any? {
                 switch self {
                     case .setValue(let value):
@@ -24,29 +24,29 @@ extension DatabaseRecordUpdate {
                 }
             }
         }
-
+        
         public enum Relationship {
             public enum ToOne {
                 case set(Database.Record.ID?)
             }
-
+            
             public enum ToMany {
                 case insert(Database.Record.ID)
                 case remove(Database.Record.ID)
                 case set(Set<Database.Record.ID>)
             }
-
+            
             public enum ToOrderedMany {
                 case insert(Database.Record.ID)
                 case remove(Database.Record.ID)
                 case set([Database.Record.ID])
             }
-
+            
             case toOne(ToOne)
             case toUnorderedMany(ToMany)
             case toOrderedMany(ToOrderedMany)
         }
-
+        
         case data(Data)
         case relationship(Relationship)
     }

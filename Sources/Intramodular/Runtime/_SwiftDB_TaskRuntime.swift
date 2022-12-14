@@ -43,7 +43,7 @@ extension _SwiftDB_TaskRuntime {
 // MARK: - Supplementary API -
 
 public final class _SwiftDB_TaskRuntimeLink {
-    public let parentID: AnyHashable
+    let parentID: _SwiftDB_TaskRuntimeID
 
     init(from parent: any _SwiftDB_TaskRuntime) {
         self.parentID = parent.id

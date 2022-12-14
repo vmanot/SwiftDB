@@ -18,7 +18,7 @@ public struct AnyDatabaseTransaction: DatabaseTransaction {
     ) throws -> Database.Record {
         try base._opaque_createRecord(withConfiguration: configuration)
     }
-
+    
     public func updateRecord(
         _ recordID: AnyDatabaseRecord.ID,
         with update: RecordUpdate
@@ -49,13 +49,13 @@ fileprivate extension DatabaseTransaction {
         
         return AnyDatabaseRecord(erasing: record)
     }
-
+    
     func _opaque_updateRecord(
         _ recordID: AnyDatabaseRecord.ID,
         with update: AnyDatabaseTransaction.RecordUpdate
     ) throws {
         assert(!(self is AnyDatabaseTransaction))
-
+        
         try updateRecord(
             recordID._cast(to: Database.Record.ID.self),
             with: try update._cast(to: RecordUpdate.self)
