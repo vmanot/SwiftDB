@@ -52,6 +52,12 @@ extension AnyDatabaseContainer.LiveAccess: DatabaseCRUDQ {
 }
 
 extension AnyDatabaseContainer.LiveAccess {
+    public func transact<R>(
+        _ body: @escaping (AnyTransaction) throws -> R
+    ) async throws -> R {
+        try await base.unwrap().transact(body)
+    }
+
     public func querySubscription<Model>(
         for request: QueryRequest<Model>
     ) throws -> QuerySubscription<Model> {
