@@ -41,28 +41,40 @@ extension _CoreData.Database {
                     }
                 case .relationship(let payload):
                     switch payload {
-                        case .toOne(let payload):
-                            switch payload {
-                                case .set(let recordID):
-                                    try managedObject._setRelated(objectID: recordID?.nsManagedObjectID, forKey: key)
+                        case .set(let value):
+                            switch value {
+                                case .toOne(let value):
+                                    try managedObject._setToOne(value?.nsManagedObjectID, forKey: key)
+                                case .toUnorderedMany(let value):
+                                    try managedObject._setToUnorderedMany(
+                                        value.map({ $0.nsManagedObjectID }),
+                                        forKey: key
+                                    )
+                                case .toOrderedMany(let value):
+                                    try managedObject._setToOrderedMany(
+                                        value.map({ $0.nsManagedObjectID }),
+                                        forKey: key
+                                    )
                             }
-                        case .toUnorderedMany(let payload):
-                            switch payload {
-                                case .insert(let recordID):
-                                    try managedObject._insertRelated(objectID: recordID.nsManagedObjectID, forKey: key)
-                                case .remove(let recordID):
-                                    try managedObject._removeRelated(objectID: recordID.nsManagedObjectID, forKey: key)
-                                case .set(let recordIDs):
-                                    try managedObject._setRelated(objectIDs: Set(recordIDs.map({ $0.nsManagedObjectID })), forKey: key)
-                            }
-                        case .toOrderedMany(let payload):
-                            switch payload {
-                                case .insert(let recordID):
-                                    try managedObject._insertRelated(objectID: recordID.nsManagedObjectID, forKey: key)
-                                case .remove(let recordID):
-                                    try managedObject._removeRelated(objectID: recordID.nsManagedObjectID, forKey: key)
-                                case .set(let recordIDs):
-                                    try managedObject._setRelated(objectIDs: recordIDs.map({ $0.nsManagedObjectID }) as Array, forKey: key)
+                        case .apply(let value):
+                            switch value {
+                                case .toOne(let value):
+                                    if let update = value.update {
+                                        try managedObject._setToOne(
+                                            update.newValue?.nsManagedObjectID,
+                                            forKey: key
+                                        )
+                                    }
+                                case .toUnorderedMany(let value):
+                                    try managedObject._applyToUnorderedManyDiff(
+                                        value.map({ $0.nsManagedObjectID }),
+                                        forKey: key
+                                    )
+                                case .toOrderedMany(let value):
+                                    try managedObject._applyToOrderedManyDiff(
+                                        value.map({ $0.nsManagedObjectID }),
+                                        forKey: key
+                                    )
                             }
                     }
             }

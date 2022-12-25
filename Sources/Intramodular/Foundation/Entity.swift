@@ -6,10 +6,8 @@ import FoundationX
 import Swallow
 
 /// An entity in a data schema.
-public protocol Entity: _opaque_Entity, EntityRelatable, PredicateExpressionPrimitiveConvertible {
-    associatedtype RelatableEntityType = Self
-    
-    typealias Relationship<Value: EntityRelatable, ValueEntity: Entity, InverseValue: EntityRelatable, InverseValueEntity: Entity> = EntityRelationship<Self, Value, ValueEntity, InverseValue, InverseValueEntity>
+public protocol Entity: _opaque_Entity, PredicateExpressionPrimitiveConvertible {
+    typealias Relationship<Value: _EntityRelationshipDestination> = EntityRelationship<Value>
 }
 
 // MARK: - Implementation -

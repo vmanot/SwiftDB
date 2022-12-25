@@ -28,7 +28,7 @@ extension _Schema.Entity {
                 case .integer32:
                     return Int32.self
                 case .integer64:
-                    return Int64.self
+                    return Int.self
                 case .decimal:
                     return Decimal.self
                 case .double:

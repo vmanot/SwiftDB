@@ -6,28 +6,41 @@ import CorePersistence
 import Merge
 import Swallow
 
-public protocol _DatabaseRecordProxyBase {
+protocol _DatabaseRecordProxyBase {
     var allKeys: [AnyCodingKey] { get }
     
     func containsValue(forKey key: AnyCodingKey) throws -> Bool
     
-    func decode<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value
-    func encode<Value>(_ value: Value, forKey key: AnyCodingKey) throws
+    func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value
+    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws
+    func decodeValue(forKey key: AnyCodingKey) throws -> Any?
+    func encodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws
     
-    func unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any?
-    func unsafeEncodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws
+    func decodeRelationship(
+        forKey _: AnyCodingKey
+    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase>
+    
+    func encodeRelationship(
+        _: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
+        forKey _: AnyCodingKey
+    ) throws
+    
+    func encodeRelationshipDiff(
+        _: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
+        forKey _: AnyCodingKey
+    ) throws
 }
 
 /// A proxy to a record container OR snapshot.
-public final class _DatabaseRecordProxy: CancellablesHolder {
+final class _DatabaseRecordProxy: CancellablesHolder {
     private enum OperationType {
         case read
         case write
     }
     
-    public private(set) var base: _DatabaseRecordProxyBase
+    private(set) var base: _DatabaseRecordProxyBase
     
-    public let recordID: AnyDatabaseRecord.ID
+    let recordID: AnyDatabaseRecord.ID
     
     private init(base: _DatabaseRecordProxyBase, recordID: AnyDatabaseRecord.ID) {
         self.base = base
@@ -77,20 +90,52 @@ extension _DatabaseRecordProxy {
         try base.containsValue(forKey: key)
     }
     
-    func decode<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
-        try base.decode(type, forKey: key)
+    func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
+        try base.decodeValue(type, forKey: key)
     }
     
-    func encode<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
-        try base.encode(value, forKey: key)
+    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+        try base.encodeValue(value, forKey: key)
     }
     
-    func unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any? {
-        try base.unsafeDecodeValue(forKey: key)
+    func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
+        try base.decodeValue(forKey: key)
     }
     
-    func unsafeEncodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws {
-        try base.unsafeEncodeValue(payload, forKey: key)
+    func encodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws {
+        try base.encodeValue(payload, forKey: key)
+    }
+    
+    func decodeRelationship(
+        forKey key: AnyCodingKey
+    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
+        try base.decodeRelationship(forKey: key)
+    }
+    
+    func encodeRelationship(
+        relationship: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
+        forKey key: AnyCodingKey
+    ) throws {
+        try base.encodeRelationship(relationship, forKey: key)
+    }
+    
+    func encodeRelationshipDiff(
+        diff: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
+        forKey key: AnyCodingKey
+    ) throws {
+        try base.encodeRelationshipDiff(diff, forKey: key)
+    }
+    
+    func decodeAndReencodeRelationship(
+        forKey key: AnyCodingKey,
+        operation: (inout RelatedDatabaseRecordIdentifiers<AnyDatabase>) throws -> Void
+    ) throws {
+        let currentRelationship = try decodeRelationship(forKey: key)
+        var newRelationship = currentRelationship
+        
+        try operation(&newRelationship)
+        
+        try encodeRelationshipDiff(diff: newRelationship.difference(from: currentRelationship), forKey: key)
     }
 }
 

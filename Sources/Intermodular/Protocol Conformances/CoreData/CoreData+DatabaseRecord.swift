@@ -221,19 +221,6 @@ extension NSManagedObject {
         return setOrArray
     }
     
-    func _setRelated(
-        objectID: NSManagedObjectID?,
-        forKey key: AnyCodingKey
-    ) throws {
-        if let objectID = objectID {
-            let rawObjectToSet = try managedObjectContext.unwrap().object(withPermanentID: objectID)
-            
-            try _unsafeEncodeValue(rawObjectToSet, forKey: key)
-        } else {
-            try _unsafeEncodeValue(nil, forKey: key)
-        }
-    }
-    
     func _insertRelated(
         objectID: NSManagedObjectID,
         forKey key: AnyCodingKey
@@ -270,8 +257,21 @@ extension NSManagedObject {
         }
     }
     
-    func _setRelated(
-        objectIDs: Set<NSManagedObjectID>,
+    func _setToOne(
+        _ objectID: NSManagedObjectID?,
+        forKey key: AnyCodingKey
+    ) throws {
+        if let objectID = objectID {
+            let rawObjectToSet = try managedObjectContext.unwrap().object(withPermanentID: objectID)
+            
+            try _unsafeEncodeValue(rawObjectToSet, forKey: key)
+        } else {
+            try _unsafeEncodeValue(nil, forKey: key)
+        }
+    }
+    
+    func _setToUnorderedMany(
+        _ objectIDs: Set<NSManagedObjectID>,
         forKey key: AnyCodingKey
     ) throws {
         let managedObjectsToSet = try objectIDs.map({ try managedObjectContext.unwrap().object(withPermanentID: $0) })
@@ -279,12 +279,38 @@ extension NSManagedObject {
         setValue(NSMutableSet(array: managedObjectsToSet), forKey: key.stringValue)
     }
     
-    func _setRelated(
-        objectIDs: [NSManagedObjectID],
+    func _setToOrderedMany(
+        _ objectIDs: [NSManagedObjectID],
         forKey key: AnyCodingKey
     ) throws {
         let managedObjectsToSet = try objectIDs.map({ try managedObjectContext.unwrap().object(withPermanentID: $0) })
         
         setValue(NSMutableArray(array: managedObjectsToSet), forKey: key.stringValue)
+    }
+    
+    func _applyToUnorderedManyDiff(
+        _ diff: Set<NSManagedObjectID>.Difference,
+        forKey key: AnyCodingKey
+    ) throws {
+        let managedObjectContext = try self.managedObjectContext.unwrap()
+        
+        var set = try cast(self._cocoaMutableSetOrArray(forKey: key), to: Set<NSManagedObject>.self)
+        
+        set.applyUnconditionally(diff.map({ managedObjectContext.object(with: $0) })) // TODO: Validate existence of objects
+        
+        setValue(set, forKey: key.stringValue)
+    }
+    
+    func _applyToOrderedManyDiff(
+        _ diff: Array<NSManagedObjectID>.Difference,
+        forKey key: AnyCodingKey
+    ) throws {
+        let managedObjectContext = try self.managedObjectContext.unwrap()
+        
+        var array = try cast(self._cocoaMutableSetOrArray(forKey: key), to: Array<NSManagedObject>.self)
+        
+        try array.applyUnconditionally(diff.map({ managedObjectContext.object(with: $0) }))
+        
+        setValue(array, forKey: key.stringValue)
     }
 }

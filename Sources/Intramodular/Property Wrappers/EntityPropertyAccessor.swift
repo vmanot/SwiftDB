@@ -6,17 +6,8 @@ import Foundation
 import Runtime
 import Swallow
 
-public struct EntityPropertyAccessorRuntimeMetadata {
-    let valueType: Any.Type
-    
-    var wrappedValueAccessToken: AnyHashable?
-    var wrappedValue_didSet_token: AnyHashable?
-}
-
-// MARK: - Extensions -
-
-public protocol EntityPropertyAccessor: _opaque_ObservableObject, ObservableObject, PropertyWrapper {
-    var _runtimeMetadata: EntityPropertyAccessorRuntimeMetadata { get set }
+protocol _EntityPropertyAccessor: _opaque_ObservableObject, ObservableObject, PropertyWrapper {
+    var _runtimeMetadata: _EntityPropertyAccessorRuntimeMetadata { get set }
     
     var _underlyingRecordProxy: _DatabaseRecordProxy? { get set }
     
@@ -28,12 +19,24 @@ public protocol EntityPropertyAccessor: _opaque_ObservableObject, ObservableObje
     var wrappedValue: WrappedValue { get }
 }
 
+public protocol EntityPropertyAccessor {
+    var name: String? { get set }
+}
+
 // MARK: - Extensions -
 
-extension EntityPropertyAccessor {
+extension _EntityPropertyAccessor {
     var key: AnyCodingKey {
         get throws {
             try name.map(AnyCodingKey.init(stringValue:)).unwrap()
         }
     }
+}
+
+// MARK: - Auxiliary -
+
+struct _EntityPropertyAccessorRuntimeMetadata {
+    let valueType: Any.Type
+    
+    var didAccessWrappedValueGetter: Bool = false
 }

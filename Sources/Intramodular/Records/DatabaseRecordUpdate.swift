@@ -26,31 +26,16 @@ extension DatabaseRecordUpdate {
         }
         
         public enum Relationship {
-            public enum ToOne {
-                case set(Database.Record.ID?)
-            }
-            
-            public enum ToMany {
-                case insert(Database.Record.ID)
-                case remove(Database.Record.ID)
-                case set(Set<Database.Record.ID>)
-            }
-            
-            public enum ToOrderedMany {
-                case insert(Database.Record.ID)
-                case remove(Database.Record.ID)
-                case set([Database.Record.ID])
-            }
-            
-            case toOne(ToOne)
-            case toUnorderedMany(ToMany)
-            case toOrderedMany(ToOrderedMany)
+            case set(RelatedDatabaseRecordIdentifiers<Database>)
+            case apply(difference: RelatedDatabaseRecordIdentifiers<Database>.Difference)
         }
         
         case data(Data)
         case relationship(Relationship)
     }
 }
+
+// MARK: - Auxiliary -
 
 extension DatabaseRecordUpdate where Database == AnyDatabase {
     func _cast<T: SwiftDB.Database>(
@@ -60,7 +45,7 @@ extension DatabaseRecordUpdate where Database == AnyDatabase {
     }
 }
 
-extension DatabaseRecordUpdate.Payload where Database == AnyDatabase {
+extension DatabaseRecordUpdate.Payload: _AnyDatabaseRuntimeCasting where Database == AnyDatabase {
     func _cast<T: SwiftDB.Database>(
         to type: DatabaseRecordUpdate<T>.Payload.Type
     ) throws -> DatabaseRecordUpdate<T>.Payload {
@@ -74,41 +59,18 @@ extension DatabaseRecordUpdate.Payload where Database == AnyDatabase {
                 }
             case .relationship(let update):
                 switch update {
-                    case .toOne(let update):
-                        switch update {
-                            case .set(let recordID):
-                                return .relationship(.toOne(.set(try recordID.map({ try $0._cast(to: T.Record.ID.self) }))))
-                        }
-                    case .toUnorderedMany(let update):
-                        switch update {
-                            case .insert(let recordID):
-                                return .relationship(.toUnorderedMany(.insert(try recordID._cast(to: T.Record.ID.self))))
-                            case .remove(let recordID):
-                                return .relationship(.toUnorderedMany(.remove(try recordID._cast(to: T.Record.ID.self))))
-                            case .set(let recordIDs):
-                                return .relationship(
-                                    .toUnorderedMany(
-                                        .set(
-                                            Set(try recordIDs.map({ try $0._cast(to: T.Record.ID.self) }))
-                                        )
-                                    )
-                                )
-                        }
-                    case .toOrderedMany(let update):
-                        switch update {
-                            case .insert(let recordID):
-                                return .relationship(.toOrderedMany(.insert(try recordID._cast(to: T.Record.ID.self))))
-                            case .remove(let recordID):
-                                return .relationship(.toOrderedMany(.remove(try recordID._cast(to: T.Record.ID.self))))
-                            case .set(let recordIDs):
-                                return .relationship(
-                                    .toOrderedMany(
-                                        .set(
-                                            try recordIDs.map({ try $0._cast(to: T.Record.ID.self) })
-                                        )
-                                    )
-                                )
-                        }
+                    case .set(let value):
+                        return .relationship(
+                            .set(
+                                try value._cast(to: RelatedDatabaseRecordIdentifiers<T>.self)
+                            )
+                        )
+                    case .apply(let value):
+                        return .relationship(
+                            .apply(
+                                difference: try value._cast(to: RelatedDatabaseRecordIdentifiers<T>.Difference.self)
+                            )
+                        )
                 }
         }
     }

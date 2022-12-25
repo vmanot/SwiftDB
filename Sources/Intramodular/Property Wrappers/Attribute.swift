@@ -10,18 +10,19 @@ import SwiftUI
 
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
+public final class Attribute<Value>: _EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
     
-    public var _runtimeMetadata = EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
+    var _runtimeMetadata = _EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
+
     public var name: String?
     
     private let traits: [EntityAttributeTrait]
     private var initialValue: InitialValue
     
-    public var _underlyingRecordProxy: _DatabaseRecordProxy?
+    var _underlyingRecordProxy: _DatabaseRecordProxy?
     
     private var isOptional: Bool {
         Value.self is _opaque_Optional.Type
@@ -29,11 +30,11 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     
     public var wrappedValue: Value {
         get {
-            _runtimeMetadata.wrappedValueAccessToken = UUID()
+            _runtimeMetadata.didAccessWrappedValueGetter = true
             
             if let recordProxy = _underlyingRecordProxy {
                 do {
-                    return try recordProxy.decode(Value.self, forKey: key)
+                    return try recordProxy.decodeValue(Value.self, forKey: key)
                 } catch {
                     assertionFailure(error)
                     
@@ -51,7 +52,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
             
             do {
                 if let recordProxy = _underlyingRecordProxy {
-                    try recordProxy.encode(newValue, forKey: key)
+                    try recordProxy.encodeValue(newValue, forKey: key)
                 } else {
                     initialValue = .assigned(newValue)
                 }
@@ -85,7 +86,7 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
         }
     }
     
-    public func initialize(with container: _DatabaseRecordProxy) throws {
+    func initialize(with container: _DatabaseRecordProxy) throws {
         assert(_underlyingRecordProxy == nil)
         
         self._underlyingRecordProxy = container
@@ -96,15 +97,15 @@ public final class Attribute<Value>: EntityPropertyAccessor, Loggable, Observabl
     /// Encode the `defaultValue` if necessary.
     /// Needed for required attributes, otherwise the underlying object crashes on save.
     func encodeInitialValueIfNecessary(
-        into _underlyingRecordProxy: _DatabaseRecordProxy
+        into proxy: _DatabaseRecordProxy
     ) throws {
-        guard try !_underlyingRecordProxy.containsValue(forKey: key), !initialValue.isResolved else {
+        guard try !proxy.containsValue(forKey: key), !initialValue.isResolved else {
             return
         }
         
         let value = initialValue.resolve()
         
-        try _underlyingRecordProxy.encode(value, forKey: key)
+        try proxy.encodeValue(value, forKey: key)
     }
     
     public func schema() throws -> _Schema.Entity.Property {

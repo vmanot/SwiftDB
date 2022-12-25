@@ -32,6 +32,7 @@ public final class QuerySubscription<Model>: ObservableObject {
                 }
             }
             .stopExecutionOnError()
+        
             .sink { completion in
                 switch completion {
                     case .finished:

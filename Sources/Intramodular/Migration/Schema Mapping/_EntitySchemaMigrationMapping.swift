@@ -108,6 +108,6 @@ extension _EntitySchemaMigrationMapping {
 // MARK: - Auxiliary -
 
 public struct CustomEntityTransformerArguments {
-    public let source: _DatabaseRecordProxy
+    let source: _DatabaseRecordProxy
     public let createDestination: () throws -> UnsafeRecordMigrationDestination
 }

@@ -33,9 +33,13 @@ public final class _TransactionScopedRecord {
         self._taskRuntimeLink = .init(from: try _SwiftDB_taskContext._taskRuntime.unwrap())
         self.recordSchema = recordSchema
         self.record = record
-        self.recordUpdater = try .init(recordSchema: recordSchema, record: record, onUpdate: { update in
-            try! transaction.updateRecord(record.id, with: update)
-        })
+        self.recordUpdater = try .init(
+            recordSchema: recordSchema,
+            record: record,
+            onUpdate: { update in
+                try! transaction.updateRecord(record.id, with: update)
+            }
+        )
         self.transaction = transaction
     }
     
@@ -69,24 +73,44 @@ extension _TransactionScopedRecord: _DatabaseRecordProxyBase {
         }
     }
     
-    public func decode<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
+    public func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
         try scope(.read) { _ in
             try recordUpdater.decodeValue(type, forKey: key)
         }
     }
     
-    public func encode<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+    public func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
         try scope(.write) { _ in
-            recordUpdater.unsafeEncodeValue(value, forKey: key)
+            recordUpdater.encodeValue(value, forKey: key)
         }
     }
     
-    public func unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any? {
-        try recordUpdater.unsafeDecodeValue(forKey: AnyCodingKey(key))
+    public func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
+        try recordUpdater.decodeValue(forKey: AnyCodingKey(key))
     }
     
-    public func unsafeEncodeValue(_ value: Any?, forKey key: AnyCodingKey) throws {
-        recordUpdater.unsafeEncodeValue(value, forKey: AnyCodingKey(key))
+    public func encodeValue(_ value: Any?, forKey key: AnyCodingKey) throws {
+        recordUpdater.encodeValue(value, forKey: AnyCodingKey(key))
+    }
+    
+    public func decodeRelationship(
+        forKey key: AnyCodingKey
+    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
+        try recordUpdater.decodeRelationship(forKey: key)
+    }
+    
+    public func encodeRelationship(
+        _ relationship: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
+        forKey key: AnyCodingKey
+    ) throws {
+        try recordUpdater.encodeRelationship(relationship, forKey: key)
+    }
+    
+    public func encodeRelationshipDiff(
+        _ diff: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
+        forKey key: AnyCodingKey
+    ) throws {
+        try recordUpdater.encodeRelationshipDiff(diff: diff, forKey: key)
     }
 }
 
@@ -108,7 +132,7 @@ extension _TransactionScopedRecord {
         
         switch property {
             case is _Schema.Entity.Attribute:
-                return try unsafeDecodeValue(forKey: key).map(_RecordFieldPayload.init(from:))
+                return try decodeValue(forKey: key).map(_RecordFieldPayload.init(from:))
             case is _Schema.Entity.Relationship:
                 return try .relationship(
                     primaryKeysOrRecordIdentifiers: decodeRelatedRecordIDs(forKey: key)

@@ -193,10 +193,6 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
             throw _CoreData.DatabaseRecordSpace.DatabaseZoneQueryRequestError.atLeastOneRecordTypeRequired
         }
 
-        guard filters.recordTypes.count == 1 else {
-            throw _CoreData.DatabaseRecordSpace.DatabaseZoneQueryRequestError.multipleRecordTypesUnsupported
-        }
-
         var nsFetchRequests: [NSFetchRequest<NSManagedObject>] = []
 
         for recordType in filters.recordTypes {

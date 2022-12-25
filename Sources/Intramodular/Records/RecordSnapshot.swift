@@ -9,7 +9,7 @@ public struct RecordInstanceMetadata {
     public let recordID: AnyDatabaseRecord.ID
     
     public static func from(instance: Any) throws -> Self {
-        if let instance = instance as? _opaque_Entity {
+        if let instance = instance as? (any Entity) {
             return try .init(
                 recordID: instance._databaseRecordProxy.recordID
             )

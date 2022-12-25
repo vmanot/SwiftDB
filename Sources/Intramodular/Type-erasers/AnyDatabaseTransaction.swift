@@ -10,6 +10,8 @@ public struct AnyDatabaseTransaction: DatabaseTransaction {
     private let base: any DatabaseTransaction
     
     public init<Transaction: DatabaseTransaction>(erasing base: Transaction) {
+        assert(!(base is AnyDatabaseTransaction))
+        
         self.base = base
     }
     

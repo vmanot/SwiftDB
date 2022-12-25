@@ -2,31 +2,50 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Diagnostics
 import Compute
 import CorePersistence
 import Swallow
 
-final class _DatabaseRecordSnapshot {
+final class _DatabaseRecordSnapshot: Loggable {
     let allKeys: [AnyCodingKey]
-    var fieldValues: [AnyCodingKey: Any]
-    var fieldValuesDiff = DictionaryDifference<AnyCodingKey, Any>(insertions: [], updates: [], removals: [])
+    var attributeValues: [AnyCodingKey: Any] = [:]
+    var relationships: [AnyCodingKey: RelatedDatabaseRecordIdentifiers<AnyDatabase>] = [:]
+    
+    var attributeValuesDiff = DictionaryDifference<AnyCodingKey, Any>(
+        insertions: [],
+        updates: [],
+        removals: []
+    )
     
     init(
-        from coder: _DatabaseRecordDataDecoder
+        from decoder: _DatabaseRecordDataDecoder
     ) throws {
-        self.allKeys = coder.record.allKeys
+        self.allKeys = decoder.record.allKeys
         
-        var fieldValues = [AnyCodingKey: Any](minimumCapacity: allKeys.count)
+        try _decodeAllValuesAndRelationships(from: decoder)
+    }
+    
+    private func _decodeAllValuesAndRelationships(
+        from decoder: _DatabaseRecordDataDecoder
+    ) throws {
+        let recordSchema = try cast(decoder.recordSchema.unwrap(), to: _Schema.Entity.self)
         
-        for key in allKeys {
-            fieldValues[AnyCodingKey(key)] = try coder.unsafeDecodeValue(forKey: key)
+        for attribute in recordSchema.attributes {
+            let key = AnyCodingKey(stringValue: attribute.name)
+            
+            attributeValues[key] = try decoder.decodeValue(forKey: key)
         }
         
-        self.fieldValues = fieldValues
+        for relationship in recordSchema.relationships {
+            let key = AnyCodingKey(stringValue: relationship.name)
+            
+            relationships[key] = try decoder.decodeRelationship(forKey: key)
+        }
     }
     
     deinit {
-        if !fieldValuesDiff.isEmpty {
+        if !attributeValuesDiff.isEmpty {
             assertionFailure()
         }
     }
@@ -34,23 +53,49 @@ final class _DatabaseRecordSnapshot {
 
 extension _DatabaseRecordSnapshot: _DatabaseRecordProxyBase {
     func containsValue(forKey key: AnyCodingKey) throws -> Bool {
-        fieldValues.contains(key: AnyCodingKey(key))
+        attributeValues.contains(key: AnyCodingKey(key))
     }
     
-    func decode<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
-        return try cast(fieldValues[AnyCodingKey(key)], to: Value.self)
+    func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
+        return try cast(decodeValue(forKey: key), to: Value.self)
     }
     
-    func encode<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
-        try unsafeEncodeValue(value, forKey: key)
+    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+        try encodeValue(cast(value, to: Optional<Any>.self), forKey: key)
     }
     
-    func unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any? {
-        fieldValues[AnyCodingKey(key)]
+    func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
+        attributeValues[AnyCodingKey(key)]
     }
     
-    func unsafeEncodeValue(_ value: Any?, forKey key: AnyCodingKey) throws {
-        fieldValues[AnyCodingKey(key)] = value
-        fieldValuesDiff[AnyCodingKey(key)] = value
+    func encodeValue(_ value: Any?, forKey key: AnyCodingKey) throws {
+        attributeValues[AnyCodingKey(key)] = value
+        attributeValuesDiff[AnyCodingKey(key)] = value
+    }
+    
+    func decodeRelationship(
+        forKey key: AnyCodingKey
+    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
+        let relationship = try relationships[key].unwrap()
+                
+        return relationship
+    }
+    
+    func encodeRelationship(
+        _ relationship: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
+        forKey key: AnyCodingKey
+    ) throws {
+        relationships[key] = relationship
+    }
+    
+    func encodeRelationshipDiff(
+        _ diff: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
+        forKey key: AnyCodingKey
+    ) throws {
+        var relationship = try relationships[key].unwrap()
+        
+        try relationship.applyUnconditionally(diff)
+        
+        relationships[key] = relationship
     }
 }

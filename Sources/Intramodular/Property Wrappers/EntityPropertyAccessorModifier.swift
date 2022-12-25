@@ -13,22 +13,8 @@ public protocol EntityPropertyAccessorModifier: EntityPropertyAccessor {
 
 // MARK: - Implementation -
 
-extension EntityPropertyAccessorModifier {
-    public var _opaque_objectWillChange: AnyObjectWillChangePublisher {
-        base._opaque_objectWillChange
-    }
-    
-    public var objectWillChange: EntityPropertyAccessorType.ObjectWillChangePublisher {
-        base.objectWillChange
-    }
-    
-    public func _opaque_objectWillChange_send() throws {
-        try base._opaque_objectWillChange_send()
-    }
-}
-
-extension EntityPropertyAccessorModifier  {
-    public var _runtimeMetadata: EntityPropertyAccessorRuntimeMetadata {
+extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _EntityPropertyAccessor {
+    var _runtimeMetadata: _EntityPropertyAccessorRuntimeMetadata {
         get {
             base._runtimeMetadata
         } set {
@@ -36,7 +22,7 @@ extension EntityPropertyAccessorModifier  {
         }
     }
     
-    public var _underlyingRecordProxy: _DatabaseRecordProxy? {
+    var _underlyingRecordProxy: _DatabaseRecordProxy? {
         get {
             base._underlyingRecordProxy
         } set {
@@ -44,7 +30,7 @@ extension EntityPropertyAccessorModifier  {
         }
     }
     
-    public var name: String? {
+    var name: String? {
         get {
             base.name
         } set {
@@ -52,11 +38,11 @@ extension EntityPropertyAccessorModifier  {
         }
     }
         
-    public func schema() throws -> _Schema.Entity.Property {
+    func schema() throws -> _Schema.Entity.Property {
         try base.schema()
     }
     
-    public func initialize(with container: _DatabaseRecordProxy) throws {
+    func initialize(with container: _DatabaseRecordProxy) throws {
         try base.initialize(with: container)
     }
 }

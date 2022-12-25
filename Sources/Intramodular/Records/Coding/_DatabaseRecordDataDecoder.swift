@@ -23,66 +23,65 @@ extension _DatabaseRecordDataDecoder {
         record.containsValue(forKey: key)
     }
 
-    public func decode<Value>(
+    public func decodeValue<Value>(
         _ type: Value.Type, forKey key: AnyCodingKey
     ) throws -> Value {
-        if type is any EntityRelatable.Type {
-            throw _Error.relationshipCodingUnsupported
-        } else {
-            // Special handling for RawRepresentable types.
-            if let rawRepresentableType = type as? any RawRepresentable.Type,
-               case .primitive = _Schema.Entity.AttributeType(from: rawRepresentableType)
-            {
-                let rawValue = try record._opaque_decode(rawRepresentableType._opaque_RawValue, forKey: key)
-
-                return try cast(
-                    try rawRepresentableType.init(_opaque_rawValue: rawValue),
-                    to: Value.self
-                )
-            }
-
-            return try record.decode(type, forKey: key)
+        if let rawRepresentableType = type as? any RawRepresentable.Type,
+           case .primitive = _Schema.Entity.AttributeType(from: rawRepresentableType)
+        {
+            let rawValue = try record._opaque_decode(rawRepresentableType._opaque_RawValue, forKey: key)
+            
+            return try cast(
+                try rawRepresentableType.init(_opaque_rawValue: rawValue),
+                to: Value.self
+            )
         }
+        
+        return try record.decode(type, forKey: key)
     }
 
-    public func decodeRelationship(
-        ofType type: DatabaseRecordRelationshipType,
-        forKey key: AnyCodingKey
-    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
-        try record.decodeRelationship(ofType: type, forKey: key)
-    }
-}
-
-extension _DatabaseRecordDataDecoder {
-    public func unsafeDecodeValue(forKey key: AnyCodingKey) throws -> Any? {
-        guard let entitySchema = recordSchema as? _Schema.Entity else {
-            throw _Error.entitySchemaRequired
-        }
-
-        let property = try entitySchema.property(named: key.stringValue)
-
+    public func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
+        let property = try _entitySchema().property(named: key.stringValue)
+        
         switch property {
             case let property as _Schema.Entity.Attribute: do {
                 if try !containsValue(forKey: key) {
                     return nil
                 }
-
+                
                 let attributeType = property.attributeConfiguration.type
-
+                
                 func _decodeValueForType<T>(_ type: T.Type) throws -> Any {
-                    try self.decode(type, forKey: key)
+                    try self.decodeValue(type, forKey: key)
                 }
-
+                
                 let value = try _openExistential(attributeType._swiftType, do: _decodeValueForType)
-
+                
                 return value
             }
             case is _Schema.Entity.Relationship: do {
-                throw _Error.relationshipCodingUnsupported
+                throw _Error.attemptedToDecodeValueFromRelationshipKey(key)
             }
             default:
                 throw _Error.unknownPropertyType(property.type, forKey: key)
         }
+    }
+
+    public func decodeRelationship(
+        forKey key: AnyCodingKey
+    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
+        let relationship = try _entitySchema().relationship(named: key.stringValue)
+        let relationshipType = DatabaseRecordRelationshipType.destinationType(from: relationship)
+
+        return try record.decodeRelationship(ofType: relationshipType, forKey: key)
+    }
+    
+    private func _entitySchema() throws -> _Schema.Entity {
+        guard let schema = recordSchema as? _Schema.Entity else {
+            throw _Error.entitySchemaRequired
+        }
+        
+        return schema
     }
 }
 
@@ -90,7 +89,7 @@ extension _DatabaseRecordDataDecoder {
 
 extension _DatabaseRecordDataDecoder {
     public enum _Error: _SwiftDB_Error {
-        case relationshipCodingUnsupported
+        case attemptedToDecodeValueFromRelationshipKey(AnyCodingKey)
         case entitySchemaRequired
         case failedToResolvePrimaryKey
         case unknownPropertyType(Any, forKey: CodingKey)

@@ -9,8 +9,6 @@ import Swallow
 /// A shadow protocol for `Entity`.
 public protocol _opaque_Entity: Initiable {
     static var _opaque_ParentEntity: (any Entity.Type)? { get }
-    
-    var _databaseRecordProxy: _DatabaseRecordProxy { get throws }
 }
 
 extension _opaque_Entity where Self: Entity {
@@ -20,9 +18,9 @@ extension _opaque_Entity where Self: Entity {
 // MARK: - Implementation -
 
 extension _opaque_Entity  {
-    var _runtime_propertyAccessors: [any EntityPropertyAccessor] {
+    var _runtime_propertyAccessors: [any _EntityPropertyAccessor] {
         AnyNominalOrTupleMirror(self)!.allChildren.compactMap { key, value in
-            (value as? any EntityPropertyAccessor)
+            (value as? any _EntityPropertyAccessor)
         }
     }
     
@@ -32,7 +30,7 @@ extension _opaque_Entity  {
         var instance = AnyNominalOrTupleMirror(self)!
         
         for (key, value) in instance.allChildren {
-            if let property = value as? any EntityPropertyAccessor {
+            if let property = value as? any _EntityPropertyAccessor {
                 if property.name == nil {
                     property.name = .init(key.stringValue.dropPrefixIfPresent("_"))
                 }
@@ -63,15 +61,11 @@ extension _opaque_Entity where Self: Entity {
     public static var _opaque_ParentEntity: (any Entity.Type)? {
         return nil
     }
-    
-    public var _opaque_id: AnyHashable? {
-        nil
-    }
-    
-    public var _databaseRecordProxy: _DatabaseRecordProxy {
+        
+    var _databaseRecordProxy: _DatabaseRecordProxy {
         get throws {
             for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
-                if let value = value as? any EntityPropertyAccessor {
+                if let value = value as? any _EntityPropertyAccessor {
                     if let proxy = value._underlyingRecordProxy {
                         return proxy
                     }

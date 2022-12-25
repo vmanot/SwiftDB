@@ -9,13 +9,13 @@ final class _CachingRecordUpdater {
     private let recordSchema: _Schema.Record?
     private let record: AnyDatabaseRecord
     private let recordCoder: _DatabaseRecordDataDecoder
-
+    
     private let onUpdate: (DatabaseRecordUpdate<AnyDatabase>) -> Void
-
+    
     private var cachedValues: [AnyCodingKey: Any] = [:]
     private var cachedRelationships: [AnyCodingKey: RelatedDatabaseRecordIdentifiers<AnyDatabase>] = [:]
     private var removedValues: Set<AnyCodingKey> = []
-
+    
     init(
         recordSchema: _Schema.Record?,
         record: AnyDatabaseRecord,
@@ -29,66 +29,89 @@ final class _CachingRecordUpdater {
         )
         self.onUpdate = onUpdate
     }
+}
 
+extension _CachingRecordUpdater {
     func containsValue(forKey key: AnyCodingKey) throws -> Bool {
         record.containsValue(forKey: key)
     }
-
+    
     func decodeValue<T>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T {
         if let existingValue = cachedValues[key] {
             return try cast(existingValue, to: T.self)
         } else {
-            let value = try recordCoder.decode(type, forKey: key)
-
+            let value = try recordCoder.decodeValue(type, forKey: key)
+            
             cachedValues[key] = value
-
+            
             return value
         }
     }
-
-    func decodeRelationship(
-        ofType type: DatabaseRecordRelationshipType,
-        forKey key: AnyCodingKey
-    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
-        if let cached = cachedRelationships[key] {
-            return cached
-        } else {
-            let relationship = try recordCoder.decodeRelationship(ofType: type, forKey: key)
-
-            cachedRelationships[key] = relationship
-
-            return relationship
-        }
-    }
-
-    func unsafeDecodeValue(
+    
+    func decodeValue(
         forKey key: AnyCodingKey
     ) throws -> Any? {
         if let cached = cachedValues[key] {
             return cached
-        } else if let value = try recordCoder.unsafeDecodeValue(forKey: key) {
+        } else if let value = try recordCoder.decodeValue(forKey: key) {
             cachedValues[key] = value
-
+            
             return value
         } else {
             return nil
         }
     }
-
-    func unsafeEncodeValue(
+    
+    func encodeValue(
         _ newValue: Any?,
         forKey key: AnyCodingKey
     ) {
-        cachedValues[key] = newValue
-
         if let newValue = newValue {
-            onUpdate(.init(key: key, payload: .data(.setValue(newValue))))
-
+            cachedValues[key] = newValue
             removedValues.remove(key)
+            
+            onUpdate(.init(key: key, payload: .data(.setValue(newValue))))
         } else {
-            onUpdate(.init(key: key, payload: .data(.removeValue)))
-
+            cachedValues[key] = nil
             removedValues.insert(key)
+            
+            onUpdate(.init(key: key, payload: .data(.removeValue)))
         }
+    }
+    
+    func decodeRelationship(
+        forKey key: AnyCodingKey
+    ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
+        if let cached = cachedRelationships[key] {
+            return cached
+        } else {
+            let relationship = try recordCoder.decodeRelationship(forKey: key)
+            
+            cachedRelationships[key] = relationship
+            
+            return relationship
+        }
+    }
+    
+    func encodeRelationship(
+        _ relationship: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
+        forKey key: AnyCodingKey
+    ) throws {
+        cachedRelationships[key] = relationship
+        
+        onUpdate(.init(key: key, payload: .relationship(.set(relationship))))
+    }
+    
+    func encodeRelationshipDiff(
+        diff: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
+        forKey key: AnyCodingKey
+    ) throws {
+        var relationship = try decodeRelationship(forKey: key)
+        
+        try relationship.applyUnconditionally(diff)
+        
+        cachedRelationships[key] = relationship
+        
+        onUpdate(.init(key: key, payload: .relationship(.apply(difference: diff))))
     }
 }

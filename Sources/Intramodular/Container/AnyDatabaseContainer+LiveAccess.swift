@@ -86,7 +86,7 @@ extension AnyDatabase {
         return try await executor.execute { transaction in
             try body(
                 AnyTransaction(
-                    transaction: .init(erasing: transaction),
+                    transaction: transaction,
                     _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(for: self)
                 )
             )

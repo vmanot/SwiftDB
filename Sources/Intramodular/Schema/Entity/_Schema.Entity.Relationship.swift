@@ -87,6 +87,19 @@ extension _Schema.Entity.Relationship {
             }
         }
         
+        public var inverse: Self {
+            switch self {
+                case .oneToOne:
+                    return .oneToOne
+                case .oneToMany:
+                    return .manyToOne
+                case .manyToOne:
+                    return .oneToMany
+                case .manyToMany:
+                    return .manyToMany
+            }
+        }
+        
         public init(source: EntityCardinality, destination: EntityCardinality) {
             switch (source, destination) {
                 case (.one, .one):

@@ -58,10 +58,6 @@ extension _CoreData.Database {
                         TODO.unimplemented
                     }
 
-                    guard (queryRequest.sortDescriptors ?? []).isEmpty else {
-                        TODO.unimplemented
-                    }
-
                     // FIXME: This doesn't account for `queryRequest`'s sort descriptors.
                     let publisher = try queryRequest.toNSFetchRequests(recordSpace: recordSpace)
                         .map { fetchRequest -> AnyPublisher<[Database.Record], Error> in
