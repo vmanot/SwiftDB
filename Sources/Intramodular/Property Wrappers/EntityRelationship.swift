@@ -6,15 +6,11 @@ import CoreData
 import Runtime
 import Swallow
 
-public protocol _EntityRelationshipType {
-    associatedtype _RelationshipDestination: _EntityRelationshipDestination
-}
-
 /// A property accessor for entity relationships.
 @propertyWrapper
 public final class EntityRelationship<
     Value: _EntityRelationshipDestination
->: _EntityRelationshipType, _EntityPropertyAccessor, ObservableObject, PropertyWrapper {
+>: _EntityPropertyAccessor, EntityPropertyAccessor, ObservableObject, PropertyWrapper {
     public typealias _RelationshipDestination = Value
     
     enum InverseKeyPath {
@@ -67,7 +63,7 @@ public final class EntityRelationship<
         get {
             _runtimeMetadata.didAccessWrappedValueGetter = true
             
-            return ._uninitializedInstance()
+            return try! .init(_relationshipPropertyAccessor: self)
         }
     }
     

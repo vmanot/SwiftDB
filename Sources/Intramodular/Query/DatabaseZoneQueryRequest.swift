@@ -122,7 +122,7 @@ extension DatabaseZoneQueryRequest where Database == AnyDatabase {
     )  throws {
         let recordTypes: [AnyDatabaseRecord.RecordType]
 
-        if Model.self == Any.self {
+        if Model.self == Any.self || Model.self == (any Entity).self {
             recordTypes = try databaseContext.schema.entities.map({ try databaseContext.schemaAdaptor.recordType(for: $0.id) })
         } else {
             let entity = try databaseContext.schema.entity(forModelType: Model.self).unwrap().id

@@ -11,6 +11,7 @@ public protocol DatabaseCRUDQ {
     func queryExecutionTask<Model>(for request: QueryRequest<Model>) -> AnyTask<QueryRequest<Model>.Output, Error>
     func querySubscription<Model>(for request: QueryRequest<Model>) async throws -> QuerySubscription<Model>
     func delete<Instance: Entity>(_ instance: Instance) async throws
+    func deleteAll() async throws
 }
 
 // MARK: - Extensions -
@@ -39,7 +40,7 @@ extension DatabaseCRUDQ {
 }
 
 extension DatabaseCRUDQ {
-    public func fetchAllInstances() async throws -> [Any] {
+    public func fetchAll() async throws -> [Any] {
         try await execute(
             QueryRequest<Any>(
                 predicate: nil,
@@ -97,7 +98,9 @@ extension DatabaseCRUDQ {
 }
 
 extension DatabaseCRUDQ {
-    public func delete<Instances: Sequence>(allOf instances: Instances) async throws where Instances.Element: Entity {
+    public func delete<Instances: Sequence>(
+        allOf instances: Instances
+    ) async throws where Instances.Element: Entity {
         for instance in instances {
             try await delete(instance)
         }

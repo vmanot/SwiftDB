@@ -17,9 +17,9 @@ public protocol LocalDatabaseCRUDQ {
 }
 
 extension LocalDatabaseCRUDQ {
-    public func fetchAllInstances() throws -> [Any] {
+    public func fetchAll() throws -> [any Entity] {
         try execute(
-            QueryRequest<Any>(
+            QueryRequest<any Entity>(
                 predicate: nil,
                 sortDescriptors: nil,
                 fetchLimit: nil,
@@ -71,5 +71,9 @@ extension LocalDatabaseCRUDQ {
             )
         )
         .results
+    }
+    
+    public func deleteAll() throws {
+        try fetchAll().forEach({ try delete($0) })
     }
 }

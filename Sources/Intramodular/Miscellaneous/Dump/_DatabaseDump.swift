@@ -12,7 +12,7 @@ public struct _DatabaseDump: Codable, Hashable {
 
 extension AnyLocalTransaction {
     public func _dumpDatabase() throws -> _DatabaseDump {
-        let instances = try fetchAllInstances()
+        let instances = try fetchAll()
         
         var recordDumps: [_DatabaseRecordDump] = []
         

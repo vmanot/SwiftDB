@@ -35,6 +35,37 @@ extension _CachingRecordUpdater {
     func containsValue(forKey key: AnyCodingKey) throws -> Bool {
         record.containsValue(forKey: key)
     }
+        
+    func encodeInitialValue<T>(
+        _ newValue: T,
+        forKey key: AnyCodingKey
+    ) throws {
+        if let newValue = try cast(newValue, to: Optional<Any>.self) {
+            cachedValues[key] = newValue
+            removedValues.remove(key)
+            
+            onUpdate(.init(key: key, payload: .data(.setValue(newValue))))
+        } else {
+            // TODO: Handle `nil` initial values?
+        }
+    }
+    
+    func encodeValue(
+        _ newValue: Any?,
+        forKey key: AnyCodingKey
+    ) throws {
+        if let newValue = newValue {
+            cachedValues[key] = newValue
+            removedValues.remove(key)
+            
+            onUpdate(.init(key: key, payload: .data(.setValue(newValue))))
+        } else {
+            cachedValues[key] = nil
+            removedValues.insert(key)
+            
+            onUpdate(.init(key: key, payload: .data(.removeValue)))
+        }
+    }
     
     func decodeValue<T>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T {
         if let existingValue = cachedValues[key] {
@@ -61,24 +92,7 @@ extension _CachingRecordUpdater {
             return nil
         }
     }
-    
-    func encodeValue(
-        _ newValue: Any?,
-        forKey key: AnyCodingKey
-    ) {
-        if let newValue = newValue {
-            cachedValues[key] = newValue
-            removedValues.remove(key)
-            
-            onUpdate(.init(key: key, payload: .data(.setValue(newValue))))
-        } else {
-            cachedValues[key] = nil
-            removedValues.insert(key)
-            
-            onUpdate(.init(key: key, payload: .data(.removeValue)))
-        }
-    }
-    
+
     func decodeRelationship(
         forKey key: AnyCodingKey
     ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {

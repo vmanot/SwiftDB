@@ -34,8 +34,10 @@ extension RelatedDatabaseRecordIdentifiers {
                 return .toOrderedMany
         }
     }
-    
-    public mutating func insert(_ element: Database.Record.ID) throws {
+}
+
+extension RelatedDatabaseRecordIdentifiers {
+    mutating func insert(_ element: Database.Record.ID) throws {
         switch self {
             case .toOne:
                 throw Error.insertIllegal
@@ -46,7 +48,7 @@ extension RelatedDatabaseRecordIdentifiers {
         }
     }
     
-    public mutating func remove(_ element: Database.Record.ID) throws {
+    mutating func remove(_ element: Database.Record.ID) throws {
         switch self {
             case .toOne:
                 throw Error.insertIllegal
@@ -54,6 +56,17 @@ extension RelatedDatabaseRecordIdentifiers {
                 self = .toUnorderedMany(value.removing(element))
             case .toOrderedMany(let value):
                 self = .toOrderedMany(value.removing(allOf: element))
+        }
+    }
+    
+    func _toCollection() -> any Collection<Database.Record.ID> {
+        switch self {
+            case .toOne(let value):
+                return value.map({ [$0] }) ?? []
+            case .toUnorderedMany(let value):
+                return value
+            case .toOrderedMany(let value):
+                return value
         }
     }
 }

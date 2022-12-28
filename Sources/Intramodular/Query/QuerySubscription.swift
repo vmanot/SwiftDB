@@ -15,7 +15,7 @@ public final class QuerySubscription<Model>: ObservableObject {
     
     private let resultsPublisher = ReplaySubject<Output, Error>(bufferSize: 1)
     
-    @Published private(set) var results: [RecordSnapshot<Model>]?
+    @Published private(set) public var results: [Model]?
     
     init(
         from base: AnyDatabaseQuerySubscription,
@@ -25,14 +25,11 @@ public final class QuerySubscription<Model>: ObservableObject {
         
         baseSubscription = base
             .tryMap { records in
-                try records.map { record -> RecordSnapshot<Model> in
-                    let instance = try context.createSnapshotInstance(Model.self, for: record)
-                    
-                    return try RecordSnapshot(from: instance)
+                try records.map { record in
+                    try context.createSnapshotInstance(Model.self, for: record)
                 }
             }
             .stopExecutionOnError()
-        
             .sink { completion in
                 switch completion {
                     case .finished:
@@ -53,7 +50,7 @@ public final class QuerySubscription<Model>: ObservableObject {
 // MARK: - Conformances -
 
 extension QuerySubscription: Publisher {
-    public typealias Output = [RecordSnapshot<Model>]
+    public typealias Output = [Model]
     public typealias Failure = Swift.Error
     
     public func receive<S: Subscriber>(

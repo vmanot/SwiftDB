@@ -57,20 +57,53 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
     @MainActor
     override public func load() async throws {
         try await taskGraph.insert(.load, policy: .useExisting) {
+            guard status != .initialized else {
+                return
+            }
+            
             do {
-                let database = try await initializeDatabase()
+                assert(status != .initializing)
+                
+                status = .initializing
+                
+                var existingDBState: _CoreData.Database.State?
+                
+                if let stateLocation = stateLocation, FileManager.default.fileExists(at: stateLocation) {
+                    existingDBState = try JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
+                }
+                
+                logger.info("Initializing database at location: \(location.map(String.init(describing:)) ?? "null")")
+                
+                let database = try await _CoreData.Database(
+                    schema: .init(schema),
+                    configuration: _CoreData.Database.Configuration(
+                        name: name,
+                        location: location,
+                        cloudKitContainerIdentifier: nil
+                    ),
+                    state: existingDBState
+                )
+                
+                if existingDBState == nil {
+                    self.saveState(database: database)
+                }
+                
+                self.database = database
+                
+                liveAccess.setBase(AnyDatabase(erasing: database))
+                
                 
                 do {
                     try await performMigrationCheck(database: database)
                     
                     saveState(database: database)
+                    
+                    _ = try await database.fetchAllAvailableZones()
+                    
+                    status = .initialized
                 } catch {
                     status = .migrationCheckFailed
                 }
-                
-                _ = try await database.fetchAllAvailableZones()
-                
-                liveAccess.setBase(AnyDatabase(erasing: database))
             } catch {
                 logger.error(error)
                 
@@ -83,7 +116,6 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
         _ body: @escaping (AnyLocalTransaction) throws -> R
     ) async throws -> R {
         let database = try await loadedDatabase()
-        
         let executor = try database.transactionExecutor()
         
         return try await executor.execute { transaction in
@@ -135,49 +167,6 @@ extension LocalDatabaseContainer {
         }
         
         return try database.unwrap()
-    }
-    
-    @MainActor
-    private func initializeDatabase() async throws -> _CoreData.Database {
-        try await taskGraph.insert(.initialize, policy: .useExisting) { [self] in
-            if let database = self.database {
-                assert(status == .initialized)
-                
-                return database
-            } else {
-                assert(status != .initialized || status != .initializing)
-                
-                status = .initializing
-                
-                var existingDBState: _CoreData.Database.State?
-                
-                if let stateLocation = stateLocation, FileManager.default.fileExists(at: stateLocation) {
-                    existingDBState = try JSONDecoder().decode(_CoreData.Database.State.self, from: Data(contentsOf: stateLocation))
-                }
-                
-                logger.info("Initializing database at location: \(location.map(String.init(describing:)) ?? "null")")
-                
-                let database = try await _CoreData.Database(
-                    schema: .init(schema),
-                    configuration: _CoreData.Database.Configuration(
-                        name: name,
-                        location: location,
-                        cloudKitContainerIdentifier: nil
-                    ),
-                    state: existingDBState
-                )
-                
-                if existingDBState == nil {
-                    self.saveState(database: database)
-                }
-                
-                self.database = database
-                
-                status = .initialized
-                
-                return database
-            }
-        }
     }
     
     @MainActor

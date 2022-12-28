@@ -12,22 +12,24 @@ protocol _DatabaseRecordProxyBase {
     func containsValue(forKey key: AnyCodingKey) throws -> Bool
     
     func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value
-    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws
     func decodeValue(forKey key: AnyCodingKey) throws -> Any?
+    
+    func encodeInitialValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws
+    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws
     func encodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws
     
     func decodeRelationship(
-        forKey _: AnyCodingKey
+        forKey key: AnyCodingKey
     ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase>
     
     func encodeRelationship(
-        _: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
-        forKey _: AnyCodingKey
+        _ relationship: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
+        forKey key: AnyCodingKey
     ) throws
     
     func encodeRelationshipDiff(
-        _: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
-        forKey _: AnyCodingKey
+        _ diff: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
+        forKey key: AnyCodingKey
     ) throws
 }
 
@@ -94,14 +96,18 @@ extension _DatabaseRecordProxy {
         try base.decodeValue(type, forKey: key)
     }
     
-    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
-        try base.encodeValue(value, forKey: key)
-    }
-    
     func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
         try base.decodeValue(forKey: key)
     }
-    
+
+    func encodeInitialValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+        try base.encodeInitialValue(value, forKey: key)
+    }
+
+    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+        try base.encodeValue(value, forKey: key)
+    }
+        
     func encodeValue(_ payload: Any?, forKey key: AnyCodingKey) throws {
         try base.encodeValue(payload, forKey: key)
     }

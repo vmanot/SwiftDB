@@ -31,33 +31,13 @@ extension AnyDatabaseContainer {
     }
 }
 
-extension AnyDatabaseContainer.LiveAccess: DatabaseCRUDQ {
-    public func create<Instance: Entity>(_ entityType: Instance.Type) async throws -> Instance {
-        try await baseUnwrapped.transact { transaction in
-            try transaction.create(entityType) // FIXME!!!: Convert to snapshot
-        }
-    }
-    
-    public func execute<Model>(
-        _ request: QueryRequest<Model>
-    ) async throws -> QueryRequest<Model>.Output {
-        try await baseUnwrapped.queryExecutionTask(for: request).value
-    }
-    
-    public func delete<Instance: Entity>(_ instance: Instance) async throws {
-        try await baseUnwrapped.transact { transaction in
-            try transaction.delete(instance) // FIXME!!!: Convert to snapshot
-        }
-    }
-}
-
 extension AnyDatabaseContainer.LiveAccess {
     public func transact<R>(
-        _ body: @escaping (AnyTransaction) throws -> R
+        _ body: @escaping (AnyLocalTransaction) throws -> R
     ) async throws -> R {
-        try await base.unwrap().transact(body)
+        try await baseUnwrapped.transact(body)
     }
-
+    
     public func querySubscription<Model>(
         for request: QueryRequest<Model>
     ) throws -> QuerySubscription<Model> {
@@ -75,6 +55,34 @@ extension AnyDatabaseContainer.LiveAccess {
     }
 }
 
+extension AnyDatabaseContainer.LiveAccess: DatabaseCRUDQ {
+    public func create<Instance: Entity>(_ entityType: Instance.Type) async throws -> Instance {
+        try await transact { transaction in
+            try transaction.create(entityType) // FIXME!!!: Convert to snapshot
+        }
+    }
+    
+    public func execute<Model>(
+        _ request: QueryRequest<Model>
+    ) async throws -> QueryRequest<Model>.Output {
+        try await queryExecutionTask(for: request).value
+    }
+    
+    public func delete<Instance: Entity>(_ instance: Instance) async throws {
+        try await transact { transaction in
+            try transaction.delete(instance)
+        }
+    }
+    
+    public func deleteAll() async throws {
+        try await transact { transaction in
+            let all = try transaction.fetchAll()
+            
+            try all.forEach({ try transaction.delete($0) })
+        }
+    }
+}
+
 // MARK: - Auxiliary -
 
 extension AnyDatabase {
@@ -82,7 +90,7 @@ extension AnyDatabase {
         _ body: @escaping (AnyTransaction) throws -> R
     ) async throws -> R {
         let executor = try transactionExecutor()
-
+        
         return try await executor.execute { transaction in
             try body(
                 AnyTransaction(
@@ -92,7 +100,38 @@ extension AnyDatabase {
             )
         }
     }
-
+    
+    @_disfavoredOverload
+    public func transact<R>(
+        _ body: @escaping (AnyLocalTransaction) throws -> R
+    ) async throws -> R {
+        let executor = try transactionExecutor()
+        
+        return try await executor.execute { transaction in
+            try body(
+                AnyLocalTransaction(
+                    transaction: transaction,
+                    _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(for: self)
+                )
+            )
+        }
+    }
+    
+    public func transactSynchronously<R>(
+        _ body: @escaping (AnyLocalTransaction) throws -> R
+    ) throws -> R {
+        let executor = try transactionExecutor()
+        
+        return try executor.executeSynchronously { transaction in
+            try body(
+                AnyLocalTransaction(
+                    transaction: .init(erasing: transaction),
+                    _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(for: self)
+                )
+            )
+        }
+    }
+    
     public func transact<Model, R>(
         with request: QueryRequest<Model>,
         _ body: @escaping (QueryRequest<Model>.Output) throws -> R
@@ -119,21 +158,6 @@ extension AnyDatabase {
             )
             
             return try body(queryResult)
-        }
-    }
-    
-    public func transactSynchronously<R>(
-        _ body: @escaping (AnyLocalTransaction) throws -> R
-    ) throws -> R {
-        let executor = try transactionExecutor()
-        
-        return try executor.executeSynchronously { transaction in
-            try body(
-                AnyLocalTransaction(
-                    transaction: .init(erasing: transaction),
-                    _SwiftDB_taskContext: _SwiftDB_TaskContext.defaultContext(for: self)
-                )
-            )
         }
     }
     

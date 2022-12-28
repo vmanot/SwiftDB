@@ -59,18 +59,22 @@ extension _DatabaseRecordSnapshot: _DatabaseRecordProxyBase {
     func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
         return try cast(decodeValue(forKey: key), to: Value.self)
     }
+        
+    func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
+        attributeValues[key]
+    }
     
+    func encodeInitialValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+        attributeValues[key] = attributeValues[key] ?? value
+    }
+
     func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
         try encodeValue(cast(value, to: Optional<Any>.self), forKey: key)
     }
-    
-    func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
-        attributeValues[AnyCodingKey(key)]
-    }
-    
+
     func encodeValue(_ value: Any?, forKey key: AnyCodingKey) throws {
-        attributeValues[AnyCodingKey(key)] = value
-        attributeValuesDiff[AnyCodingKey(key)] = value
+        attributeValues[key] = value
+        attributeValuesDiff[key] = value
     }
     
     func decodeRelationship(

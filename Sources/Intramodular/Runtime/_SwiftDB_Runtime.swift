@@ -61,10 +61,12 @@ public final class _SwiftDB_DefaultRuntime: _SwiftDB_Runtime, @unchecked Sendabl
             try _openExistential(prototype, do: _accessKeyPath)
             
             let field = try prototype._runtime_propertyAccessors
-                .first(where: { $0._runtimeMetadata.didAccessWrappedValueGetter != nil })
+                .first(where: { $0._runtimeMetadata.didAccessWrappedValueGetter })
                 .unwrap()
             
             guard field._runtimeMetadata.valueType == valueType else {
+                assertionFailure()
+                
                 throw KeyPathToFieldNameConversionError.valueTypeMismatch(field._runtimeMetadata.valueType, valueType)
             }
             

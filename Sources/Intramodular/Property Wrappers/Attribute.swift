@@ -10,7 +10,7 @@ import SwiftUI
 
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: _EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
+public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
@@ -105,7 +105,7 @@ public final class Attribute<Value>: _EntityPropertyAccessor, Loggable, Observab
         
         let value = initialValue.resolve()
         
-        try proxy.encodeValue(value, forKey: key)
+        try proxy.encodeInitialValue(value, forKey: key)
     }
     
     public func schema() throws -> _Schema.Entity.Property {

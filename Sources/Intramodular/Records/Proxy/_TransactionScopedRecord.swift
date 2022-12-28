@@ -67,55 +67,69 @@ extension _TransactionScopedRecord: _DatabaseRecordProxyBase {
         record.allKeys
     }
     
-    public func containsValue(forKey key: AnyCodingKey) throws -> Bool {
+    func containsValue(forKey key: AnyCodingKey) throws -> Bool {
         try scope(.read) { _ in
             try recordUpdater.containsValue(forKey: key)
         }
     }
     
-    public func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
+    func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
         try scope(.read) { _ in
             try recordUpdater.decodeValue(type, forKey: key)
         }
     }
     
-    public func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
-        try scope(.write) { _ in
-            recordUpdater.encodeValue(value, forKey: key)
-        }
-    }
-    
-    public func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
+    func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
         try recordUpdater.decodeValue(forKey: AnyCodingKey(key))
     }
     
-    public func encodeValue(_ value: Any?, forKey key: AnyCodingKey) throws {
-        recordUpdater.encodeValue(value, forKey: AnyCodingKey(key))
+    func encodeInitialValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+        try scope(.write) { _ in
+            try recordUpdater.encodeInitialValue(value, forKey: key)
+        }
     }
     
-    public func decodeRelationship(
+    func encodeValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {
+        try scope(.write) { _ in
+            try recordUpdater.encodeValue(value, forKey: key)
+        }
+    }
+    
+    func encodeValue(_ value: Any?, forKey key: AnyCodingKey) throws {
+        try scope(.write) { _ in
+            try recordUpdater.encodeValue(value, forKey: key)
+        }
+    }
+    
+    func decodeRelationship(
         forKey key: AnyCodingKey
     ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
-        try recordUpdater.decodeRelationship(forKey: key)
+        try scope(.read) { _ in
+            try recordUpdater.decodeRelationship(forKey: key)
+        }
     }
     
-    public func encodeRelationship(
+    func encodeRelationship(
         _ relationship: RelatedDatabaseRecordIdentifiers<AnyDatabase>,
         forKey key: AnyCodingKey
     ) throws {
-        try recordUpdater.encodeRelationship(relationship, forKey: key)
+        try scope(.write) { _ in
+            try recordUpdater.encodeRelationship(relationship, forKey: key)
+        }
     }
     
-    public func encodeRelationshipDiff(
+    func encodeRelationshipDiff(
         _ diff: RelatedDatabaseRecordIdentifiers<AnyDatabase>.Difference,
         forKey key: AnyCodingKey
     ) throws {
-        try recordUpdater.encodeRelationshipDiff(diff: diff, forKey: key)
+        try scope(.write) { _ in
+            try recordUpdater.encodeRelationshipDiff(diff: diff, forKey: key)
+        }
     }
 }
 
 extension _TransactionScopedRecord {
-    public func primaryKeyOrRecordID() throws -> _RecordFieldPayload.PrimaryKeyOrRecordID {
+    func primaryKeyOrRecordID() throws -> _RecordFieldPayload.PrimaryKeyOrRecordID {
         do {
             return .primaryKey(value: try decodePrimaryKeyValue().unwrap())
         } catch {
@@ -123,7 +137,7 @@ extension _TransactionScopedRecord {
         }
     }
     
-    public func decodeFieldPayload(forKey key: AnyCodingKey) throws -> _RecordFieldPayload? {
+    func decodeFieldPayload(forKey key: AnyCodingKey) throws -> _RecordFieldPayload? {
         guard let entitySchema = recordSchema as? _Schema.Entity else {
             throw _Error.recordSchemaRequired
         }

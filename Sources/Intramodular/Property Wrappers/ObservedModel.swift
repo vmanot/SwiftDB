@@ -13,9 +13,9 @@ import SwiftUIX
 public struct ObservedModel<Model: Entity>: DynamicProperty {
     @Environment(\.database) var database
     
-    private let initialValue: RecordSnapshot<Model>
+    private let initialValue: Model
     
-    public var wrappedValue: RecordSnapshot<Model> {
+    public var wrappedValue: Model {
         get {
             initialValue
         }
@@ -29,7 +29,7 @@ public struct ObservedModel<Model: Entity>: DynamicProperty {
         
     }
     
-    public init(wrappedValue: RecordSnapshot<Model>) {
+    public init(wrappedValue: Model) {
         self.initialValue = wrappedValue
     }
 }

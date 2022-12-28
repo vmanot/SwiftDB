@@ -133,7 +133,7 @@ final class _CoreDataTestSuite: XCTestCase {
         try await Task.sleep(.seconds(1))
         
         try await database.transact { transaction in
-            let instance = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
+            _ = try transaction.create(TestORMSchema.EntityWithSimpleRequiredProperty.self)
         }
         
         try await database.transact { transaction in
@@ -177,6 +177,8 @@ extension _CoreDataTestSuite {
                 
                 parent.children.insert(child)
             }
+            
+            XCTAssert(parent.children.count == 10)
         }
     }
 }
@@ -195,7 +197,7 @@ extension _CoreDataTestSuite {
         }
         
         try! FileManager.default.createDirectoryIfNecessary(at: tempDir)
-                
+        
         let database = try! LocalDatabaseContainer(
             name: randomDatabaseName,
             schema: TestORMSchema(),

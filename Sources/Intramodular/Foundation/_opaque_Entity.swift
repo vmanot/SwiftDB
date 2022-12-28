@@ -49,11 +49,7 @@ extension _opaque_Entity  {
     init(_databaseRecordProxy: _DatabaseRecordProxy?) throws {
         self.init()
         
-        if let databaseRecordProxy = _databaseRecordProxy, type(of: self) is AnyObject.Type {
-            try _runtime_configurePropertyAccessors(withRecordProxy: databaseRecordProxy)
-        } else {
-            try _runtime_configurePropertyAccessors(withRecordProxy: nil)
-        }
+        try _runtime_configurePropertyAccessors(withRecordProxy: _databaseRecordProxy)
     }
 }
 

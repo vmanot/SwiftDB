@@ -9,7 +9,7 @@ import Swift
 public protocol _EntityRelationshipDestination {
     static var _destinationEntityType: any Entity.Type { get }
     
-    static func _uninitializedInstance() -> Self
+    init(_relationshipPropertyAccessor: EntityPropertyAccessor) throws
 }
 
 public protocol _EntityRelationshipToOneDestination: _EntityRelationshipDestination {
@@ -51,8 +51,8 @@ extension _EntityRelationshipToManyDestination {
 // MARK: - Implementations -
 
 extension Optional: _EntityRelationshipDestination  {
-    public static func _uninitializedInstance() -> Optional<Wrapped> {
-        nil
+    public init(_relationshipPropertyAccessor: EntityPropertyAccessor) {
+        self = nil
     }
 }
 

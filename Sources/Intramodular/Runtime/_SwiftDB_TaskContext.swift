@@ -68,24 +68,9 @@ extension _SwiftDB_TaskContext {
         for record: AnyDatabaseRecord,
         transaction: AnyDatabaseTransaction
     ) throws -> Instance {
-        if instanceType == Any.self {
-            let instance = try _createTransactionScopedInstance(
-                for: record,
-                transaction: transaction
-            )
-
-            return try cast(instance, to: Instance.self)
-        } else if let instanceType = instanceType as? any Entity.Type {
-            let instance = try instanceType.init(
-                _databaseRecordProxy: _createTransactionScopedRecordProxy(
-                    for: record,
-                    transaction: transaction)
-            )
-
-            return try cast(instance, to: Instance.self)
-        } else {
-            TODO.unimplemented
-        }
+        let instance = try _createTransactionScopedInstance(for: record, transaction: transaction)
+        
+        return try cast(instance, to: Instance.self)
     }
 
     private func _createTransactionScopedInstance(

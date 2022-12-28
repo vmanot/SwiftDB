@@ -201,9 +201,13 @@ struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Loggable {
             }
         }
         
-        let encodedValue = try ObjectEncoder().encode(value)
+        let value = try ObjectEncoder().encode(value)
         
-        object.setValue(encodedValue, forKey: key.stringValue)
+        if value is NSNull {
+            object.setValue(nil, forKey: key.stringValue)
+        } else {
+            object.setValue(value, forKey: key.stringValue)
+        }
     }
     
     func getNSAttributeType() -> NSAttributeType {

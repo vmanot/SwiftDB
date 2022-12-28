@@ -128,11 +128,11 @@ extension DatabaseRecordRelationshipType {
             case .oneToOne:
                 return .toOne
             case .oneToMany:
-                return isOrdered ? .toUnorderedMany : .toOrderedMany
+                return isOrdered ? .toOrderedMany : .toUnorderedMany
             case .manyToOne:
                 return .toOne
             case .manyToMany:
-                return isOrdered ? .toUnorderedMany : .toOrderedMany // FIXME?
+                return isOrdered ? .toOrderedMany : .toUnorderedMany // FIXME?
         }
     }
 }

@@ -307,10 +307,22 @@ extension NSManagedObject {
     ) throws {
         let managedObjectContext = try self.managedObjectContext.unwrap()
         
-        var array = try cast(self._cocoaMutableSetOrArray(forKey: key), to: Array<NSManagedObject>.self)
+        let setOrArray = self._cocoaMutableSetOrArray(forKey: key)
         
-        try array.applyUnconditionally(diff.map({ managedObjectContext.object(with: $0) }))
-        
-        setValue(array, forKey: key.stringValue)
+        if setOrArray is NSOrderedSet {
+            var array = try cast(self._cocoaMutableSetOrArray(forKey: key), to: NSOrderedSet.self).map({ try cast($0, to: NSManagedObject.self) })
+            
+            try array.applyUnconditionally(diff.map({ managedObjectContext.object(with: $0) }))
+            
+            setValue(NSOrderedSet(array: array), forKey: key.stringValue)
+        } else if setOrArray is NSArray {
+            var array = try cast(self._cocoaMutableSetOrArray(forKey: key), to: Array<NSManagedObject>.self)
+            
+            try array.applyUnconditionally(diff.map({ managedObjectContext.object(with: $0) }))
+            
+            setValue(array, forKey: key.stringValue)
+        } else {
+            throw _CoreData.Database.Record.Error.unrecognizedRelationshipContainer(setOrArray, forKey: key)
+        }
     }
 }
