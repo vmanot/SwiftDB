@@ -14,7 +14,7 @@ public struct RelatedModels<Model: Entity> {
     }
     
     private let _required: _Required?
-        
+    
     private var recordProxy: _DatabaseRecordProxy{
         get throws {
             try _required.unwrap().recordProxy
@@ -29,7 +29,7 @@ public struct RelatedModels<Model: Entity> {
     
     private var relationship: RelatedDatabaseRecordIdentifiers<AnyDatabase> {
         get throws {
-           try recordProxy.decodeRelationship(forKey: key)
+            try recordProxy.decodeRelationship(forKey: key)
         }
     }
     
@@ -103,7 +103,6 @@ extension RelatedModels: _EntityRelationshipToManyDestination {
             self.init(_required: nil)
         }
     }
-
     
     public static func _uninitializedInstance() -> RelatedModels<Model> {
         .init(_required: nil)

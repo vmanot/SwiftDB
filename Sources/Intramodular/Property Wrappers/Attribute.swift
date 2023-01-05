@@ -10,7 +10,7 @@ import SwiftUI
 
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAccessor, Loggable, ObservableObject, PropertyWrapper {
+public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAccessor, Logging, ObservableObject, PropertyWrapper {
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil

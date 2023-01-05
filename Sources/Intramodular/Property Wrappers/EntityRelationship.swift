@@ -6,6 +6,10 @@ import CoreData
 import Runtime
 import Swallow
 
+public enum EntityRelationshipTrait: String, Codable {
+    case primary
+}
+
 /// A property accessor for entity relationships.
 @propertyWrapper
 public final class EntityRelationship<
@@ -64,6 +68,8 @@ public final class EntityRelationship<
             _runtimeMetadata.didAccessWrappedValueGetter = true
             
             return try! .init(_relationshipPropertyAccessor: self)
+        } set {
+            fatalError()
         }
     }
     
@@ -89,25 +95,40 @@ public final class EntityRelationship<
 extension EntityRelationship where Value: _EntityRelationshipToManyDestination {
     public convenience init<Inverse: _EntityRelationshipToOneDestination>(
         inverse: KeyPath<Value._DestinationEntityType, Inverse>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) {
-        self.init(inverse: .manyToOne(inverse), deleteRule: deleteRule, traits: [])
+        self.init(
+            inverse: .manyToOne(inverse),
+            deleteRule: deleteRule,
+            traits: traits
+        )
     }
 }
 
 extension EntityRelationship where Value: _EntityRelationshipToOneDestination {
     public convenience init<Inverse: _EntityRelationshipToOneDestination>(
         inverse: KeyPath<Value._DestinationEntityType, Inverse>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) {
-        self.init(inverse: .oneToOne(inverse), deleteRule: deleteRule, traits: [])
+        self.init(
+            inverse: .oneToOne(inverse),
+            deleteRule: deleteRule,
+            traits: traits
+        )
     }
     
     public convenience init<Inverse: _EntityRelationshipToManyDestination>(
         inverse: KeyPath<Value._DestinationEntityType, Inverse>,
-        deleteRule: NSDeleteRule? = nil
+        deleteRule: NSDeleteRule? = nil,
+        _ traits: EntityRelationshipTrait...
     ) {
-        self.init(inverse: .oneToMany(inverse), deleteRule: deleteRule, traits: [])
+        self.init(
+            inverse: .oneToMany(inverse),
+            deleteRule: deleteRule,
+            traits: traits
+        )
     }
 }
 

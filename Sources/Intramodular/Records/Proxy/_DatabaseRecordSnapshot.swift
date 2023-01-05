@@ -7,7 +7,7 @@ import Compute
 import CorePersistence
 import Swallow
 
-final class _DatabaseRecordSnapshot: Loggable {
+final class _DatabaseRecordSnapshot: Logging {
     let allKeys: [AnyCodingKey]
     var attributeValues: [AnyCodingKey: Any] = [:]
     var relationships: [AnyCodingKey: RelatedDatabaseRecordIdentifiers<AnyDatabase>] = [:]

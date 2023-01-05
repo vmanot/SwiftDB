@@ -8,7 +8,7 @@ import Swallow
 /// A type-erased database container.
 ///
 /// Use this type to propagate a reference to your database container in your SwiftUI hierarchy.
-public class AnyDatabaseContainer: CustomReflectable, Loggable, ObservableObject, @unchecked Sendable {
+public class AnyDatabaseContainer: CustomReflectable, Logging, ObservableObject, @unchecked Sendable {
     public enum Status: String, CustomStringConvertible {
         case uninitialized
         case initializing
