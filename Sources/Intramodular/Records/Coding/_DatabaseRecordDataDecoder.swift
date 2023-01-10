@@ -8,7 +8,7 @@ import Swallow
 public struct _DatabaseRecordDataDecoder {
     let recordSchema: _Schema.Record?
     let record: AnyDatabaseRecord
-
+    
     init(
         recordSchema: _Schema.Record?,
         record: AnyDatabaseRecord
@@ -22,9 +22,10 @@ extension _DatabaseRecordDataDecoder {
     public func containsValue(forKey key: AnyCodingKey) throws -> Bool {
         record.containsValue(forKey: key)
     }
-
+    
     public func decodeValue<Value>(
-        _ type: Value.Type, forKey key: AnyCodingKey
+        _ type: Value.Type,
+        forKey key: AnyCodingKey
     ) throws -> Value {
         if let rawRepresentableType = type as? any RawRepresentable.Type,
            case .primitive = _Schema.Entity.AttributeType(from: rawRepresentableType)
@@ -39,7 +40,7 @@ extension _DatabaseRecordDataDecoder {
         
         return try record.decode(type, forKey: key)
     }
-
+    
     public func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
         let property = try _entitySchema().property(named: key.stringValue)
         
@@ -49,13 +50,13 @@ extension _DatabaseRecordDataDecoder {
                     return nil
                 }
                 
-                let attributeType = property.attributeConfiguration.type
+                let attributeConfiguration = property.attributeConfiguration
                 
                 func _decodeValueForType<T>(_ type: T.Type) throws -> Any {
                     try self.decodeValue(type, forKey: key)
                 }
                 
-                let value = try _openExistential(attributeType._swiftType, do: _decodeValueForType)
+                let value = try _openExistential(attributeConfiguration._resolveSwiftType(), do: _decodeValueForType)
                 
                 return value
             }
@@ -66,13 +67,13 @@ extension _DatabaseRecordDataDecoder {
                 throw _Error.unknownPropertyType(property.type, forKey: key)
         }
     }
-
+    
     public func decodeRelationship(
         forKey key: AnyCodingKey
     ) throws -> RelatedDatabaseRecordIdentifiers<AnyDatabase> {
         let relationship = try _entitySchema().relationship(named: key.stringValue)
         let relationshipType = DatabaseRecordRelationshipType.destinationType(from: relationship)
-
+        
         return try record.decodeRelationship(ofType: relationshipType, forKey: key)
     }
     
@@ -101,7 +102,7 @@ extension AnyDatabaseRecord {
         func _decodeForType<T>(_ type: T.Type) throws -> Any {
             try self.decode(type, forKey: key)
         }
-
+        
         return try _openExistential(type, do: _decodeForType)
     }
 }

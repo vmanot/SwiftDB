@@ -109,13 +109,12 @@ public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAcce
     }
     
     public func schema() throws -> _Schema.Entity.Property {
-        let valueType = (Value.self as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? Value.self
-        
         return _Schema.Entity.Attribute(
             name: name!.stringValue,
             propertyConfiguration: .init(isOptional: isOptional),
             attributeConfiguration: .init(
-                type: _Schema.Entity.AttributeType(from: valueType),
+                type: .init(from: Value.self),
+                attributeType: _Schema.Entity.AttributeType(from: Value.self),
                 traits: traits,
                 defaultValue: initialValue._nonLazyValue.flatMap({ (value: Value) -> AnyCodableOrNSCodingValue? in
                     do {

@@ -2,14 +2,20 @@
 // Copyright (c) Vatsal Manot
 //
 
+import CorePersistence
 import FoundationX
 import Swallow
 
 extension _Schema.Entity {
     public struct AttributeConfiguration: Codable, Hashable {
-        public var type: _Schema.Entity.AttributeType
-        public var traits: [EntityAttributeTrait] 
+        public var type: _PersistentTypeRepresentation
+        public var attributeType: _Schema.Entity.AttributeType
+        public var traits: [EntityAttributeTrait]
         public var defaultValue: AnyCodableOrNSCodingValue?
+        
+        public func _resolveSwiftType() throws -> Any.Type {
+            try (try? type.resolveType()) ?? attributeType._swiftType
+        }
     }
     
     public final class Attribute: _Schema.Entity.Property {

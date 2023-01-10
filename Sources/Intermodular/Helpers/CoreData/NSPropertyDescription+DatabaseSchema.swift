@@ -11,7 +11,7 @@ extension NSAttributeDescription {
     public convenience init(_ attribute: _Schema.Entity.Attribute) throws {
         self.init()
         
-        let nsAttributeType = _SwiftDB_NSAttributeType(from: attribute.attributeConfiguration.type)
+        let nsAttributeType = _SwiftDB_NSAttributeType(from: attribute.attributeConfiguration.attributeType)
         
         renamingIdentifier = attribute.propertyConfiguration.renamingIdentifier
         name = attribute.name

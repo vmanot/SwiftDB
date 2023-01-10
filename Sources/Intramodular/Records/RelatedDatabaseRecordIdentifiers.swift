@@ -13,7 +13,7 @@ public enum DatabaseRecordRelationshipType {
 
 public enum RelatedDatabaseRecordIdentifiers<Database: SwiftDB.Database> {
     public enum Error: _SwiftDB_Error {
-        case insertIllegal
+        case illegalInsert
     }
     
     case toOne(Database.Record.ID?)
@@ -40,7 +40,7 @@ extension RelatedDatabaseRecordIdentifiers {
     mutating func insert(_ element: Database.Record.ID) throws {
         switch self {
             case .toOne:
-                throw Error.insertIllegal
+                throw Error.illegalInsert
             case .toUnorderedMany(let value):
                 self = .toUnorderedMany(value.inserting(element))
             case .toOrderedMany(let value):
@@ -51,7 +51,7 @@ extension RelatedDatabaseRecordIdentifiers {
     mutating func remove(_ element: Database.Record.ID) throws {
         switch self {
             case .toOne:
-                throw Error.insertIllegal
+                throw Error.illegalInsert
             case .toUnorderedMany(let value):
                 self = .toUnorderedMany(value.removing(element))
             case .toOrderedMany(let value):
