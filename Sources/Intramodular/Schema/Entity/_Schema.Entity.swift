@@ -30,7 +30,7 @@ extension _Schema {
         }
         
         public required init(from decoder: Decoder) throws {
-            let container = try decoder.polymorphic().container(keyedBy: CodingKeys.self)
+            let container = try decoder._polymorphic().container(keyedBy: CodingKeys.self)
             
             self.parent = try container.decode(forKey: .parent)
             self.persistentTypeRepresentation = try container.decode(forKey: .persistentTypeRepresentation)

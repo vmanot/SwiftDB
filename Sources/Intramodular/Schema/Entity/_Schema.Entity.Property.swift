@@ -14,20 +14,6 @@ extension _Schema.Entity {
     }
     
     public class Property: Codable, Hashable, @unchecked Sendable {
-        public enum PropertyType: Codable, CodingTypeDiscriminator {
-            case attribute
-            case relationship
-            
-            public var typeValue: Decodable.Type {
-                switch self {
-                    case .attribute:
-                        return _Schema.Entity.Attribute.self
-                    case .relationship:
-                        return _Schema.Entity.Relationship.self
-                }
-            }
-        }
-        
         public static let version: Version? = "0.0.0"
         
         public let type: PropertyType
@@ -70,16 +56,10 @@ extension _Schema.Entity {
 // MARK: - Conformances -
 
 extension _Schema.Entity.Property: PolymorphicDecodable {
-    public typealias TypeDiscriminator = PropertyType
-    
     fileprivate enum CodingKeys: String, CodingKey {
         case type
         case name
         case propertyConfiguration
-    }
-    
-    public static func decodeTypeDiscriminator(from decoder: Decoder) throws -> TypeDiscriminator {
-        try decoder.container(keyedBy: CodingKeys.self).decode(forKey: .type)
     }
 }
 
@@ -92,5 +72,21 @@ extension _Schema.Entity.Property: Comparable {
 extension _Schema.Entity.Property: Equatable {
     public static func == (lhs: _Schema.Entity.Property, rhs: _Schema.Entity.Property) -> Bool {
         lhs.hashValue == rhs.hashValue
+    }
+}
+
+extension _Schema.Entity.Property: TypeDiscriminable {
+    public enum PropertyType: String, Codable, TypeDiscriminator {
+        case attribute
+        case relationship
+        
+        public func resolveType() -> Any.Type {
+            switch self {
+                case .attribute:
+                    return _Schema.Entity.Attribute.self
+                case .relationship:
+                    return _Schema.Entity.Relationship.self
+            }
+        }
     }
 }
