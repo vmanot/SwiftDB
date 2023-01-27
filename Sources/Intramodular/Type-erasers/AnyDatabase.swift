@@ -72,7 +72,7 @@ extension AnyDatabase {
         let base: AnyCodable
         
         init(base: Codable) {
-            self.base = AnyCodable(base)
+            self.base = AnyCodable(lazy: base)
         }
         
         public init(from decoder: Decoder) throws {
@@ -84,7 +84,7 @@ extension AnyDatabase {
         let base: AnyCodable
         
         init(base: Codable) {
-            self.base = .init(base)
+            self.base = .init(lazy: base)
         }
         
         public init(from decoder: Decoder) throws {
@@ -96,7 +96,7 @@ extension AnyDatabase {
         let base: AnyCodable?
         
         init(base: Codable?) {
-            self.base = base.map({ AnyCodable($0) })
+            self.base = base.map({ AnyCodable(lazy: $0) })
         }
         
         public init(from decoder: Decoder) throws {

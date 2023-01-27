@@ -25,7 +25,7 @@ public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAcce
     var _underlyingRecordProxy: _DatabaseRecordProxy?
     
     private var isOptional: Bool {
-        Value.self is _opaque_Optional.Type
+        Value.self is any OptionalProtocol.Type
     }
     
     public var wrappedValue: Value {

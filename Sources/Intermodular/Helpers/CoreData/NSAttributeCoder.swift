@@ -170,21 +170,30 @@ struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Logging {
         self.value = value
     }
     
-    static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
+    static func primitivelyDecode<Key: CodingKey>(
+        from object: NSManagedObject,
+        forKey key: Key
+    ) throws -> Self {
         .init(try ObjectDecoder().decode(T.self, from: object.primitiveValue(forKey: key.stringValue).unwrap()))
     }
     
-    static func decode<Key: CodingKey>(from object: KeyValueCoding, forKey key: Key) throws -> Self {
+    static func decode<Key: CodingKey>(
+        from object: KeyValueCoding,
+        forKey key: Key
+    ) throws -> Self {
         let value = object.value(forKey: key.stringValue)
         
-        if value == nil, let _T = T.self as? _opaque_Optional.Type {
-            return .init(_T.init(none: ()) as! T)
+        if value == nil, let _T = T.self as? (any OptionalProtocol.Type) {
+            return .init(_T.init(nilLiteral: ()) as! T)
         }
         
         return .init(try ObjectDecoder().decode(T.self, from: try value.unwrap()))
     }
     
-    func primitivelyEncode<Key: CodingKey>(to object: NSManagedObject, forKey key: Key) throws {
+    func primitivelyEncode<Key: CodingKey>(
+        to object: NSManagedObject,
+        forKey key: Key
+    ) throws {
         guard object.managedObjectContext != nil else {
             return
         }
@@ -192,7 +201,10 @@ struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Logging {
         object.setPrimitiveValue(try ObjectEncoder().encode(value), forKey: key.stringValue)
     }
     
-    func encode<Key: CodingKey>(to object: KeyValueCoding, forKey key: Key) throws {
+    func encode<Key: CodingKey>(
+        to object: KeyValueCoding,
+        forKey key: Key
+    ) throws {
         if let object = object as? NSManagedObject {
             guard object.managedObjectContext != nil else {
                 assertionFailure()

@@ -63,7 +63,7 @@ extension _Schema.Entity {
         case object(type: ObjectType)
         
         public init(from type: Any.Type) {
-            let type = (type as? _opaque_Optional.Type)?._opaque_Optional_Wrapped ?? type
+            let type = (type as? (any OptionalProtocol.Type))?._opaque_Optional_WrappedType ?? type
             
             if let type = type as? any _EntityAttributeSchemaRepresentable.Type {
                 self = type.toSchemaEntityAttributeType()
