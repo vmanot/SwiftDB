@@ -15,7 +15,7 @@ public indirect enum _RecordFieldPayload: Codable, Hashable {
         } else {
             self = .attribute(
                 value: .object(
-                    value: _PersistentTypeRepresentedCodable(try cast(value, to: Codable.self))
+                    value: _TypeSerializingAnyCodable(try cast(value, to: Codable.self))
                 )
             )
         }
@@ -24,18 +24,18 @@ public indirect enum _RecordFieldPayload: Codable, Hashable {
 
 extension _RecordFieldPayload {
     public enum EntityAttributeValue: Codable, Hashable {
-        case primitive(value: _PersistentTypeRepresentedCodable)
-        case array(value: [_PersistentTypeRepresentedCodable])
-        case dictionary(value: [_PersistentTypeRepresentedCodable: _PersistentTypeRepresentedCodable])
-        case object(value: _PersistentTypeRepresentedCodable)
+        case primitive(value: _TypeSerializingAnyCodable)
+        case array(value: [_TypeSerializingAnyCodable])
+        case dictionary(value: [_TypeSerializingAnyCodable: _TypeSerializingAnyCodable])
+        case object(value: _TypeSerializingAnyCodable)
     }
     
     public enum PrimaryKeyOrRecordID: Codable, Hashable {
         case primaryKey(value: _RecordFieldPayload)
-        case recordID(value: _PersistentTypeRepresentedCodable)
+        case recordID(value: _TypeSerializingAnyCodable)
         
         init(from recordID: AnyDatabaseRecord.ID) throws {
-            self = .recordID(value: _PersistentTypeRepresentedCodable(try cast(recordID, to: Codable.self)))
+            self = .recordID(value: _TypeSerializingAnyCodable(try cast(recordID, to: Codable.self)))
         }
     }
     

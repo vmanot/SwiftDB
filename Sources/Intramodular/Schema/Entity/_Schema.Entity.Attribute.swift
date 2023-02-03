@@ -8,7 +8,7 @@ import Swallow
 
 extension _Schema.Entity {
     public struct AttributeConfiguration: Codable, Hashable {
-        public var type: _PersistentTypeRepresentation
+        public var type: _SerializedTypeIdentity
         public var attributeType: _Schema.Entity.AttributeType
         public var traits: [EntityAttributeTrait]
         public var defaultValue: AnyCodableOrNSCodingValue?

@@ -95,7 +95,7 @@ extension UUID: _RecordFieldPayloadConvertible {
 
 extension Array: _RecordFieldPayloadConvertible {
     public func _toRecordFieldPayload() throws -> _RecordFieldPayload {
-        try .attribute(value: .array(value: self.map({ try _PersistentTypeRepresentedCodable(cast($0, to: Codable.self)) })))
+        try .attribute(value: .array(value: self.map({ try _TypeSerializingAnyCodable(cast($0, to: Codable.self)) })))
     }
 }
 
@@ -104,8 +104,8 @@ extension Dictionary: _RecordFieldPayloadConvertible {
         try .attribute(
             value: .dictionary(
                 value: self
-                    .mapKeys({ try _PersistentTypeRepresentedCodable(cast($0, to: Codable.self)) })
-                    .mapValues({ try _PersistentTypeRepresentedCodable(cast($0, to: Codable.self)) })
+                    .mapKeys({ try _TypeSerializingAnyCodable(cast($0, to: Codable.self)) })
+                    .mapValues({ try _TypeSerializingAnyCodable(cast($0, to: Codable.self)) })
             )
         )
     }

@@ -10,14 +10,14 @@ import Swallow
 extension _Schema {
     public final class Entity: _Schema.Record, @unchecked Sendable {
         public var parent: _Schema.Entity.ID?
-        public var persistentTypeRepresentation: _PersistentTypeRepresentation
+        public var persistentTypeRepresentation: _SerializedTypeIdentity
         public var subentities: [_Schema.Entity]
         public var properties: [_Schema.Entity.Property]
         
         public init(
             parent: _Schema.Entity.ID?,
             name: String,
-            persistentTypeRepresentation: _PersistentTypeRepresentation,
+            persistentTypeRepresentation: _SerializedTypeIdentity,
             subentities: [_Schema.Entity],
             properties: [_Schema.Entity.Property]
         ) {
