@@ -195,7 +195,7 @@ extension _TransactionScopedRecord {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension _TransactionScopedRecord {
     enum _Error: _SwiftDB_Error {

@@ -62,7 +62,7 @@ extension DatabaseZoneQueryRequest {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension DatabaseZoneQueryRequest where Database == AnyDatabase {
     func _cast<T>(to type: DatabaseZoneQueryRequest<T>.Type) throws -> DatabaseZoneQueryRequest<T> {

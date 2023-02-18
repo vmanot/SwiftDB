@@ -80,7 +80,7 @@ extension RelatedModels {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension RelatedModels: _EntityRelationshipToManyDestination {
     public typealias _DestinationEntityType = Model

@@ -80,7 +80,7 @@ extension _EntitySchemaMigrationMapping {
     }
 }
 
-// MARK: - Supplementary API -
+// MARK: - Supplementary API
 
 extension _EntitySchemaMigrationMapping {
     public static func inferredTransformEntity(
@@ -105,7 +105,7 @@ extension _EntitySchemaMigrationMapping {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 public struct CustomEntityTransformerArguments {
     let source: _DatabaseRecordProxy

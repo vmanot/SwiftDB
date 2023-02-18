@@ -11,7 +11,7 @@ public protocol EntityPropertyAccessorModifier: EntityPropertyAccessor {
     var base: EntityPropertyAccessorType { get }
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _EntityPropertyAccessor {
     var _runtimeMetadata: _EntityPropertyAccessorRuntimeMetadata {
@@ -47,7 +47,7 @@ extension EntityPropertyAccessorModifier where EntityPropertyAccessorType: _Enti
     }
 }
 
-/*// MARK: - Conformances -
+/*// MARK: - Conformances
 
 @propertyWrapper
 public final class RenamingIdentifier<EntityPropertyAccessorType: EntityPropertyAccessor, WrappedValue>: EntityPropertyAccessorModifier {

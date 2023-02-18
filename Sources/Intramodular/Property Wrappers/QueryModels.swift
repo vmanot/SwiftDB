@@ -79,9 +79,19 @@ extension QueryModels {
             try await database.delete(item)
         }
     }
+    
+    @_disfavoredOverload
+    @MainActor
+    public func remove(atOffsets offsets: IndexSet) {
+        Task { @MainActor in
+            for item in offsets.map({ wrappedValue[$0] }) {
+                try await database.delete(item)
+            }
+        }
+    }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension QueryModels {
     fileprivate class RequestOutputCoordinator: Logging, ObservableObject, @unchecked Sendable {
@@ -89,7 +99,7 @@ extension QueryModels {
         
         @PublishedObject var querySubscription: QuerySubscription<Model>?
         
-        @PublishedObject var database: AnyDatabaseContainer.LiveAccess? {
+        var database: AnyDatabaseContainer.LiveAccess? {
             didSet {
                 guard querySubscription == nil || oldValue !== database else {
                     return

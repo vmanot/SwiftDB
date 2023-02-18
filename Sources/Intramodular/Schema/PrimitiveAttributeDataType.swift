@@ -8,7 +8,7 @@ public protocol PrimitiveAttributeDataType: Codable, Hashable {
     
 }
 
-// MARK: - Conditional Conformances -
+// MARK: - Conditional Conformances
 
 extension Optional: PrimitiveAttributeDataType where Wrapped: PrimitiveAttributeDataType {
     
@@ -18,7 +18,7 @@ extension RawRepresentable where RawValue: PrimitiveAttributeDataType {
     
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension Bool: PrimitiveAttributeDataType {
     

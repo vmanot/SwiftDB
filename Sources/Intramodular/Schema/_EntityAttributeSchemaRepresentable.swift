@@ -8,7 +8,7 @@ protocol _EntityAttributeSchemaRepresentable {
     static func toSchemaEntityAttributeType() -> _Schema.Entity.AttributeType
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension Bool: _EntityAttributeSchemaRepresentable {
     public static func toSchemaEntityAttributeType() -> _Schema.Entity.AttributeType {

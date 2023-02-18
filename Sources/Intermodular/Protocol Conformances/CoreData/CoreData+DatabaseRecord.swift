@@ -102,7 +102,7 @@ extension _CoreData.DatabaseRecord {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension _CoreData.DatabaseRecord {
     public struct RecordType: Codable, CustomStringConvertible, Hashable, LosslessStringConvertible {

@@ -43,7 +43,7 @@ public final class AnyDatabaseRecordSpace: DatabaseRecordSpace, Sendable {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 private extension DatabaseRecordSpace {
     func _opaque_createRecord(

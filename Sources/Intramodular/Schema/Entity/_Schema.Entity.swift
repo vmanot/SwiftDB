@@ -64,7 +64,7 @@ extension _Schema {
     }
 }
 
-// MARK: - Extensions -
+// MARK: - Extensions
 
 extension _Schema.Entity {
     private enum CodingKeys: String, CodingKey {
@@ -98,7 +98,7 @@ extension _Schema.Entity {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension _Schema.Entity: Identifiable {
     public enum ID: Codable, Hashable, Sendable {

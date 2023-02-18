@@ -10,7 +10,7 @@ public protocol NSPrimitiveAttributeCoder: NSAttributeCoder {
     static func toNSAttributeType() -> NSAttributeType
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension NSPrimitiveAttributeCoder {
     public static func primitivelyDecode<Key: CodingKey>(from object: NSManagedObject, forKey key: Key) throws -> Self {
@@ -70,7 +70,7 @@ extension NSPrimitiveAttributeCoder {
     }
 }
 
-// MARK: - Conditional Conformances -
+// MARK: - Conditional Conformances
 
 extension Optional: NSPrimitiveAttributeCoder where Wrapped: NSPrimitiveAttributeCoder {
     public static func toNSAttributeType() -> NSAttributeType {
@@ -84,7 +84,7 @@ extension RawRepresentable where RawValue: NSPrimitiveAttributeCoder {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension Bool: NSPrimitiveAttributeCoder {
     public static func toNSAttributeType() -> NSAttributeType {

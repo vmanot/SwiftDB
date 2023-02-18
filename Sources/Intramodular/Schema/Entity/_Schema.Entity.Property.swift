@@ -53,7 +53,7 @@ extension _Schema.Entity {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension _Schema.Entity.Property: PolymorphicDecodable {
     fileprivate enum CodingKeys: String, CodingKey {

@@ -32,7 +32,7 @@ protocol _SwiftDB_TaskRuntimeInterposer: _SwiftDB_TaskRuntime {
     var interposee: _SwiftDB_TaskRuntimeID { get }
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension _SwiftDB_TaskRuntime {
     public func _scopeRecordMutation<T>(_ body: () throws -> T) throws -> T {
@@ -40,7 +40,7 @@ extension _SwiftDB_TaskRuntime {
     }
 }
 
-// MARK: - Supplementary API -
+// MARK: - Supplementary API
 
 public final class _SwiftDB_TaskRuntimeLink {
     let parentID: _SwiftDB_TaskRuntimeID

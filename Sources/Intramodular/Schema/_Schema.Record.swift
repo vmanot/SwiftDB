@@ -44,7 +44,7 @@ extension _Schema {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension _Schema.Record: TypeDiscriminable {
     public enum RecordType: String, Codable, TypeDiscriminator {

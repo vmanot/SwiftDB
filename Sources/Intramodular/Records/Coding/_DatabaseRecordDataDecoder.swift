@@ -86,7 +86,7 @@ extension _DatabaseRecordDataDecoder {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension _DatabaseRecordDataDecoder {
     public enum _Error: _SwiftDB_Error {

@@ -17,7 +17,7 @@ public struct AnyDatabaseZone: DatabaseZone {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension AnyDatabaseZone {
     public struct ID: Codable, Hashable {

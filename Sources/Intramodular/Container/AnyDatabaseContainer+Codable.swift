@@ -5,7 +5,7 @@
 import Merge
 import Swallow
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension Dictionary where Key == CodingUserInfoKey, Value == Any {
     var _SwiftDB_DatabaseContainer: AnyDatabaseContainer! {

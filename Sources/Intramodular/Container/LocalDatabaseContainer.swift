@@ -10,7 +10,7 @@ import SwiftUIX
 
 /// A container that encapsulates a database stack in your app.
 public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer {
-    private enum Tasks: Hashable {
+    private enum Tasks: Hashable, Sendable {
         case initialize
         case load
     }
@@ -207,7 +207,7 @@ extension LocalDatabaseContainer {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension AnyDatabaseContainer {
     public enum Error: Swift.Error {

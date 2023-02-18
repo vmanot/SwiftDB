@@ -23,7 +23,7 @@ public protocol EntityPropertyAccessor {
     var name: String? { get set }
 }
 
-// MARK: - Extensions -
+// MARK: - Extensions
 
 extension _EntityPropertyAccessor {
     var key: AnyCodingKey {
@@ -33,7 +33,7 @@ extension _EntityPropertyAccessor {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 struct _EntityPropertyAccessorRuntimeMetadata {
     let valueType: Any.Type

@@ -61,7 +61,7 @@ extension NSManagedObjectContext {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension NSManagedObjectContext.ChangesPublisher: Publisher {
     public typealias Output = [Event]
@@ -72,7 +72,7 @@ extension NSManagedObjectContext.ChangesPublisher: Publisher {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension NSManagedObjectContext.ChangesPublisher {
     public enum Event {

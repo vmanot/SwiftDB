@@ -7,7 +7,7 @@ import Merge
 import Swallow
 import SwiftUIX
 
-struct AttachDatabaseContainer: ViewModifier {
+struct _AssociateDatabaseViewModifier: ViewModifier {
     @ObservedObject var container: AnyDatabaseContainer
     
     @State private var hasAttemptedFirstLoad: Bool = false
@@ -50,7 +50,7 @@ struct AttachDatabaseContainer: ViewModifier {
     }
 }
 
-// MARK: - API -
+// MARK: - API
 
 extension View {
     /// Attaches a database container to this view.
@@ -62,11 +62,11 @@ extension View {
     public func database(
         _ container: AnyDatabaseContainer
     ) -> some View {
-        modifier(AttachDatabaseContainer(container: container))
+        modifier(_AssociateDatabaseViewModifier(container: container))
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension EnvironmentValues {
     fileprivate struct _DatabaseEnvironmentKey: EnvironmentKey {
@@ -85,7 +85,7 @@ extension EnvironmentValues {
 
 // MARK: - Diagnostics -
 
-extension AttachDatabaseContainer {
+extension _AssociateDatabaseViewModifier {
     struct DiagnosticView: View {
         @ObservedObject var container: AnyDatabaseContainer
         
@@ -121,11 +121,11 @@ public struct _MirrorSummaryView: View {
                 let value = labelAndValue.value
                 
                 if Mirror(reflecting: labelAndValue.value).children.count <= 1 {
-                    #if !os(macOS) && !targetEnvironment(macCatalyst)
+#if !os(macOS) && !targetEnvironment(macCatalyst)
                     LabeledContent(label) {
                         Text(String(describing: value))
                     }
-                    #endif
+#endif
                 } else {
                     NavigationLink(label) {
                         _MirrorSummaryView(mirror: Mirror(reflecting: value))

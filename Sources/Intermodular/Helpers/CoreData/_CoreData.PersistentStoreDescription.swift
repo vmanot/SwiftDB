@@ -21,7 +21,7 @@ extension _CoreData {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension NSPersistentStoreDescription {
     public convenience init(_ description: _CoreData.PersistentStoreDescription) {

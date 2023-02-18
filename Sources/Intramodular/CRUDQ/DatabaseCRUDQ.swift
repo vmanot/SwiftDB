@@ -14,7 +14,7 @@ public protocol DatabaseCRUDQ {
     func deleteAll() async throws
 }
 
-// MARK: - Extensions -
+// MARK: - Extensions
 
 extension DatabaseCRUDQ {
     /// Create an entity instance.

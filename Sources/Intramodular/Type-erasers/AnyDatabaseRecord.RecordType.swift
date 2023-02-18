@@ -33,7 +33,7 @@ extension AnyDatabaseRecord {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension AnyDatabaseRecord.RecordType: Codable {
     public init(from decoder: Decoder) throws {

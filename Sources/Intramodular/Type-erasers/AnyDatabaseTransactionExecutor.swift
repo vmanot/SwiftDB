@@ -34,7 +34,7 @@ public struct AnyDatabaseTransactionExecutor: DatabaseTransactionExecutor {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension DatabaseTransactionExecutor {
     fileprivate func _opaque_execute<R>(

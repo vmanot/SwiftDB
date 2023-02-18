@@ -35,7 +35,7 @@ extension DatabaseRecordUpdate {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension DatabaseRecordUpdate where Database == AnyDatabase {
     func _cast<T: SwiftDB.Database>(

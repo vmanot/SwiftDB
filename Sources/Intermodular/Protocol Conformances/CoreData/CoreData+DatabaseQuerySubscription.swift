@@ -222,7 +222,7 @@ extension NSFetchedResultsPublisher {
     }
 }
 
-// MARK: - Helpers -
+// MARK: - Helpers
 
 extension DatabaseZoneQueryRequest {
     fileprivate func _decomposeToSingleRecordIDIfPossible() -> Database.Record.ID? {

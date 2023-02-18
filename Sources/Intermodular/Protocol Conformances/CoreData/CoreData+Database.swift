@@ -13,7 +13,7 @@ extension _CoreData {
     public typealias Database = CoreDataDatabase
 }
 
-public final class CoreDataDatabase: CancellablesHolder, SwiftDB.LocalDatabase, ObservableObject {
+public final class CoreDataDatabase: CancellablesHolder, SwiftDB.LocalDatabase, ObservableObject, @unchecked Sendable {
     private let logger = OSLogger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
     private let setupTasksQueue = TaskQueue()
     
@@ -118,7 +118,7 @@ public final class CoreDataDatabase: CancellablesHolder, SwiftDB.LocalDatabase, 
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension _CoreData.Database {
     enum ConfigurationError: Error {
@@ -252,7 +252,7 @@ extension _CoreData.Database: Named {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension _CoreData.Database {
     public var sqliteStoreURL: URL? {

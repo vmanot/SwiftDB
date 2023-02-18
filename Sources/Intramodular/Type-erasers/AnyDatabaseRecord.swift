@@ -56,7 +56,7 @@ public final class AnyDatabaseRecord: DatabaseRecord, Identifiable, ObservableOb
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension AnyDatabaseRecord {
     public struct ID: Hashable {

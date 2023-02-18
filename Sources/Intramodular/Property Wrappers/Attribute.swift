@@ -10,13 +10,13 @@ import SwiftUI
 
 /// A property accessor for entity attributes.
 @propertyWrapper
-public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAccessor, Logging, ObservableObject, PropertyWrapper {
+public final class _EntityAttribute<Value>: _EntityPropertyAccessor, EntityPropertyAccessor, Logging, ObservableObject, PropertyWrapper {
     public let objectWillChange = ObservableObjectPublisher()
     
     private var objectWillChangeConduit: AnyCancellable? = nil
     
     var _runtimeMetadata = _EntityPropertyAccessorRuntimeMetadata(valueType: Value.self)
-
+    
     public var name: String?
     
     private let traits: [EntityAttributeTrait]
@@ -62,7 +62,7 @@ public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAcce
         }
     }
     
-    public var projectedValue: Attribute<Value> {
+    public var projectedValue: _EntityAttribute {
         self
     }
     
@@ -77,7 +77,7 @@ public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAcce
     public static subscript<EnclosingSelf: Entity>(
         _enclosingInstance instance: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value>,
-        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Attribute>
+        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, _EntityAttribute>
     ) -> Value {
         get {
             return instance[keyPath: storageKeyPath].wrappedValue
@@ -129,7 +129,7 @@ public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAcce
         )
     }
     
-    // MARK: - Initializers -
+    // MARK: - Initializers
     
     public convenience init(
         wrappedValue: @autoclosure @escaping () -> Value,
@@ -168,9 +168,9 @@ public final class Attribute<Value>: _EntityPropertyAccessor, EntityPropertyAcce
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
-extension Attribute {
+extension _EntityAttribute {
     enum AccessError: _SwiftDB_Error {
         case failedToResolveInitialValue
     }

@@ -12,7 +12,7 @@ public protocol _SwiftDB_Runtime: Sendable {
     func convertEntityKeyPathToString(_ keyPath: AnyKeyPath) throws -> String
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 public final class _SwiftDB_DefaultRuntime: _SwiftDB_Runtime, @unchecked Sendable {
     struct TypeCache: Hashable {
@@ -95,7 +95,7 @@ public final class _SwiftDB_DefaultRuntime: _SwiftDB_Runtime, @unchecked Sendabl
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension CodingUserInfoKey {
     fileprivate static let _SwiftDB_runtime = CodingUserInfoKey(rawValue: "_SwiftDB_runtime")!

@@ -47,7 +47,7 @@ public final class QuerySubscription<Model>: ObservableObject {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension QuerySubscription: Publisher {
     public typealias Output = [Model]

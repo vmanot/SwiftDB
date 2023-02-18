@@ -96,7 +96,7 @@ public struct _Schema: Hashable, Sendable, Versioned {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension _Schema: Codable {
     enum CodingKeys: String, CodingKey {
@@ -120,7 +120,7 @@ extension _Schema: Codable {
 }
 
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension _Schema {
     private enum Error: Swift.Error {

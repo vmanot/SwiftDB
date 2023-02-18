@@ -20,7 +20,7 @@ public protocol _EntityRelationshipToManyDestination: _EntityRelationshipDestina
     associatedtype _DestinationEntityType: Entity
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension _EntityRelationshipDestination {
     public static var _destinationEntityType: any Entity.Type {
@@ -34,7 +34,7 @@ extension _EntityRelationshipDestination {
     }
 }
 
-// MARK: - Extensions -
+// MARK: - Extensions
 
 extension _EntityRelationshipToOneDestination {
     fileprivate static var _toOneDestinationEntityType: any Entity.Type {
@@ -48,7 +48,7 @@ extension _EntityRelationshipToManyDestination {
     }
 }
 
-// MARK: - Implementations -
+// MARK: - Implementations
 
 extension Optional: _EntityRelationshipDestination  {
     public init(_relationshipPropertyAccessor: EntityPropertyAccessor) {

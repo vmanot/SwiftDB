@@ -64,7 +64,7 @@ extension NSRelationshipDescription {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 struct _SwiftDB_NSAttributeType {
     let attributeType: NSAttributeType

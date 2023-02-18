@@ -15,7 +15,7 @@ extension _opaque_Entity where Self: Entity {
     public typealias RelatableEntityType = Self
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension _opaque_Entity  {
     var _runtime_propertyAccessors: [any _EntityPropertyAccessor] {
@@ -83,10 +83,6 @@ extension _opaque_Entity where Self: Entity & ObservableObject {
     public static var _opaque_ParentEntity: (any Entity.Type)? {
         ObjCClass(Self.self).superclass?.value as? any Entity.Type
     }
-    
-    public func _opaque_objectWillChange_send() throws {
-        try cast(objectWillChange, to: _opaque_VoidSender.self).send()
-    }
 }
 
 extension _opaque_Entity where Self: Entity & Identifiable {
@@ -95,7 +91,7 @@ extension _opaque_Entity where Self: Entity & Identifiable {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension _opaque_Entity {
     public static func isSuperclass(of other: _opaque_Entity.Type) -> Bool {

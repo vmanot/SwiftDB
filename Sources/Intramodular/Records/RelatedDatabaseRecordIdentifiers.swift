@@ -21,7 +21,7 @@ public enum RelatedDatabaseRecordIdentifiers<Database: SwiftDB.Database> {
     case toOrderedMany(Array<Database.Record.ID>)
 }
 
-// MARK: - Extensions -
+// MARK: - Extensions
 
 extension RelatedDatabaseRecordIdentifiers {
     public var relationshipType: DatabaseRecordRelationshipType {
@@ -71,7 +71,7 @@ extension RelatedDatabaseRecordIdentifiers {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension RelatedDatabaseRecordIdentifiers: Diffable {
     public enum Difference {
@@ -107,7 +107,7 @@ extension RelatedDatabaseRecordIdentifiers: Diffable {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension RelatedDatabaseRecordIdentifiers where Database == AnyDatabase {
     init<T: SwiftDB.Database>(erasing other: RelatedDatabaseRecordIdentifiers<T>) throws {

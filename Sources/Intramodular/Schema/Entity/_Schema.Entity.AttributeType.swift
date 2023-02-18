@@ -98,7 +98,7 @@ extension _Schema.Entity {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 fileprivate extension Hashable {
     static func dictionaryType(valueType: Any.Type) -> Any.Type {

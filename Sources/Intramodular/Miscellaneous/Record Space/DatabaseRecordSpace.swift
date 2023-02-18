@@ -38,7 +38,7 @@ public protocol DatabaseRecordSpace: Sendable {
     func save() -> AnyTask<Void, SaveError>
 }
 
-// MARK: - Extensions -
+// MARK: - Extensions
 
 extension DatabaseRecordSpace {
     public func execute(_ request: Database.ZoneQueryRequest) async throws -> Database.ZoneQueryRequest.Result {

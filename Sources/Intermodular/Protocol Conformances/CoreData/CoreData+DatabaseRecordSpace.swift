@@ -2,7 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CoreData
+@preconcurrency import CoreData
 import FoundationX
 import Merge
 import Runtime
@@ -177,7 +177,7 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
     }
 }
 
-// MARK: - Helpers -
+// MARK: - Helpers
 
 fileprivate extension DatabaseRecordMergeConflict where Context == _CoreData.DatabaseRecordSpace {
     init(conflict: NSMergeConflict) {

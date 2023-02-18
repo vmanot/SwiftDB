@@ -6,10 +6,10 @@ import Merge
 import Swallow
 
 extension AnyDatabaseContainer {
-    public final class LiveAccess: ObservableObject {
+    public final class LiveAccess {
         private let taskQueue = TaskQueue()
         
-        @Published private var base: AnyDatabase?
+        private var base: AnyDatabase?
         
         public var isInitialized: Bool {
             base != nil
@@ -83,7 +83,7 @@ extension AnyDatabaseContainer.LiveAccess: DatabaseCRUDQ {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension AnyDatabase {
     public func transact<R>(
@@ -134,7 +134,7 @@ extension AnyDatabase {
     
     public func transact<Model, R>(
         with request: QueryRequest<Model>,
-        _ body: @escaping (QueryRequest<Model>.Output) throws -> R
+        _ body: @escaping @Sendable (QueryRequest<Model>.Output) throws -> R
     ) async throws -> R {
         let database = AnyDatabase(erasing: self)
         let executor = try database.transactionExecutor()
@@ -164,14 +164,16 @@ extension AnyDatabase {
     func queryExecutionTask<Model>(
         for request: QueryRequest<Model>
     ) -> AnyTask<QueryRequest<Model>.Output, Error> {
-        return PassthroughTask<QueryRequest<Model>.Output, Error> { attemptToFulfill in
+        PassthroughTask<QueryRequest<Model>.Output, Error> { attemptToFulfill -> Void in
+            let attemptToFulfill = UncheckedSendable(attemptToFulfill)
+            
             Task {
                 do {
                     try await self.transact(with: request) { result in
-                        attemptToFulfill(.success(result))
+                        attemptToFulfill.wrappedValue(.success(result))
                     }
                 } catch {
-                    attemptToFulfill(.failure(error))
+                    attemptToFulfill.wrappedValue(.failure(error))
                 }
             }
         }

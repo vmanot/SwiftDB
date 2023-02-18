@@ -19,7 +19,7 @@ import Swallow
 ///     A representation of a local or remote store.
 /// - RecordSpace:
 ///     An in-memory scratchpad for transacting on managed records.
-public protocol Database: Named, Identifiable where ID: Codable {
+public protocol Database: Named, Identifiable, Sendable where ID: Codable {
     typealias Runtime = _SwiftDB_Runtime
     
     associatedtype Configuration: Codable
@@ -59,7 +59,7 @@ public protocol Database: Named, Identifiable where ID: Codable {
     func transactionExecutor() throws -> TransactionExecutor
 }
 
-// MARK: - Extensions -
+// MARK: - Extensions
 
 extension Database {
     public init(

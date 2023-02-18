@@ -7,8 +7,8 @@ import Merge
 import Swallow
 
 extension _CoreData.Database {
-    public struct Zone: DatabaseZone, Identifiable {
-        public struct ID: Codable, Hashable {
+    public struct Zone: DatabaseZone, Identifiable, Sendable {
+        public struct ID: Codable, Hashable, Sendable {
             let fileURL: URL
             
             init(_fileURL: URL) {
@@ -24,7 +24,8 @@ extension _CoreData.Database {
             }
         }
         
-        let nsPersistentStoreDescription: NSPersistentStoreDescription
+        @UncheckedSendable
+        var nsPersistentStoreDescription: NSPersistentStoreDescription
         
         public let id: ID
         public let name: String?
@@ -33,7 +34,7 @@ extension _CoreData.Database {
         init(persistentStoreDescription: NSPersistentStoreDescription) throws {
             let fileURL = persistentStoreDescription.url
             
-            self.nsPersistentStoreDescription = persistentStoreDescription
+            self._nsPersistentStoreDescription = .init(wrappedValue: persistentStoreDescription)
             self.id = .init(from: persistentStoreDescription)
             self.name = persistentStoreDescription.configuration
             self.fileURL = fileURL

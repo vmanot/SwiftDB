@@ -115,7 +115,7 @@ extension _Schema.Entity.Relationship {
     }
 }
 
-// MARK: - Supplementary API -
+// MARK: - Supplementary API
 
 extension DatabaseRecordRelationshipType {
     /// The record relationship type relative to the destination of the given relationship property.

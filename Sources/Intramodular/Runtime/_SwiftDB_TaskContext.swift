@@ -133,7 +133,7 @@ extension _SwiftDB_TaskContext {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension _SwiftDB_TaskContext {
     final class _DefaultTaskRuntime: _SwiftDB_TaskRuntime {
