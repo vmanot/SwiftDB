@@ -24,7 +24,7 @@ extension _CoreData.Database {
             }
         }
         
-        @UncheckedSendable
+        @_UncheckedSendable
         var nsPersistentStoreDescription: NSPersistentStoreDescription
         
         public let id: ID

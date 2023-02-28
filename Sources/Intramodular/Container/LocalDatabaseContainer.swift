@@ -112,8 +112,8 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
         }
     }
     
-    public override func transact<R>(
-        _ body: @escaping (AnyLocalTransaction) throws -> R
+    public override func transact<R: Sendable>(
+        _ body: @escaping @Sendable (AnyLocalTransaction) throws -> R
     ) async throws -> R {
         let database = try await loadedDatabase()
         let executor = try database.transactionExecutor()

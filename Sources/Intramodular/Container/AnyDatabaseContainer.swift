@@ -34,8 +34,8 @@ public class AnyDatabaseContainer: CustomReflectable, Logging, ObservableObject,
         fatalError(reason: .abstract)
     }
     
-    public func transact<R>(
-        _ body: @escaping (AnyLocalTransaction) throws -> R
+    public func transact<R: Sendable>(
+        _ body: @escaping @Sendable (AnyLocalTransaction) throws -> R
     ) async throws -> R {
         fatalError(reason: .abstract)
     }

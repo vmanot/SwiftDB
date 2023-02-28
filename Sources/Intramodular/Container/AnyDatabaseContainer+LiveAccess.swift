@@ -6,7 +6,7 @@ import Merge
 import Swallow
 
 extension AnyDatabaseContainer {
-    public final class LiveAccess {
+    public final class LiveAccess: @unchecked Sendable {
         private let taskQueue = TaskQueue()
         
         private var base: AnyDatabase?
@@ -32,8 +32,8 @@ extension AnyDatabaseContainer {
 }
 
 extension AnyDatabaseContainer.LiveAccess {
-    public func transact<R>(
-        _ body: @escaping (AnyLocalTransaction) throws -> R
+    public func transact<R: Sendable>(
+        _ body: @escaping @Sendable (AnyLocalTransaction) throws -> R
     ) async throws -> R {
         try await baseUnwrapped.transact(body)
     }
@@ -165,7 +165,7 @@ extension AnyDatabase {
         for request: QueryRequest<Model>
     ) -> AnyTask<QueryRequest<Model>.Output, Error> {
         PassthroughTask<QueryRequest<Model>.Output, Error> { attemptToFulfill -> Void in
-            let attemptToFulfill = UncheckedSendable(attemptToFulfill)
+            let attemptToFulfill = _UncheckedSendable(attemptToFulfill)
             
             Task {
                 do {
