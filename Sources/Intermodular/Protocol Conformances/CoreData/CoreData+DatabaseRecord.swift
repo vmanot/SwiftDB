@@ -152,7 +152,7 @@ extension Decodable where Self: Encodable {
     static func decode(from object: NSManagedObject, forKey key: AnyCodingKey) throws -> Self {
         return try _CodableToNSAttributeCoder<Self>.decode(
             from: object,
-            forKey: AnyCodingKey(key)
+            forKey: AnyCodingKey(erasing: key)
         )
         .value
     }
@@ -160,7 +160,7 @@ extension Decodable where Self: Encodable {
     func encode(to object: NSManagedObject, forKey key: AnyCodingKey) throws  {
         try _CodableToNSAttributeCoder<Self>(self).encode(
             to: object,
-            forKey: AnyCodingKey(key)
+            forKey: AnyCodingKey(erasing: key)
         )
     }
 }

@@ -80,7 +80,7 @@ extension _TransactionScopedRecord: _DatabaseRecordProxyBase {
     }
     
     func decodeValue(forKey key: AnyCodingKey) throws -> Any? {
-        try recordUpdater.decodeValue(forKey: AnyCodingKey(key))
+        try recordUpdater.decodeValue(forKey: AnyCodingKey(erasing: key))
     }
     
     func encodeInitialValue<Value>(_ value: Value, forKey key: AnyCodingKey) throws {

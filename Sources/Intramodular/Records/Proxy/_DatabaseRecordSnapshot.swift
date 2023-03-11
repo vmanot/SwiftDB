@@ -53,7 +53,7 @@ final class _DatabaseRecordSnapshot: Logging {
 
 extension _DatabaseRecordSnapshot: _DatabaseRecordProxyBase {
     func containsValue(forKey key: AnyCodingKey) throws -> Bool {
-        attributeValues.contains(key: AnyCodingKey(key))
+        attributeValues.contains(key: AnyCodingKey(erasing: key))
     }
     
     func decodeValue<Value>(_ type: Value.Type, forKey key: AnyCodingKey) throws -> Value {
