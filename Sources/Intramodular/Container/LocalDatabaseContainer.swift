@@ -56,7 +56,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
     
     @MainActor
     override public func load() async throws {
-        try await taskGraph.insert(.load, policy: .useExisting) {
+        try await taskGraph.perform(.load, policy: .useExisting) {
             guard status != .initialized else {
                 return
             }

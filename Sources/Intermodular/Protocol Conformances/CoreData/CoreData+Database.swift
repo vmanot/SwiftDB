@@ -15,7 +15,7 @@ extension _CoreData {
 
 public final class CoreDataDatabase: CancellablesHolder, SwiftDB.LocalDatabase, ObservableObject, @unchecked Sendable {
     private let logger = OSLogger(subsystem: "com.vmanot.SwiftDB", category: "_CoreData.Database")
-    private let setupTasksQueue = TaskQueue()
+    private let setupTasksQueue = ThrowingTaskQueue()
     
     public typealias Record = _CoreData.DatabaseRecord
     public typealias RecordSpace = _CoreData.DatabaseRecordSpace

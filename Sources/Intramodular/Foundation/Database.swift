@@ -30,7 +30,7 @@ public protocol Database: Named, Identifiable, Sendable where ID: Codable {
     associatedtype TransactionExecutor: DatabaseTransactionExecutor
     associatedtype QuerySubscription: DatabaseQuerySubscription where QuerySubscription.Database == Self
     associatedtype RecordSpace: DatabaseRecordSpace where RecordSpace.Zone == Zone, RecordSpace.Record == Record
-
+    
     typealias Transaction = TransactionExecutor.Transaction
     typealias Context = DatabaseContext<Self>
     typealias ZoneQueryRequest = DatabaseZoneQueryRequest<Self>
@@ -55,7 +55,7 @@ public protocol Database: Named, Identifiable, Sendable where ID: Codable {
     func fetchAllAvailableZones() -> AnyTask<[Zone], Error>
     
     func querySubscription(for request: ZoneQueryRequest) throws -> QuerySubscription
-
+    
     func transactionExecutor() throws -> TransactionExecutor
 }
 
