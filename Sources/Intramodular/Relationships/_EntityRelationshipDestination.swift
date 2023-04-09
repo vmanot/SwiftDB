@@ -48,7 +48,7 @@ extension _EntityRelationshipToManyDestination {
     }
 }
 
-// MARK: - Implementations
+// MARK: - Conforming Implementations
 
 extension Optional: _EntityRelationshipDestination  {
     public init(_relationshipPropertyAccessor: EntityPropertyAccessor) {
