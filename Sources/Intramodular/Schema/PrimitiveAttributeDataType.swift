@@ -2,7 +2,8 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Swift
+import Foundation
+import Swallow
 
 public protocol PrimitiveAttributeDataType: Codable, Hashable {
     

@@ -3,6 +3,7 @@
 //
 
 import Diagnostics
+import FoundationX
 import Merge
 import Runtime
 import Swallow

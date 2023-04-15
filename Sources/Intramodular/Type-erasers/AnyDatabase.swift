@@ -3,7 +3,7 @@
 //
 
 import Merge
-import Swift
+import Swallow
 
 /// A type-erased database.
 public final class AnyDatabase: Database {

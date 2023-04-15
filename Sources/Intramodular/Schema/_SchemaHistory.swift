@@ -2,8 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import FoundationX
-import Swift
+import Swallow
 
 public struct _SchemaHistory: Codable, Hashable, Sendable {
     @LossyCoding

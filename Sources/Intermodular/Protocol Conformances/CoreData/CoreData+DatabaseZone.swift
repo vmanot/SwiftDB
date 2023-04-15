@@ -3,6 +3,7 @@
 //
 
 import CoreData
+import CorePersistence
 import Merge
 import Swallow
 

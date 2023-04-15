@@ -2,7 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Swift
+import Swallow
 
 public struct DatabaseRecordUpdate<Database: SwiftDB.Database> {
     public let key: AnyCodingKey

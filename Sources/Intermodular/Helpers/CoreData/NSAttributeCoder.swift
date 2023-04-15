@@ -161,7 +161,7 @@ extension Wrapper where Value: NSAttributeCoder, Self: NSAttributeCoder {
     }
 }
 
-// MARK: - Conforming Implementations
+// MARK: - Implemented Conformances
 
 struct _CodableToNSAttributeCoder<T: Codable>: NSAttributeCoder, Logging {
     let value: T

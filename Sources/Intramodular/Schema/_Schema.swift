@@ -3,6 +3,7 @@
 //
 
 import Compute
+import FoundationX
 import Runtime
 import Swallow
 import SwiftUI
