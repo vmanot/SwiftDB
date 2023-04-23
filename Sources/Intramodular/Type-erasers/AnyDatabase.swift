@@ -16,7 +16,7 @@ public final class AnyDatabase: Database {
     private let base: any Database
     
     public var name: String {
-        base.name
+        base.name.description
     }
     
     public var id: ID {
