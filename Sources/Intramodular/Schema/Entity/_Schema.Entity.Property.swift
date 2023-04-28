@@ -20,6 +20,10 @@ extension _Schema.Entity {
         public let name: String
         public let propertyConfiguration: PropertyConfiguration
         
+        public var instanceType: PropertyType {
+            type
+        }
+
         public init(
             type: PropertyType,
             name: String,

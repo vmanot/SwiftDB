@@ -14,6 +14,10 @@ extension _Schema {
         public var type: RecordType
         public var name: String
         
+        public var instanceType: RecordType {
+            type
+        }
+
         public init(type: RecordType, name: String) {
             self.type = type
             self.name = name
