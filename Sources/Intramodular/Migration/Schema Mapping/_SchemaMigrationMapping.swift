@@ -16,7 +16,7 @@ public struct _SchemaMigrationMapping {
     ) {
         self.source = source
         self.destination = destination
-        self.mappings = mappings.group(by: \.instanceType)
+        self.mappings = mappings.group(by: \.typeDiscriminator)
     }
 }
 

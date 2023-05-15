@@ -23,7 +23,7 @@ public enum _EntitySchemaMigrationMapping: Hashable, TypeDiscriminable {
         transformer: (CustomEntityTransformerArguments) throws -> Void
     )
     
-    public var instanceType: MappingType {
+    public var typeDiscriminator: MappingType {
         switch self {
             case .deleteEntity:
                 return .delete

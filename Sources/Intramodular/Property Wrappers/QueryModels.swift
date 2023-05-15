@@ -54,7 +54,7 @@ public struct QueryModels<Model: Entity>: DynamicProperty {
     
     public init(
         sortDescriptors: [AnySortDescriptor] = [],
-        predicate: Predicate<Model>? = nil,
+        predicate: CocoaPredicate<Model>? = nil,
         animation: Animation? = nil
     ) {
         self.init(

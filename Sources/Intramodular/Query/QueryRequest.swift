@@ -27,7 +27,7 @@ public struct QueryRequest<Model> {
     }
 
     public init(
-        predicate: Predicate<Model>?,
+        predicate: CocoaPredicate<Model>?,
         sortDescriptors: [AnySortDescriptor]?,
         fetchLimit: FetchLimit?,
         scope: Scope

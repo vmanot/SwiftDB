@@ -14,7 +14,7 @@ public struct RecordInstanceMetadata {
                 recordID: instance._databaseRecordProxy.recordID
             )
         } else {
-            throw EmptyError()
+            throw _PlaceholderError()
         }
     }
 }

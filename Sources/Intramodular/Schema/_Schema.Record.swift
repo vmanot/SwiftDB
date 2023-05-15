@@ -14,7 +14,7 @@ extension _Schema {
         public var type: RecordType
         public var name: String
         
-        public var instanceType: RecordType {
+        public var typeDiscriminator: RecordType {
             type
         }
 
@@ -51,7 +51,7 @@ extension _Schema {
 // MARK: - Conformances
 
 extension _Schema.Record: TypeDiscriminable {
-    public enum RecordType: String, Codable, TypeDiscriminator {
+    public enum RecordType: String, Codable, Swallow.TypeDiscriminator {
         case entity
         
         public func resolveType() -> Any.Type {

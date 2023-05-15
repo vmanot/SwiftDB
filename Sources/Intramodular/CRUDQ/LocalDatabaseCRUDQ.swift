@@ -47,7 +47,7 @@ extension LocalDatabaseCRUDQ {
     /// Fetch the first available entity instance.
     public func first<Instance: Entity>(
         _ type: Instance.Type = Instance.self,
-        where predicate: Predicate<Instance>
+        where predicate: CocoaPredicate<Instance>
     ) throws -> Instance? {
         try execute(
             QueryRequest<Instance>(

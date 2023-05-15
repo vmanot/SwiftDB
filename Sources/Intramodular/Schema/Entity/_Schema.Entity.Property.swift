@@ -20,7 +20,7 @@ extension _Schema.Entity {
         public let name: String
         public let propertyConfiguration: PropertyConfiguration
         
-        public var instanceType: PropertyType {
+        public var typeDiscriminator: PropertyType {
             type
         }
 
@@ -80,7 +80,7 @@ extension _Schema.Entity.Property: Equatable {
 }
 
 extension _Schema.Entity.Property: TypeDiscriminable {
-    public enum PropertyType: String, Codable, TypeDiscriminator {
+    public enum PropertyType: String, Codable, Swallow.TypeDiscriminator {
         case attribute
         case relationship
         

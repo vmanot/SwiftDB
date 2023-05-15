@@ -70,7 +70,7 @@ extension DatabaseCRUDQ {
     /// Fetch the first available entity instance.
     public func first<Instance: Entity>(
         _ type: Instance.Type = Instance.self,
-        where predicate: Predicate<Instance>
+        where predicate: CocoaPredicate<Instance>
     ) async throws -> Instance? {
         try await execute(
             QueryRequest<Instance>(

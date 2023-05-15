@@ -77,7 +77,7 @@ extension _Schema.Entity.Property {
             case let relationship as _Schema.Entity.Relationship:
                 return try NSRelationshipDescription(relationship)
             default:
-                throw EmptyError()
+                throw _PlaceholderError()
         }
     }
 }
