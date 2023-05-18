@@ -2,10 +2,10 @@
 // Copyright (c) Vatsal Manot
 //
 
-import API
 import Combine
 import CoreData
 import Swift
+import SwiftAPI
 import SwiftUIX
 
 // A property wrapper type that subscribes to an observable model and invalidates a view whenever the observable model changes.

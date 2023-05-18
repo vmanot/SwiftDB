@@ -2,10 +2,10 @@
 // Copyright (c) Vatsal Manot
 //
 
-import API
 import FoundationX
 import Merge
 import Swallow
+import SwiftAPI
 
 public protocol LocalDatabaseCRUDQ {
     func create<Instance: Entity>(_ entityType: Instance.Type) throws -> Instance

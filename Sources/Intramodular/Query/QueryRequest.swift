@@ -2,9 +2,9 @@
 // Copyright (c) Vatsal Manot
 //
 
-import API
 import FoundationX
 import Swallow
+import SwiftAPI
 
 /// A description of search criteria used to retrieve data from a persistent store.
 public struct QueryRequest<Model> {

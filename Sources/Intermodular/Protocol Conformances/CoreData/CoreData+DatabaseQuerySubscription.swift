@@ -2,10 +2,10 @@
 // Copyright (c) Vatsal Manot
 //
 
-import API
 import CoreData
 import Merge
 import Swallow
+import SwiftAPI
 
 extension _CoreData.Database {
     public final class QuerySubscription: DatabaseQuerySubscription {

@@ -2,9 +2,9 @@
 // Copyright (c) Vatsal Manot
 //
 
-import API
 import FoundationX
 import Swallow
+import SwiftAPI
 
 public enum DatabaseZoneQueryPredicate<Database: SwiftDB.Database>: Hashable, NSPredicateConvertible {
     case related(to: Database.Record.ID, by: AnyCodingKey)

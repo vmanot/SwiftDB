@@ -2,8 +2,8 @@
 // Copyright (c) Vatsal Manot
 //
 
-import API
 import Swallow
+import SwiftAPI
 
 public struct AnyLocalTransaction: LocalDatabaseCRUDQ {
     private let _SwiftDB_taskContext: _SwiftDB_TaskContext
