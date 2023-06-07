@@ -111,7 +111,7 @@ extension _Schema.Entity: Identifiable {
         }
         
         public init(from type: Any.Type) throws {
-            try self.init(from: try cast(type, to: any Entity.Type.self))
+            try self.init(from: try cast(type, to: (any Entity.Type).self))
         }
     }
     

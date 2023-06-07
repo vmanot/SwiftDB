@@ -21,7 +21,7 @@ public struct _Schema: Hashable, Sendable, Versioned {
         self.entities = .init(entities.sorted(by: \.name))
         
         for entity in entities {
-            let metatype = Metatype(try cast(entity.persistentTypeRepresentation.resolveType(), to: any SwiftDB.Entity.Type.self))
+            let metatype = Metatype(try cast(entity.persistentTypeRepresentation.resolveType(), to: (any SwiftDB.Entity.Type).self))
             
             entityTypesByName[entity.name] = metatype
             entityTypesByEntityID[entity.id] = metatype

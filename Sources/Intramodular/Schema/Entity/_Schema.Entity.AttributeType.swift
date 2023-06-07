@@ -112,5 +112,5 @@ fileprivate extension Hashable {
 }
 
 func makeDictionaryType(keyType: Any.Type, valueType: Any.Type) throws -> Any.Type {
-    try cast(keyType, to: any Hashable.Type.self).dictionaryType(valueType: valueType)
+    try cast(keyType, to: (any Hashable.Type).self).dictionaryType(valueType: valueType)
 }

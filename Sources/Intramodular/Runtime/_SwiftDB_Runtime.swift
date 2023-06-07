@@ -89,7 +89,7 @@ public final class _SwiftDB_DefaultRuntime: _SwiftDB_Runtime, @unchecked Sendabl
     
     public func convertEntityKeyPathToString(_ keyPath: AnyKeyPath) throws -> String {
         let rootType = try type(of: cast(keyPath, to: _opaque_PartialKeyPathType.self))._opaque_RootType
-        let entityType = try cast(rootType, to: any Entity.Type.self)
+        let entityType = try cast(rootType, to: (any Entity.Type).self)
         
         return try entityCache(for: entityType)._getFieldNameForKeyPath(keyPath)
     }
