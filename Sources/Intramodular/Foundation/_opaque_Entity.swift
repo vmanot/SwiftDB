@@ -43,7 +43,7 @@ extension _opaque_Entity  {
             }
         }
         
-        self = try cast(instance.value, to: Self.self)
+        self = try cast(instance.subject, to: Self.self)
     }
     
     init(_databaseRecordProxy: _DatabaseRecordProxy?) throws {
