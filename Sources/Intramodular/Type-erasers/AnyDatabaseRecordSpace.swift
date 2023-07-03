@@ -81,10 +81,18 @@ private extension DatabaseRecordSpace {
         save()
             .successPublisher
             .mapError { error in
-                AnyDatabaseRecordSpace.SaveError(
-                    description: error.description,
-                    mergeConflicts: error.mergeConflicts?.map({ DatabaseRecordMergeConflict(source: AnyDatabaseRecord(erasing: $0.source)) })
-                )
+                switch error {
+                    case .canceled:
+                        return AnyDatabaseRecordSpace.SaveError(
+                            description: "cancelled",
+                            mergeConflicts: []
+                        )
+                    case .error(let error):
+                        return AnyDatabaseRecordSpace.SaveError(
+                            description: error.description,
+                            mergeConflicts: error.mergeConflicts?.map({ DatabaseRecordMergeConflict(source: AnyDatabaseRecord(erasing: $0.source)) })
+                        )
+                }
             }
             .convertToTask()
     }

@@ -19,7 +19,7 @@ public protocol NSAttributeCoder {
     static func toNSAttributeTypeIfPossible() -> NSAttributeType?
 }
 
-// MARK: - Default Implementation -
+// MARK: - Default Implementation
 
 extension NSAttributeCoder {
     public static func primitivelyDecode<Key: CodingKey>(
