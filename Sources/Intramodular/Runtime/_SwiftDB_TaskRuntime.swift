@@ -41,7 +41,7 @@ extension _SwiftDB_TaskRuntime {
     }
 }
 
-// MARK: - Supplementary API
+// MARK: - Supplementary
 
 public final class _SwiftDB_TaskRuntimeLink {
     let parentID: _SwiftDB_TaskRuntimeID

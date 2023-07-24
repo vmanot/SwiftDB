@@ -120,7 +120,7 @@ extension QueryModels {
         }
         
         init() {
-            logger.dumpToConsole = true
+
         }
     }
 }

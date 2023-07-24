@@ -15,7 +15,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
         case load
     }
     
-    private let taskGraph = TaskGraph<Tasks>()
+    private let taskGraph = _KeyedTaskGraph<Tasks>()
     
     public let cancellables = Cancellables()
     
@@ -50,8 +50,6 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
         self.location = location
         
         super.init()
-        
-        logger.dumpToConsole = true
     }
     
     @MainActor

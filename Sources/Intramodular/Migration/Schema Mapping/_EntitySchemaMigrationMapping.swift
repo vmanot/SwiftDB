@@ -80,7 +80,7 @@ extension _EntitySchemaMigrationMapping {
     }
 }
 
-// MARK: - Supplementary API
+// MARK: - Supplementary
 
 extension _EntitySchemaMigrationMapping {
     public static func inferredTransformEntity(

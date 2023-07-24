@@ -20,7 +20,7 @@ public struct _SchemaMigrationMapping {
     }
 }
 
-// MARK: - Supplementary API
+// MARK: - Supplementary
 
 extension _SchemaMigrationMapping {
     public static func createInferredMapping(
