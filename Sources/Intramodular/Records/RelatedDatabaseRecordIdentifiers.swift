@@ -74,10 +74,21 @@ extension RelatedDatabaseRecordIdentifiers {
 // MARK: - Conformances
 
 extension RelatedDatabaseRecordIdentifiers: Diffable {
-    public enum Difference {
+    public enum Difference: _DiffableDifferenceType {
         case toOne(CollectionOfOne<Database.Record.ID?>.Difference)
         case toUnorderedMany(Set<Database.Record.ID>.Difference)
         case toOrderedMany(Array<Database.Record.ID>.Difference)
+        
+        public var isEmpty: Bool {
+            switch self {
+                case .toOne(let difference):
+                    return difference.isEmpty
+                case .toUnorderedMany(let difference):
+                    return difference.isEmpty
+                case .toOrderedMany(let difference):
+                    return difference.isEmpty
+            }
+        }
     }
     
     public func difference(from other: Self) -> Difference {
