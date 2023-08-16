@@ -11,7 +11,12 @@ let package = Package(
         .watchOS(.v9)
     ],
     products: [
-        .library(name: "SwiftDB", targets: ["SwiftDB"])
+        .library(
+            name: "SwiftDB",
+            targets: [
+                "SwiftDB"
+            ]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/vmanot/CorePersistence.git", branch: "main"),
