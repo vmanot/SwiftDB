@@ -7,7 +7,7 @@ import Swallow
 import Swift
 
 /// A database record.
-public protocol DatabaseRecord: Identifiable, CancellablesHolder {
+public protocol DatabaseRecord: Identifiable, _CancellablesProviding {
     associatedtype Database: SwiftDB.Database where Database.Record == Self
     associatedtype RecordType: Codable & Hashable & LosslessStringConvertible
     

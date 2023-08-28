@@ -34,7 +34,7 @@ protocol _DatabaseRecordProxyBase {
 }
 
 /// A proxy to a record container OR snapshot.
-final class _DatabaseRecordProxy: CancellablesHolder {
+final class _DatabaseRecordProxy: _CancellablesProviding {
     private enum OperationType {
         case read
         case write
