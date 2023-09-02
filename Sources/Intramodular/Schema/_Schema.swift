@@ -12,7 +12,7 @@ import SwiftUI
 public struct _Schema: Hashable, Sendable, Versioned {
     public var version: Version? = "0.0.1"
     
-    public let entities: IdentifierIndexedArray<Entity, Entity.ID>
+    public let entities: IdentifierIndexingArray<Entity, Entity.ID>
     
     private var entityTypesByName = BidirectionalMap<String,  Metatype<any SwiftDB.Entity.Type>>()
     private var entityTypesByEntityID = BidirectionalMap<Entity.ID, Metatype<any SwiftDB.Entity.Type>>()
