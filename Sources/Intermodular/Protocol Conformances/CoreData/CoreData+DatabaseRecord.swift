@@ -75,8 +75,14 @@ extension _CoreData.DatabaseRecord {
         }
     }
     
-    private func _toOneRelatedRecordID(forKey key: AnyCodingKey) throws -> _CoreData.DatabaseRecord.ID? {
-        _CoreData.DatabaseRecord(rawObject: try cast(rawObject._unsafeDecodeValue(forKey: key), to: NSManagedObject.self)).id
+    private func _toOneRelatedRecordID(
+        forKey key: AnyCodingKey
+    ) throws -> _CoreData.DatabaseRecord.ID? {
+        guard let value = try rawObject._unsafeDecodeValue(forKey: key) else {
+            return nil
+        }
+        
+        return _CoreData.DatabaseRecord(rawObject: try cast(value, to: NSManagedObject.self)).id
     }
     
     private func _toUnorderedManyRelatedRecordIDs(forKey key: AnyCodingKey) throws -> Set<_CoreData.DatabaseRecord.ID> {

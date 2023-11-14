@@ -15,7 +15,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
         case load
     }
     
-    private let taskGraph = _KeyedTaskGraph<Tasks>()
+    private let taskGraph = KeyedThrowingTaskGroup<Tasks>()
     
     public let cancellables = Cancellables()
     
@@ -54,7 +54,7 @@ public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseCo
     
     @MainActor
     override public func load() async throws {
-        try await taskGraph.perform(.load, policy: .useExisting) {
+        try await taskGraph.perform(.load, policy: .useExisting) { @MainActor in
             guard status != .initialized else {
                 return
             }

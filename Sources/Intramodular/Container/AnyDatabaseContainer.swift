@@ -31,16 +31,16 @@ public class AnyDatabaseContainer: CustomReflectable, Logging, ObservableObject,
     @Published internal(set) public var status: Status = .uninitialized
     
     public func load() async throws {
-        fatalError(reason: .abstract)
+        fatalError(.abstract)
     }
     
     public func transact<R: Sendable>(
         _ body: @escaping @Sendable (AnyLocalTransaction) throws -> R
     ) async throws -> R {
-        fatalError(reason: .abstract)
+        fatalError(.abstract)
     }
     
     public func reset() async throws {
-        fatalError(reason: .abstract)
+        fatalError(.abstract)
     }
 }

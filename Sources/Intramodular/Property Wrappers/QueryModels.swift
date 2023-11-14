@@ -110,11 +110,13 @@ extension QueryModels {
                 guard let queryRequest, let database, database.isInitialized else {
                     return
                 }
-                
-                do {
-                    querySubscription = try database.querySubscription(for: queryRequest)
-                } catch {
-                    logger.error(error)
+
+                DispatchQueue.main.async {
+                    do {
+                        self.querySubscription = try database.querySubscription(for: queryRequest)
+                    } catch {
+                        self.logger.error(error)
+                    }
                 }
             }
         }

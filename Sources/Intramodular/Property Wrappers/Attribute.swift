@@ -231,3 +231,6 @@ extension _EntityAttribute {
     }
 }
 
+extension _EntityAttribute: @unchecked Sendable where Value: Sendable {
+    
+}

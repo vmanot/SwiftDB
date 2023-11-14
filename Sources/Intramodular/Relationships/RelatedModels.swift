@@ -33,6 +33,10 @@ public struct RelatedModels<Model: Entity> {
         }
     }
     
+    public var isEmpty: Bool {
+        false // FIXME!!!
+    }
+    
     private init(_required: _Required?) {
         self._required = _required
     }

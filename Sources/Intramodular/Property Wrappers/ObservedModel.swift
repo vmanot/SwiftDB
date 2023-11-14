@@ -22,7 +22,7 @@ public struct ObservedModel<Model: Entity>: DynamicProperty {
     }
     
     public var projectedValue: Binding<Model> {
-        fatalError(reason: .unimplemented)
+        fatalError(.unimplemented)
     }
     
     public func update() {

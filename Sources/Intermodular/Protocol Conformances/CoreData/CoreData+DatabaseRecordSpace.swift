@@ -233,7 +233,7 @@ extension DatabaseZoneQueryRequest where Database == _CoreData.Database {
                     case .none:
                         nsFetchRequest.fetchLimit = 0
                     default:
-                        fatalError(reason: .unimplemented)
+                        fatalError(.unimplemented)
                 }
             }
 

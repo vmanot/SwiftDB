@@ -124,6 +124,48 @@ private extension NSAttributeType {
     }
 }
 
+#if swift(>=5.9)
+private extension _Schema.Entity.PrimitiveAttributeType {
+    init?(_ type: NSAttributeType) {
+        switch type {
+            case .undefinedAttributeType:
+                return nil
+            case .integer16AttributeType:
+                self = .integer16
+            case .integer32AttributeType:
+                self = .integer32
+            case .integer64AttributeType:
+                self = .integer64
+            case .decimalAttributeType:
+                self = .decimal
+            case .doubleAttributeType:
+                self = .double
+            case .floatAttributeType:
+                self = .float
+            case .stringAttributeType:
+                self = .string
+            case .booleanAttributeType:
+                self = .boolean
+            case .dateAttributeType:
+                self = .date
+            case .binaryDataAttributeType:
+                self = .binaryData
+            case .UUIDAttributeType:
+                self = .UUID
+            case .URIAttributeType:
+                self = .URI
+            case .transformableAttributeType:
+                return nil
+            case .objectIDAttributeType:
+                return nil
+            case .compositeAttributeType:
+                return nil
+            @unknown default:
+                return nil
+        }
+    }
+}
+#else
 private extension _Schema.Entity.PrimitiveAttributeType {
     init?(_ type: NSAttributeType) {
         switch type {
@@ -162,3 +204,4 @@ private extension _Schema.Entity.PrimitiveAttributeType {
         }
     }
 }
+#endif
