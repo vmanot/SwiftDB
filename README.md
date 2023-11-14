@@ -1,4 +1,7 @@
-# SwiftDB
+# SwiftDB [WIP]
+
+> [!IMPORTANT]
+> This package is under development and is being currently rewritten to fully leverage Swift 5.9.
 
 A modern, type-safe database abstraction layer. SwiftDB aims to be an opinionated DBAL for relational and document-oriented databases. 
 
