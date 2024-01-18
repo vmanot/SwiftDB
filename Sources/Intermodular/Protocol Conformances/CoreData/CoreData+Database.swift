@@ -5,7 +5,7 @@
 import CoreData
 import CorePersistence
 import Diagnostics
-import Foundation
+import FoundationX
 import Merge
 import Swallow
 

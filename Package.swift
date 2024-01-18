@@ -1,4 +1,4 @@
-// swift-tools-version:5.8
+// swift-tools-version:5.9
 
 import PackageDescription
 
@@ -36,7 +36,15 @@ let package = Package(
                 "SwiftAPI",
                 "SwiftUIX"
             ],
-            path: "Sources"
+            path: "Sources",
+            swiftSettings: [
+                .unsafeFlags([
+                    "-Xfrontend",
+                    "-disable-typo-correction",
+                    "-Xfrontend",
+                    "-disable-verify-exclusivity",
+                ])
+            ]
         ),
         .testTarget(
             name: "SwiftDBTests",

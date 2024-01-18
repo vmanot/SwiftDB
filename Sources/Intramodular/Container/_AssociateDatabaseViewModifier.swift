@@ -91,7 +91,7 @@ extension _AssociateDatabaseViewModifier {
         
         var body: some View {
             NavigationStack {
-                _MirrorSummaryView(mirror: container.customMirror)
+                _MirrorView(mirror: container.customMirror)
                     .navigationTitle("Database Summary")
             }
         }
@@ -99,7 +99,7 @@ extension _AssociateDatabaseViewModifier {
 }
 
 @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
-public struct _MirrorSummaryView: View {
+public struct _MirrorView: View {
     public let mirror: Mirror
     
     public init(mirror: Mirror) {
@@ -128,7 +128,7 @@ public struct _MirrorSummaryView: View {
 #endif
                 } else {
                     NavigationLink(label) {
-                        _MirrorSummaryView(mirror: Mirror(reflecting: value))
+                        _MirrorView(mirror: Mirror(reflecting: value))
                     }
                 }
             }
