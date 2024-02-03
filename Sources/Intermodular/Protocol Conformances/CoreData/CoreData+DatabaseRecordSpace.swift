@@ -134,7 +134,7 @@ extension _CoreData.DatabaseRecordSpace: DatabaseRecordSpace {
     }
 
     public func save() -> AnyTask<Void, SaveError> {
-        return Task { @Sendable in
+        return Task { @MainActor @Sendable in
             @Sendable
             func save() -> Result<Void, SaveError> {
                 do {

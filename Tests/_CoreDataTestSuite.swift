@@ -118,7 +118,7 @@ final class _CoreDataTestSuite: XCTestCase {
     func testQuerySubscription() async throws {
         try await database.load()
         
-        let numberOfEvents = ActorIsolated(value: 0)
+        let numberOfEvents = ActorIsolated(0)
         
         let subscription = try await database.querySubscription(for: QueryRequest<TestORMSchema.EntityWithSimpleRequiredProperty>())
         
