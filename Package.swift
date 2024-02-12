@@ -36,15 +36,16 @@ let package = Package(
                 "SwiftAPI",
                 "SwiftUIX"
             ],
-            path: "Sources",
-            swiftSettings: [
-                .unsafeFlags([
-                    "-Xfrontend",
-                    "-disable-typo-correction",
-                    "-Xfrontend",
-                    "-disable-verify-exclusivity",
-                ])
-            ]
+            path: "Sources/SwiftDB",
+            swiftSettings: []
+        ),
+        .target(
+            name: "UserDB",
+            dependencies: [
+                "SwiftDB"
+            ],
+            path: "Sources/UserDB",
+            swiftSettings: []
         ),
         .testTarget(
             name: "SwiftDBTests",
