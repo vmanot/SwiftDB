@@ -146,7 +146,7 @@ extension EntityRelationship {
         // This sets the `_runtimeMetadata.didAccessWrappedValueGetter` to true for the _one_ relationship accessor representing the inverse.
         _ = subject[keyPath: inverse.keyPath]
         
-        let emptyInverseEntity = AnyNominalOrTupleMirror(subject)!
+        let emptyInverseEntity = InstanceMirror(subject)!
         
         // Walk through all properties of the empty inverse instance.
         for (key, value) in emptyInverseEntity.children {

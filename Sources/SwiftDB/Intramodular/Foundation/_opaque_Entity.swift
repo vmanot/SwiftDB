@@ -19,7 +19,7 @@ extension _opaque_Entity where Self: Entity {
 
 extension _opaque_Entity  {
     var _runtime_propertyAccessors: [any _EntityPropertyAccessor] {
-        AnyNominalOrTupleMirror(self)!.allChildren.compactMap { key, value in
+        InstanceMirror(self)!.allChildren.compactMap { key, value in
             (value as? any _EntityPropertyAccessor)
         }
     }
@@ -27,7 +27,7 @@ extension _opaque_Entity  {
     mutating func _runtime_configurePropertyAccessors(
         withRecordProxy recordProxy: _DatabaseRecordProxy?
     ) throws {
-        var instance = AnyNominalOrTupleMirror(self)!
+        var instance = InstanceMirror(self)!
         
         for (key, value) in instance.allChildren {
             if let property = value as? any _EntityPropertyAccessor {
@@ -60,7 +60,7 @@ extension _opaque_Entity where Self: Entity {
         
     var _databaseRecordProxy: _DatabaseRecordProxy {
         get throws {
-            for (_, value) in AnyNominalOrTupleMirror(self)!.allChildren {
+            for (_, value) in InstanceMirror(self)!.allChildren {
                 if let value = value as? any _EntityPropertyAccessor {
                     if let proxy = value._underlyingRecordProxy {
                         return proxy
