@@ -97,6 +97,7 @@ extension QueryModels {
     fileprivate class RequestOutputCoordinator: Logging, ObservableObject, @unchecked Sendable {
         var queryRequest: QueryRequest<Model>?
         
+        @MainActor(unsafe)
         @PublishedObject var querySubscription: QuerySubscription<Model>?
         
         var database: AnyDatabaseContainer.LiveAccess? {
