@@ -55,7 +55,7 @@ extension _Schema.Entity {
     /// The types of attributes supported by SwiftDB's canonical schema representation.
     public indirect enum AttributeType: Codable, Hashable {
         public struct ObjectType: Codable, Hashable {
-            public let identity: _SerializedTypeIdentity
+            public let identity: _CodableSwiftType
         }
         
         case primitive(type: PrimitiveAttributeType)
