@@ -9,7 +9,7 @@ import Swallow
 import SwiftUIX
 
 /// A container that encapsulates a database stack in your app.
-public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer {
+public final class LocalDatabaseContainer<Schema: SwiftDB.Schema>: AnyDatabaseContainer, @unchecked Sendable {
     private enum Tasks: Hashable, Sendable {
         case initialize
         case load

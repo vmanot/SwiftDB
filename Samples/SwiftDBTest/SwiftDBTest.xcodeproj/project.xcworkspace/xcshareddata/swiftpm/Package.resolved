@@ -1,5 +1,5 @@
 {
-  "originHash" : "f689df94a376e1a87c27f9200257fe8171883768ea0764b06c8eb77935ff7f4a",
+  "originHash" : "514092aacd9b3b4af7c6488efb2cd4ebe8fe247f5cfb661a001eebf688396352",
   "pins" : [
     {
       "identity" : "corepersistence",
@@ -17,6 +17,15 @@
       "state" : {
         "branch" : "master",
         "revision" : "3a08837f3e32c7112a5cc4fb7b53cb6460e473e8"
+      }
+    },
+    {
+      "identity" : "swallow",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vmanot/Swallow.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "8ab4269e38cadb93ccc0f3698083c0a2a400a145"
       }
     },
     {
@@ -53,6 +62,15 @@
       "state" : {
         "branch" : "master",
         "revision" : "3e47cc5f9b0cefe9ed1d0971aff22583bd9ac7b0"
+      }
+    },
+    {
+      "identity" : "swiftdb",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vmanot/SwiftDB.git",
+      "state" : {
+        "branch" : "fatbobman/SWIFTDB-2",
+        "revision" : "e781f31c45b6cecd43c59f0e053d58d640660a9d"
       }
     },
     {
