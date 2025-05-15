@@ -45,7 +45,7 @@ public protocol Database: Named, Identifiable, Sendable where ID: Codable {
     var context: Context { get }
     
     init(
-        runtime: _SwiftDB_Runtime,
+        runtime: any _SwiftDB_Runtime,
         schema: _Schema?,
         configuration: Configuration,
         state: State?
