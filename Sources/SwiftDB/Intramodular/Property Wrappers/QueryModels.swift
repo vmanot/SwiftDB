@@ -97,7 +97,6 @@ extension QueryModels {
     fileprivate class RequestOutputCoordinator: Logging, ObservableObject, @unchecked Sendable {
         var queryRequest: QueryRequest<Model>?
         
-        @MainActor(unsafe)
         @PublishedObject var querySubscription: QuerySubscription<Model>?
         
         var database: AnyDatabaseContainer.LiveAccess? {
@@ -112,7 +111,7 @@ extension QueryModels {
                     return
                 }
 
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     do {
                         self.querySubscription = try database.querySubscription(for: queryRequest)
                     } catch {

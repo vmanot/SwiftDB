@@ -1,0 +1,9 @@
+{
+  "swift.path": "/usr/bin/",
+  "swift.swiftEnvironmentVariables": {
+    "DEVELOPER_DIR": "/Applications/Xcode-16.3.0.app"
+  },
+  "lldb.library": "/Applications/Xcode-16.3.0.app/Contents/SharedFrameworks/LLDB.framework/Versions/A/LLDB",
+  "lldb.launch.expressions": "native",
+  "swiftlint.enable": false
+}

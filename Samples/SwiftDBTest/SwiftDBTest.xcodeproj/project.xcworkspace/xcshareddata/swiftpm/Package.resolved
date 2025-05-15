@@ -1,0 +1,87 @@
+{
+  "originHash" : "514092aacd9b3b4af7c6488efb2cd4ebe8fe247f5cfb661a001eebf688396352",
+  "pins" : [
+    {
+      "identity" : "corepersistence",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vmanot/CorePersistence.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a474a6ee932a349ddebaf064bf4b3e91982f87d0"
+      }
+    },
+    {
+      "identity" : "merge",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vmanot/Merge.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "3a08837f3e32c7112a5cc4fb7b53cb6460e473e8"
+      }
+    },
+    {
+      "identity" : "swallow",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vmanot/Swallow.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "8ab4269e38cadb93ccc0f3698083c0a2a400a145"
+      }
+    },
+    {
+      "identity" : "swift-atomics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-atomics.git",
+      "state" : {
+        "revision" : "cd142fd2f64be2100422d658e7411e39489da985",
+        "version" : "1.2.0"
+      }
+    },
+    {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections",
+      "state" : {
+        "revision" : "671108c96644956dddcd89dd59c203dcdb36cec7",
+        "version" : "1.1.4"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-precompiled/swift-syntax",
+      "state" : {
+        "branch" : "release/6.1",
+        "revision" : "fc197a24fb2e77609fbe3d94624e36f84d758099"
+      }
+    },
+    {
+      "identity" : "swiftapi",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vmanot/SwiftAPI.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "3e47cc5f9b0cefe9ed1d0971aff22583bd9ac7b0"
+      }
+    },
+    {
+      "identity" : "swiftdb",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vmanot/SwiftDB.git",
+      "state" : {
+        "branch" : "fatbobman/SWIFTDB-2",
+        "revision" : "e781f31c45b6cecd43c59f0e053d58d640660a9d"
+      }
+    },
+    {
+      "identity" : "swiftuix",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SwiftUIX/SwiftUIX.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "395a5d03834ab762919d3f1414ff3b4a3ef04688"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -17,7 +17,7 @@ extension _Schema.Entity {
         public var isOrdered: Bool
     }
     
-    public final class Relationship: _Schema.Entity.Property {
+    public final class Relationship: _Schema.Entity.Property, @unchecked Sendable {
         private enum CodingKeys: String, CodingKey {
             case relationshipConfiguration
         }

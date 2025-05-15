@@ -18,7 +18,7 @@ extension _Schema.Entity {
         }
     }
     
-    public final class Attribute: _Schema.Entity.Property {
+    public final class Attribute: _Schema.Entity.Property, @unchecked Sendable {
         private enum CodingKeys: String, CodingKey {
             case attributeConfiguration
         }
