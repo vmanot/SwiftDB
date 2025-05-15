@@ -4,6 +4,7 @@
 
 import FoundationX
 import Swallow
+import SwallowMacrosClient
 
 public struct RecordInstanceMetadata {
     public let recordID: AnyDatabaseRecord.ID
@@ -14,7 +15,7 @@ public struct RecordInstanceMetadata {
                 recordID: instance._databaseRecordProxy.recordID
             )
         } else {
-            throw _PlaceholderError()
+            #throw
         }
     }
 }

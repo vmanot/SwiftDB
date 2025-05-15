@@ -16,8 +16,9 @@ extension CKRecord.ID {
                 zoneID: zoneID
             )
         } else {
-            self.init(recordName: recordName ?? UUID().uuidString)
+            self.init(
+                recordName: recordName ?? UUID().uuidString
+            )
         }
     }
 }
-

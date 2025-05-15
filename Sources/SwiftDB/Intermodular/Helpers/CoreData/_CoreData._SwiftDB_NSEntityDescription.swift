@@ -6,6 +6,7 @@ import CoreData
 import FoundationX
 import Runtime
 import Swallow
+import SwallowMacrosClient
 
 extension _CoreData {
     @objc(_SwiftDB_NSEntityDescription)
@@ -77,7 +78,7 @@ extension _Schema.Entity.Property {
             case let relationship as _Schema.Entity.Relationship:
                 return try NSRelationshipDescription(relationship)
             default:
-                throw _PlaceholderError()
+                #throw
         }
     }
 }
