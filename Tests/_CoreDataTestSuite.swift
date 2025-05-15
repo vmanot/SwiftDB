@@ -124,7 +124,7 @@ final class _CoreDataTestSuite: XCTestCase {
         
         let countTask = Task {
             for await _ in subscription.discardError().values.prefix(4) {
-                await numberOfEvents.mutate {
+                await numberOfEvents.withCriticalRegion {
                     $0 += 1
                 }
             }

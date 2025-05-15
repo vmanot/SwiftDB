@@ -32,7 +32,7 @@ extension TestORMSchema {
         }
     }
     
-    class EntityWithOptionalProperties: Entity {
+    final class EntityWithOptionalProperties: Entity {
         @Attribute var foo: Int? = nil
         @Attribute var bar: Date? = nil
         @Attribute var baz: String? = nil
@@ -42,7 +42,7 @@ extension TestORMSchema {
         }
     }
     
-    class EntityWithComplexProperties: Entity {
+    final class EntityWithComplexProperties: Entity {
         enum Animal: String, Codable, Hashable {
             case cat
             case dog
@@ -56,7 +56,7 @@ extension TestORMSchema {
         }
     }
     
-    class EntityWithDynamicProperties: Entity {
+    final class EntityWithDynamicProperties: Entity {
         @Attribute var id: UUID = UUID()
         
         @Attribute(defaultValue: UUID()) var defaultValueID: UUID

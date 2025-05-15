@@ -38,14 +38,6 @@ let package = Package(
             path: "Sources/SwiftDB",
             swiftSettings: []
         ),
-        .target(
-            name: "UserDB",
-            dependencies: [
-                "SwiftDB"
-            ],
-            path: "Sources/UserDB",
-            swiftSettings: []
-        ),
         .testTarget(
             name: "SwiftDBTests",
             dependencies: ["SwiftDB"],

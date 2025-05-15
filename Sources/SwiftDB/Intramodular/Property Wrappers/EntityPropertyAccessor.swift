@@ -40,4 +40,13 @@ struct _EntityPropertyAccessorRuntimeMetadata {
     let valueType: Any.Type
     
     var didAccessWrappedValueGetter: Bool = false
+    
+    init(valueType: Any.Type, didAccessWrappedValueGetter: Bool = false) {
+        if valueType == Any.self {
+            assertionFailure()
+        }
+        
+        self.valueType = valueType
+        self.didAccessWrappedValueGetter = didAccessWrappedValueGetter
+    }
 }

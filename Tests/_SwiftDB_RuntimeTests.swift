@@ -5,7 +5,7 @@
 import XCTest
 
 @testable import SwiftDB
-import SwiftData
+
 final class RuntimeTests: XCTestCase {
     let runtime = try! _SwiftDB_DefaultRuntime(schema: _Schema(TestORMSchema()))
 
