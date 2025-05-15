@@ -60,7 +60,6 @@ public struct _Schema: Hashable, Sendable, Versioned {
             
             return try Entity(from: partial)
         })
-        
         try self.init(entities: entities)
     }
     

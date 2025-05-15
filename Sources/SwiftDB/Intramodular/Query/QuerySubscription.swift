@@ -15,7 +15,13 @@ public final class QuerySubscription<Model>: ObservableObject {
     
     private let resultsPublisher = ReplaySubject<Output, Error>(bufferSize: 1)
     
-    @Published private(set) public var results: [Model]?
+    @Published private(set) public var results: [Model]?{
+        didSet {
+            
+                Swift.print(results)
+            
+        }
+    }
     
     init(
         from base: AnyDatabaseQuerySubscription,
