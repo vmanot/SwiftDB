@@ -98,7 +98,7 @@ extension QueryModels {
         var queryRequest: QueryRequest<Model>?
         
         @MainActor(unsafe)
-        @PublishedObject var querySubscription: QuerySubscription<Model>?
+        @MyPublishedObject var querySubscription: QuerySubscription<Model>?
         
         var database: AnyDatabaseContainer.LiveAccess? {
             didSet {
@@ -106,7 +106,7 @@ extension QueryModels {
                     return
                 }
                 
-                querySubscription = nil
+//                querySubscription = nil
                 
                 guard let queryRequest, let database, database.isInitialized else {
                     return
@@ -124,6 +124,67 @@ extension QueryModels {
         
         init() {
 
+        }
+    }
+}
+
+@propertyWrapper
+public struct MyPublishedObject<Value> {
+    public var wrappedValue: Value
+    
+    public init(wrappedValue: Value) where Value: ObservableObject {
+        self.wrappedValue = wrappedValue
+    }
+    
+    public init(wrappedValue: Value) where Value: OptionalObservableObject {
+        self.wrappedValue = wrappedValue
+    }
+    
+    public static subscript<OuterSelf: ObservableObject>(
+        _enclosingInstance observed: OuterSelf,
+        wrapped wrappedKeyPath: ReferenceWritableKeyPath<OuterSelf, Value>,
+        storage storageKeyPath: ReferenceWritableKeyPath<OuterSelf, Self>
+    ) -> Value where OuterSelf.ObjectWillChangePublisher == ObservableObjectPublisher {
+        get {
+            if observed[keyPath: storageKeyPath].cancellable == nil {
+                observed[keyPath: storageKeyPath].setup(observed)
+            }
+            return observed[keyPath: storageKeyPath].wrappedValue
+        }
+        set {
+            observed.objectWillChange.send() // willSet
+            observed[keyPath: storageKeyPath].wrappedValue = newValue
+        }
+    }
+    
+    private var cancellable: AnyCancellable?
+    
+    private mutating func setup<OuterSelf: ObservableObject>(_ enclosingInstance: OuterSelf) where OuterSelf.ObjectWillChangePublisher == ObservableObjectPublisher {
+        if let optionalObject = wrappedValue as? OptionalObservableObject {
+            cancellable = optionalObject.objectWillChange?.sink(receiveValue: { [weak enclosingInstance] _ in
+                (enclosingInstance?.objectWillChange)?.send()
+            })
+        } else if let object = wrappedValue as? any ObservableObject {
+            cancellable = (object.objectWillChange as? ObservableObjectPublisher)?.sink(receiveValue: { [weak enclosingInstance] _ in
+                (enclosingInstance?.objectWillChange)?.send()
+            })
+        }
+    }
+}
+
+// 用于处理可选的 ObservableObject 的协议
+public protocol OptionalObservableObject {
+    var objectWillChange: ObservableObjectPublisher? { get }
+}
+
+// 扩展 Optional 以符合 OptionalObservableObject 协议
+extension Optional: OptionalObservableObject where Wrapped: ObservableObject, Wrapped.ObjectWillChangePublisher == ObservableObjectPublisher {
+    public var objectWillChange: ObservableObjectPublisher? {
+        switch self {
+        case .some(let object):
+            return object.objectWillChange
+        case .none:
+            return nil
         }
     }
 }
