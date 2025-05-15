@@ -23,7 +23,6 @@ let package = Package(
         .package(url: "https://github.com/vmanot/Merge.git", branch: "master"),
         .package(url: "https://github.com/vmanot/SwiftAPI.git", branch: "master"),
         .package(url: "https://github.com/vmanot/Swallow.git", branch: "master"),
-        // .package(path: "../Swallow"),
         .package(url: "https://github.com/SwiftUIX/SwiftUIX.git", branch: "master"),
     ],
     targets: [
