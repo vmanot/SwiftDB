@@ -74,8 +74,12 @@ public final class CoreDataDatabase: _CancellablesProviding, SwiftDB.LocalDataba
         
         try createFoldersIfNecessary()
         
-        try await nsPersistentContainer.loadPersistentStores()
-        
+        for await result in nsPersistentContainer.loadPersistentStores() {
+            if let error = result.error {
+                throw error
+            }
+        }
+
         nsPersistentContainer.viewContext.automaticallyMergesChangesFromParent = true
         
         mainRecordSpace = RecordSpace(

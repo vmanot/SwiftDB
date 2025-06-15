@@ -6,6 +6,7 @@ import Combine
 import CoreData
 import Runtime
 import Swallow
+import os
 
 extension NSPersistentContainer {
     /// Create a container with the specified name and managed object model.
@@ -18,16 +19,28 @@ extension NSPersistentContainer {
     }
     
     /// Loads the persistent stores.
-    func loadPersistentStores() async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            self.loadPersistentStores { storeDescription, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: ())
+    func loadPersistentStores() -> AsyncStream<(description: NSPersistentStoreDescription, error: (any Error)?)> {
+        let (stream, continuation) = AsyncStream<(description: NSPersistentStoreDescription, error: (any Error)?)>.makeStream()
+
+        guard !persistentStoreDescriptions.isEmpty else {
+            continuation.finish()
+            return stream
+        }
+
+        let lock = OSAllocatedUnfairLock<[NSPersistentStoreDescription]>(initialState: persistentStoreDescriptions)
+
+        self.loadPersistentStores { description, error in
+            continuation.yield((description, error))
+
+            lock.withLock { descriptions in
+                descriptions.removeAll(of: description)
+                if descriptions.isEmpty {
+                    continuation.finish()
                 }
             }
         }
+
+        return stream
     }
     
     func persistentStoreDescription(
