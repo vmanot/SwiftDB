@@ -36,7 +36,7 @@ let package = Package(
         .package(url: "https://github.com/vmanot/SwiftAPI.git", branch: "master"),
         .package(url: "https://github.com/vmanot/Swallow.git", branch: "master"),
         .package(url: "https://github.com/SwiftUIX/SwiftUIX.git", branch: "master"),
-        .package(url: "https://github.com/pookjw/ellekit", branch: "main"), // to be removed
+        .package(url: "https://github.com/pookjw/ellekit.git", branch: "main"), // to be removed
     ],
     targets: [
         .target(
@@ -56,7 +56,6 @@ let package = Package(
             dependencies: [
                 .product(name: "ellekit", package: "ellekit")
             ],
-            path: "CoreDataToolbox",
             cSettings: [
                 .unsafeFlags(["-fobjc-weak", "-fno-objc-arc"])
             ],
@@ -66,11 +65,11 @@ let package = Package(
         ),
         .binaryTarget(
             name: "_SwiftDataPrivate",
-            path: "_SwiftDataPrivate/_SwiftDataPrivate.xcframework"
+            path: "Sources/_SwiftDataPrivate/_SwiftDataPrivate.xcframework"
         ),
         .binaryTarget(
             name: "_CoreDataPrivate",
-            path: "_CoreDataPrivate/_CoreDataPrivate.xcframework"
+            path: "Sources/_CoreDataPrivate/_CoreDataPrivate.xcframework"
         ),
         .testTarget(
             name: "SwiftDBTests",
