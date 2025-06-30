@@ -1,3 +1,5 @@
+#warning TODO: Rewrite using Swallow and Swift lang 
+
 #import "NSPersistentStore+Category.h"
 #include <objc/runtime.h>
 #include <objc/message.h>
