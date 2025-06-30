@@ -1,5 +1,5 @@
 {
-  "originHash" : "016828a5db6c6ee1d9f27622e64d3b41900f7e8aec37dbc165deb61975f706e6",
+  "originHash" : "0ffeaf28ef41fc9c861770850821e84016808494fb10e1f1b35976a605e4d5ac",
   "pins" : [
     {
       "identity" : "corepersistence",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/vmanot/CorePersistence.git",
       "state" : {
         "branch" : "main",
-        "revision" : "3aaf5414642c50050fed52242e03f773b045571d"
+        "revision" : "85d5849cea3633a7604839c0e82021e1cc1bf73f"
       }
     },
     {
@@ -25,7 +25,7 @@
       "location" : "https://github.com/vmanot/Merge.git",
       "state" : {
         "branch" : "master",
-        "revision" : "425dfc04b15bac827485e3b297775ac474e8ad83"
+        "revision" : "9f2b492513384f5cc26ce487b146723cef361d50"
       }
     },
     {
@@ -34,7 +34,7 @@
       "location" : "https://github.com/vmanot/Swallow.git",
       "state" : {
         "branch" : "master",
-        "revision" : "fe15232c32bd9534fd654c55e23e195bfafa231e"
+        "revision" : "685a3ddfe700105557cf28e9df08a2ea315e5868"
       }
     },
     {
@@ -56,6 +56,15 @@
       }
     },
     {
+      "identity" : "swift-subprocess",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/preternatural-fork/swift-subprocess.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "b276db492c0a91ea319bf3774755c4e3e7af8082"
+      }
+    },
+    {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-precompiled/swift-syntax",
@@ -65,12 +74,21 @@
       }
     },
     {
+      "identity" : "swift-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-system",
+      "state" : {
+        "revision" : "61e4ca4b81b9e09e2ec863b00c340eb13497dac6",
+        "version" : "1.5.0"
+      }
+    },
+    {
       "identity" : "swiftapi",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vmanot/SwiftAPI.git",
       "state" : {
         "branch" : "master",
-        "revision" : "12e63008d44b929c00a47c982b39a8ec4402c443"
+        "revision" : "23f0e0c23074ba3d56a5be72494e01fae2035951"
       }
     },
     {
