@@ -1,0 +1,5 @@
+framework module _SwiftDataPrivate {
+    umbrella header "_SwiftDataPrivate.h"
+    export *
+    module * { export * }
+}

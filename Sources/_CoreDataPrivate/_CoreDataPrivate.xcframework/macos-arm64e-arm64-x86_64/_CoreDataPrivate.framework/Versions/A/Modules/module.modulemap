@@ -1,0 +1,5 @@
+framework module _CoreDataPrivate {
+    umbrella header "_CoreDataPrivate.h"
+    export *
+    module * { export * }
+}
