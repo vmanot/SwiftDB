@@ -1,5 +1,5 @@
 {
-  "originHash" : "0ffeaf28ef41fc9c861770850821e84016808494fb10e1f1b35976a605e4d5ac",
+  "originHash" : "d77d641c6e83e2b88d222a2d3c734f70203e1230562f8f243b657c54d070c990",
   "pins" : [
     {
       "identity" : "corepersistence",
@@ -8,15 +8,6 @@
       "state" : {
         "branch" : "main",
         "revision" : "85d5849cea3633a7604839c0e82021e1cc1bf73f"
-      }
-    },
-    {
-      "identity" : "ellekit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pookjw/ellekit",
-      "state" : {
-        "branch" : "main",
-        "revision" : "9bf21c6dd6eadc2ef34fe64377a9628344ef8a06"
       }
     },
     {

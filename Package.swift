@@ -35,8 +35,7 @@ let package = Package(
         .package(url: "https://github.com/vmanot/Merge.git", branch: "master"),
         .package(url: "https://github.com/vmanot/SwiftAPI.git", branch: "master"),
         .package(url: "https://github.com/vmanot/Swallow.git", branch: "master"),
-        .package(url: "https://github.com/SwiftUIX/SwiftUIX.git", branch: "master"),
-        .package(url: "https://github.com/pookjw/ellekit.git", branch: "main"), // to be removed
+        .package(url: "https://github.com/SwiftUIX/SwiftUIX.git", branch: "master")
     ],
     targets: [
         .target(
@@ -54,13 +53,7 @@ let package = Package(
         .target(
             name: "CoreDataToolbox",
             dependencies: [
-                .product(name: "ellekit", package: "ellekit")
-            ],
-            cSettings: [
-                .unsafeFlags(["-fobjc-weak", "-fno-objc-arc"])
-            ],
-            linkerSettings: [
-                .linkedFramework("CoreData")
+                .byName(name: "Swallow")
             ]
         ),
         .binaryTarget(
