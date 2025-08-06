@@ -28,6 +28,13 @@ let package = Package(
         .library(
             name: "CoreDataToolbox",
             targets: ["CoreDataToolbox"]
+        ),
+        .library(
+            name: "SwiftDataToolbox",
+            targets: [
+                "SwiftDataToolbox",
+                "_SwiftDataToolboxCShims"
+            ]
         )
     ],
     dependencies: [
@@ -54,6 +61,18 @@ let package = Package(
             name: "CoreDataToolbox",
             dependencies: [
                 .byName(name: "Swallow")
+            ]
+        ),
+        .target(
+            name: "SwiftDataToolbox"
+        ),
+        .target(
+            name: "_SwiftDataToolboxCShims",
+            dependencies: [
+                .byName(name: "SwiftDataToolbox")
+            ],
+            cSettings: [
+                .unsafeFlags(["-fno-objc-arc"])
             ]
         ),
         .binaryTarget(
